@@ -23,4 +23,38 @@ model User {
   email    String @unique
   password String
   role     Roles
+
+  ApprovedBy        SuratKeteranganKuliah[] @relation("approvedby")
+  RemainingApproved SuratKeteranganKuliah[] @relation("remainingApproved")
+  RejectedBy        SuratKeteranganKuliah[] @relation("rejectedBy")
+}
+
+enum Status {
+  MENUNGGU
+  DISETUJUI
+  DITOLAK
+}
+
+enum TypeForSuratKeteranganKuliah {
+  KP4
+  SK_PENSIUN
+  SURAT_KETERANGAN_PERUSAHAAN
+  LAINNYA
+}
+
+model SuratKeteranganKuliah {
+  id                  String                       @id @unique
+  type                TypeForSuratKeteranganKuliah
+  fileUrl             String
+  status              Status                       @default(MENUNGGU)
+  reason              String?
+  approvedById        String?
+  remainingApprovedId String?
+  rejectedById        String?
+  createdAt           DateTime                     @default(now())
+  updatedAt           DateTime                     @updatedAt
+
+  approvedBy        User? @relation("approvedby", fields: [approvedById], references: [id])
+  remainingApproved User? @relation("remainingApproved", fields: [remainingApprovedId], references: [id])
+  rejectedBy        User? @relation("rejectedBy", fields: [rejectedById], references: [id])
 }
