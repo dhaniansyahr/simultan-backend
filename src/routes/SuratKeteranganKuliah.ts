@@ -25,6 +25,8 @@ SuratKeteranganKuliahRoutes.put(
     SuratKeteranganKuliahController.verificationSurat
 );
 
+SuratKeteranganKuliahRoutes.get("/:id/cetak", AuthMiddleware.checkJwt, SuratKeteranganKuliahController.cetakSurat);
+
 SuratKeteranganKuliahRoutes.delete("/", AuthMiddleware.checkJwt, SuratKeteranganKuliahController.deleteByIds);
 
 export default SuratKeteranganKuliahRoutes;

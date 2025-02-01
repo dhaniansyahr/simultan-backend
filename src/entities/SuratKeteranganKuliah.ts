@@ -8,6 +8,7 @@ export interface SuratKeteranganKuliahDTO {
     approvedById: string;
     remainingApprovedId: string;
     rejectedById: string;
+    offerById: string;
 }
 
 export interface VerifikasiSuratDTO {
