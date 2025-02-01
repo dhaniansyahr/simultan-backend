@@ -1,6 +1,12 @@
 import { Context, TypedResponse } from "hono";
 import * as SuratKeteranganKuliahService from "$services/SuratKeteranganKuliahService";
-import { handleServiceErrorWithResponse, response_created, response_success } from "$utils/response.utils";
+import {
+    handleServiceErrorWithResponse,
+    MIME_TYPE,
+    response_buffer,
+    response_created,
+    response_success,
+} from "$utils/response.utils";
 import { FilteringQueryV2 } from "$entities/Query";
 import { checkFilteringQueryV2 } from "$controllers/helpers/CheckFilteringQuery";
 import { SuratKeteranganKuliahDTO, VerifikasiSuratDTO } from "$entities/SuratKeteranganKuliah";
@@ -8,8 +14,9 @@ import { UserJWTDAO } from "$entities/User";
 
 export async function create(c: Context): Promise<TypedResponse> {
     const data: SuratKeteranganKuliahDTO = await c.req.json();
+    const user: UserJWTDAO = c.get("jwtPayload");
 
-    const serviceResponse = await SuratKeteranganKuliahService.create(data);
+    const serviceResponse = await SuratKeteranganKuliahService.create(data, user);
 
     if (!serviceResponse.status) {
         return handleServiceErrorWithResponse(c, serviceResponse);
@@ -79,4 +86,16 @@ export async function verificationSurat(c: Context): Promise<Response | TypedRes
     if (!serviceResponse.status) return handleServiceErrorWithResponse(c, serviceResponse);
 
     return response_success(c, serviceResponse.data, "Successfully verificated SuratKeteranganKuliah!");
+}
+
+export async function cetakSurat(c: Context): Promise<Response | TypedResponse> {
+    const id = c.req.param("id");
+    const user: UserJWTDAO = c.get("jwtPayload");
+
+    const serviceResponse = await SuratKeteranganKuliahService.cetakSurat(id, user);
+    if (!serviceResponse.status) return handleServiceErrorWithResponse(c, serviceResponse);
+
+    const { buffer, fileName } = serviceResponse.data as any;
+
+    return response_buffer(c, fileName, MIME_TYPE.PDF, buffer);
 }

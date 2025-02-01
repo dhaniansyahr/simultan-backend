@@ -1,5 +1,6 @@
 import { FilteringQueryV2, PagedList } from "$entities/Query";
 import {
+    BadRequestWithMessage,
     INTERNAL_SERVER_ERROR_SERVICE_RESPONSE,
     INVALID_ID_SERVICE_RESPONSE,
     ServiceResponse,
@@ -10,17 +11,27 @@ import { Status, SuratKeteranganKuliah } from "@prisma/client";
 import { buildFilterQueryLimitOffsetV2 } from "./helpers/FilterQueryV2";
 import { SuratKeteranganKuliahDTO, VerifikasiSuratDTO } from "$entities/SuratKeteranganKuliah";
 import { UserJWTDAO } from "$entities/User";
+import { buildBufferPDF } from "$utils/buffer.utils";
+import { DateTime } from "luxon";
 
 export type CreateResponse = SuratKeteranganKuliah | {};
-export async function create(data: SuratKeteranganKuliahDTO): Promise<ServiceResponse<CreateResponse>> {
+export async function create(
+    data: SuratKeteranganKuliahDTO,
+    user: UserJWTDAO
+): Promise<ServiceResponse<CreateResponse>> {
     try {
-        const SuratKeterangaKuliah = await prisma.suratKeteranganKuliah.create({
+        if (user.role !== "USER") return BadRequestWithMessage("You cannot offer this surat!");
+
+        let suratKeteranganKuliah: any;
+
+        data.offerById = user.id;
+        suratKeteranganKuliah = await prisma.suratKeteranganKuliah.create({
             data,
         });
 
         return {
             status: true,
-            data: SuratKeterangaKuliah,
+            data: suratKeteranganKuliah,
         };
     } catch (err) {
         Logger.error(`SuratKeteranganKuliahService.create : ${err}`);
@@ -62,9 +73,30 @@ export async function getById(id: string): Promise<ServiceResponse<GetByIdRespon
     try {
         let SuratKeterangaKuliah = await prisma.suratKeteranganKuliah.findUnique({
             include: {
-                approvedBy: true,
-                rejectedBy: true,
-                remainingApproved: true,
+                approvedBy: {
+                    select: {
+                        fullName: true,
+                        email: true,
+                    },
+                },
+                rejectedBy: {
+                    select: {
+                        fullName: true,
+                        email: true,
+                    },
+                },
+                remainingApproved: {
+                    select: {
+                        fullName: true,
+                        email: true,
+                    },
+                },
+                offerBy: {
+                    select: {
+                        fullName: true,
+                        email: true,
+                    },
+                },
             },
             where: {
                 id,
@@ -148,6 +180,8 @@ export async function verificationStatus(
 
         if (!suratKeteranganKuliah) return INVALID_ID_SERVICE_RESPONSE;
 
+        if (user.role === "USER") return BadRequestWithMessage("This role cannot access this action!");
+
         if (data.action === "DISETUJUI") {
             suratKeteranganKuliah = await prisma.suratKeteranganKuliah.update({
                 where: {
@@ -179,6 +213,38 @@ export async function verificationStatus(
         };
     } catch (error) {
         Logger.error(`SuratKeteranganKuliahService.verificationStatus : ${error}`);
+        return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
+    }
+}
+
+export async function cetakSurat(id: string, user: UserJWTDAO): Promise<ServiceResponse<any>> {
+    try {
+        const suratKeteranganKuliah = await prisma.suratKeteranganKuliah.findUnique({
+            where: {
+                id,
+            },
+        });
+
+        if (!suratKeteranganKuliah) return INVALID_ID_SERVICE_RESPONSE;
+
+        let pdfData: any = {};
+
+        pdfData.title = "SURAT KETERANGAN KULIAH";
+        pdfData.data = { ...suratKeteranganKuliah, ...user };
+        pdfData.date = DateTime.now().toFormat("dd MMMM yyyy");
+
+        const buffer = await buildBufferPDF("surat-keterangan-kuliah", pdfData);
+        const fileName = "Daftar_Pembayaran_Kolektif_Voucher";
+
+        return {
+            status: true,
+            data: {
+                buffer,
+                fileName,
+            },
+        };
+    } catch (err) {
+        Logger.error(`PembayaranKolektifVoucherService.exportPDF : ${err}`);
         return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
     }
 }
