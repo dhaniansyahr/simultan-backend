@@ -5,28 +5,55 @@ import * as SuratKeteranganKuliahValidation from "$validations/SuratKeteranganKu
 
 const SuratKeteranganKuliahRoutes = new Hono();
 
-SuratKeteranganKuliahRoutes.get("/", SuratKeteranganKuliahController.getAll);
+SuratKeteranganKuliahRoutes.get(
+    "/",
+    AuthMiddleware.checkJwt,
+    AuthMiddleware.checkAccess("SURAT_KETERANGAN_KULIAH", "VIEW"),
+    SuratKeteranganKuliahController.getAll
+);
 
 SuratKeteranganKuliahRoutes.post(
     "/",
     AuthMiddleware.checkJwt,
+    AuthMiddleware.checkAccess("SURAT_KETERANGAN_KULIAH", "CREATE"),
     SuratKeteranganKuliahValidation.validateSuratKeteranganKuliahDTO,
     SuratKeteranganKuliahController.create
 );
 
-SuratKeteranganKuliahRoutes.get("/:id", AuthMiddleware.checkJwt, SuratKeteranganKuliahController.getById);
+SuratKeteranganKuliahRoutes.get(
+    "/:id",
+    AuthMiddleware.checkJwt,
+    AuthMiddleware.checkAccess("SURAT_KETERANGAN_KULIAH", "VIEW"),
+    SuratKeteranganKuliahController.getById
+);
 
-SuratKeteranganKuliahRoutes.put("/:id", AuthMiddleware.checkJwt, SuratKeteranganKuliahController.update);
+SuratKeteranganKuliahRoutes.put(
+    "/:id",
+    AuthMiddleware.checkJwt,
+    AuthMiddleware.checkAccess("SURAT_KETERANGAN_KULIAH", "UPDATE"),
+    SuratKeteranganKuliahController.update
+);
 
 SuratKeteranganKuliahRoutes.put(
     "/:id/verification",
     AuthMiddleware.checkJwt,
+    AuthMiddleware.checkAccess("SURAT_KETERANGAN_KULIAH", "VERIFIKASI"),
     SuratKeteranganKuliahValidation.validateVerificationSuratKeteranganKuliahDTO,
     SuratKeteranganKuliahController.verificationSurat
 );
 
-SuratKeteranganKuliahRoutes.get("/:id/cetak", AuthMiddleware.checkJwt, SuratKeteranganKuliahController.cetakSurat);
+SuratKeteranganKuliahRoutes.get(
+    "/:id/cetak",
+    AuthMiddleware.checkJwt,
+    AuthMiddleware.checkAccess("SURAT_KETERANGAN_KULIAH", "EXPORT"),
+    SuratKeteranganKuliahController.cetakSurat
+);
 
-SuratKeteranganKuliahRoutes.delete("/", AuthMiddleware.checkJwt, SuratKeteranganKuliahController.deleteByIds);
+SuratKeteranganKuliahRoutes.delete(
+    "/",
+    AuthMiddleware.checkJwt,
+    AuthMiddleware.checkAccess("SURAT_KETERANGAN_KULIAH", "DELETE"),
+    SuratKeteranganKuliahController.deleteByIds
+);
 
 export default SuratKeteranganKuliahRoutes;

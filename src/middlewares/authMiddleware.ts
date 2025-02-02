@@ -1,8 +1,8 @@
 import jwt from "jsonwebtoken";
 import { response_forbidden, response_internal_server_error, response_unauthorized } from "$utils/response.utils";
-import { Roles } from "@prisma/client";
-import { transformRoleToEnumRole } from "$utils/user.utils";
 import { Context, Next } from "hono";
+import { UserJWTDAO } from "$entities/User";
+import { prisma } from "$utils/prisma.utils";
 
 export async function checkJwt(c: Context, next: Next) {
     const token = c.req.header("Authorization")?.split(" ")[1];
@@ -21,15 +21,25 @@ export async function checkJwt(c: Context, next: Next) {
     await next();
 }
 
-export function checkRole(roles: Roles[]) {
+export function checkAccess(featureName: string, action: string) {
     return async (c: Context, next: Next) => {
-        const role = transformRoleToEnumRole(c.get("jwtPayload"));
+        const user: UserJWTDAO = await c.get("jwtPayload");
+
+        const mappingExist = await prisma.acl.findUnique({
+            where: {
+                featureName_actionName_userLevelId: {
+                    actionName: action,
+                    featureName: featureName,
+                    userLevelId: user.userLevelId,
+                },
+            },
+        });
 
         try {
-            if (roles.includes(role)) {
-                next();
+            if (mappingExist) {
+                await next();
             } else {
-                return response_forbidden(c, "Forbidden Action!");
+                return response_forbidden(c, "Anda tidak dapat mengakses fitur ini!!!");
             }
         } catch (err) {
             return response_internal_server_error(c, (err as Error).message);

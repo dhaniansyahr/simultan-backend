@@ -1,13 +1,15 @@
-import "../../src/paths"
+import "../../src/paths";
 import { seedAdmin } from "./seedAdmin";
-import { prisma } from '../../src/utils/prisma.utils';
-
+import { prisma } from "../../src/utils/prisma.utils";
+import { seedUserLevel } from "./seedUserLevel";
+import { seedAcl } from "./seedAcl";
 
 async function seed() {
-    await seedAdmin(prisma)
-
+    await seedUserLevel(prisma);
+    await seedAdmin(prisma);
+    await seedAcl(prisma);
 }
 
 seed().then(() => {
-    console.log("ALL SEEDING DONE")
-})
+    console.log("ALL SEEDING DONE");
+});
