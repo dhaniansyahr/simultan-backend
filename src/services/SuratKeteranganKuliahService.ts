@@ -1,6 +1,5 @@
 import { FilteringQueryV2, PagedList } from "$entities/Query";
 import {
-    BadRequestWithMessage,
     INTERNAL_SERVER_ERROR_SERVICE_RESPONSE,
     INVALID_ID_SERVICE_RESPONSE,
     ServiceResponse,
@@ -20,8 +19,6 @@ export async function create(
     user: UserJWTDAO
 ): Promise<ServiceResponse<CreateResponse>> {
     try {
-        if (user.role !== "USER") return BadRequestWithMessage("You cannot offer this surat!");
-
         let suratKeteranganKuliah: any;
 
         data.offerById = user.id;
@@ -179,8 +176,6 @@ export async function verificationStatus(
         });
 
         if (!suratKeteranganKuliah) return INVALID_ID_SERVICE_RESPONSE;
-
-        if (user.role === "USER") return BadRequestWithMessage("This role cannot access this action!");
 
         if (data.action === "DISETUJUI") {
             suratKeteranganKuliah = await prisma.suratKeteranganKuliah.update({

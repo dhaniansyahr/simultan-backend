@@ -17,6 +17,7 @@ router.route("/users", RoutesRegistry.UserRoutes);
 
 // Surat Keterangan Kuliah
 router.route("/surat-keterangan-kuliah", RoutesRegistry.SuratKeteranganKuliahRoutes);
+router.route("/acl", RoutesRegistry.AclRoutes);
 
 router.get("/", (c: Context) => {
     return response_success(c, "main routes!");
