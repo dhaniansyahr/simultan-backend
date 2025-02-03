@@ -17,7 +17,11 @@ export async function seedAcl(prisma: PrismaClient) {
         },
         {
             featureName: "SURAT_KETERANGAN_KULIAH",
-            actions: ["CREATE", "VIEW", "UPDATE", "DELETE"],
+            actions: ["CREATE", "VIEW", "UPDATE", "DELETE", "VERIFICATION", "EXPORT"],
+        },
+        {
+            featureName: "CUTI_SEMENTARA",
+            actions: ["CREATE", "VIEW", "UPDATE", "DELETE", "VERIFICATION", "EXPORT"],
         },
     ];
 
