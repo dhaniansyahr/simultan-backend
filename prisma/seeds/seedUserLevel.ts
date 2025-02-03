@@ -19,12 +19,20 @@ export async function seedUserLevel(prisma: PrismaClient) {
     ];
 
     for (const level of userLevels) {
-        await prisma.userLevel.create({
-            data: {
-                id: ulid(),
+        const existingLevel = await prisma.userLevel.findUnique({
+            where: {
                 name: level,
             },
         });
+
+        if (!existingLevel) {
+            await prisma.userLevel.create({
+                data: {
+                    id: ulid(),
+                    name: level,
+                },
+            });
+        }
     }
 
     console.log("User Levels Seeded");
