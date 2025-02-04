@@ -11,16 +11,154 @@ datasource db {
   shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
-enum Roles {
-  ADMIN
-  SUPER_ADMIN
-  USER
+model User {
+  id          String  @id @unique
+  fullName    String
+  email       String  @unique
+  password    String
+  userLevelId String?
+
+  offerBy               SuratKeteranganKuliah[] @relation("offerBy")
+  ApprovedBy            SuratKeteranganKuliah[] @relation("approvedby")
+  RemainingApproved     SuratKeteranganKuliah[] @relation("remainingApproved")
+  RejectedBy            SuratKeteranganKuliah[] @relation("rejectedBy")
+  UserLevel             UserLevel?              @relation(fields: [userLevelId], references: [id])
+  Mahasiswa             Mahasiswa?
+  Dosen                 Dosen?
+  Dekan                 Dekan?
+  offerCutiBy           CutiSementara[]         @relation("offerBy")
+  ApprovedCutiBy        CutiSementara[]         @relation("approvedby")
+  RemainingApprovedCuti CutiSementara[]         @relation("remainingApproved")
+  RejectedCutiBy        CutiSementara[]         @relation("rejectedBy")
 }
 
-model User {
-  id       String @id @unique
-  fullName String
-  email    String @unique
-  password String
-  role     Roles
+model Mahasiswa {
+  id        String   @id @unique
+  name      String
+  npm       String   @unique
+  birthday  String
+  semester  String
+  isActive  Boolean
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  User      User?    @relation(fields: [userId], references: [id])
+  userId    String?  @unique
+}
+
+model Dosen {
+  id        String   @id @unique
+  name      String
+  nip       String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  User      User?    @relation(fields: [userId], references: [id])
+  userId    String?  @unique
+}
+
+model Dekan {
+  id        String   @id @unique
+  name      String
+  nip       String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  User      User?    @relation(fields: [userId], references: [id])
+  userId    String?  @unique
+}
+
+model UserLevel {
+  id        String   @id @unique
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  User User[]
+  acl  Acl[]
+}
+
+model Feature {
+  id        String   @id @unique
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  action    Action[]
+  Acl       Acl[]
+}
+
+model Action {
+  id          String   @id @unique
+  name        String
+  featureName String
+  feature     Feature  @relation(fields: [featureName], references: [name], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([featureName, name])
+}
+
+model Acl {
+  id          String   @id @unique
+  featureName String
+  actionName  String
+  userLevelId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  feature   Feature   @relation(fields: [featureName], references: [name], onDelete: Cascade)
+  userLevel UserLevel @relation(fields: [userLevelId], references: [id], onDelete: Cascade)
+
+  @@unique([featureName, actionName, userLevelId])
+}
+
+enum Status {
+  MENUNGGU
+  DISETUJUI
+  DITOLAK
+}
+
+enum TypeForSuratKeteranganKuliah {
+  KP4
+  SK_PENSIUN
+  SURAT_KETERANGAN_PERUSAHAAN
+  LAINNYA
+}
+
+model SuratKeteranganKuliah {
+  id                  String                       @id @unique
+  type                TypeForSuratKeteranganKuliah
+  fileUrl             String
+  status              Status                       @default(MENUNGGU)
+  noSurat             String?
+  reason              String?
+  approvedById        String?
+  remainingApprovedId String?
+  rejectedById        String?
+  offerById           String
+  createdAt           DateTime                     @default(now())
+  updatedAt           DateTime                     @updatedAt
+
+  approvedBy        User? @relation("approvedby", fields: [approvedById], references: [id])
+  remainingApproved User? @relation("remainingApproved", fields: [remainingApprovedId], references: [id])
+  rejectedBy        User? @relation("rejectedBy", fields: [rejectedById], references: [id])
+  offerBy           User  @relation("offerBy", fields: [offerById], references: [id])
+}
+
+model CutiSementara {
+  id                          String   @id @unique
+  suratPersetujuanOrangTuaUrl String
+  bebasPustakaUrl             String
+  bssFormUrl                  String
+  status                      Status   @default(MENUNGGU)
+  noSurat                     String?
+  reason                      String
+  approvedById                String?
+  remainingApprovedId         String?
+  rejectedById                String?
+  offerById                   String
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+
+  approvedBy        User? @relation("approvedby", fields: [approvedById], references: [id])
+  remainingApproved User? @relation("remainingApproved", fields: [remainingApprovedId], references: [id])
+  rejectedBy        User? @relation("rejectedBy", fields: [rejectedById], references: [id])
+  offerBy           User  @relation("offerBy", fields: [offerById], references: [id])
 }

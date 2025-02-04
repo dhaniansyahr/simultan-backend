@@ -1,50 +1,113 @@
-import { PrismaClient, Roles } from '@prisma/client';
-import bcrypt from 'bcrypt';
-import { ulid } from 'ulid';
+import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcrypt";
+import { ulid } from "ulid";
 export async function seedAdmin(prisma: PrismaClient) {
-    const countAdmin = await prisma.user.count({
-        where: {
-            role: "ADMIN"
-        }
-    })
+    const roles = [
+        "ADMIN",
+        "MAHASISWA",
+        "DOSEN",
+        "KTU",
+        "KASUBBAG_AKADEMIK",
+        "KASUBBAG_KEMAHASISWAAN",
+        "BAG_KEMAHASISWAAN",
+        "OPERATOR_AKADEMIK",
+        "OPERATOR_KEMAHASISWAAN",
+        "DEKAN",
+        "WD_1",
+        "KETUA_DEPARTEMEN",
+        "PIMPINAN_FAKULTAS",
+    ];
 
-    const countUser = await prisma.user.count({
-        where: {
-            role: "USER"
-        }
-    })
+    for (const role of roles) {
+        const countRole = await prisma.user.count({
+            where: {
+                UserLevel: {
+                    name: role,
+                },
+            },
+        });
 
-    if (countAdmin === 0) {
-        const hashedPassword = await bcrypt.hash("admin123", 12)
+        if (countRole === 0) {
+            const hashedPassword = await bcrypt.hash(`${role.toLowerCase()}123`, 12);
+            const userLevel = await prisma.userLevel.findUnique({
+                where: {
+                    name: role,
+                },
+            });
 
-        await prisma.user.create({
-            data: {
-                id: ulid(),
-                fullName: "Admin",
-                password: hashedPassword,
-                email: "admin@test.com",
-                role: Roles.ADMIN
+            let user;
+            if (role === "MAHASISWA") {
+                user = await prisma.user.create({
+                    data: {
+                        id: ulid(),
+                        fullName: role,
+                        password: hashedPassword,
+                        email: `${role.toLowerCase()}@test.com`,
+                        userLevelId: userLevel!.id,
+                    },
+                });
+                await prisma.mahasiswa.create({
+                    data: {
+                        id: ulid(),
+                        name: role,
+                        npm: "2108107010057",
+                        birthday: "1990-01-01",
+                        semester: "1",
+                        isActive: true,
+                        userId: user.id,
+                    },
+                });
+            } else if (role === "DOSEN") {
+                user = await prisma.user.create({
+                    data: {
+                        id: ulid(),
+                        fullName: role,
+                        password: hashedPassword,
+                        email: `${role.toLowerCase()}@test.com`,
+                        userLevelId: userLevel!.id,
+                    },
+                });
+                await prisma.dosen.create({
+                    data: {
+                        id: ulid(),
+                        name: role,
+                        nip: "198003262014041001",
+                        userId: user.id,
+                    },
+                });
+            } else if (role === "DEKAN") {
+                user = await prisma.user.create({
+                    data: {
+                        id: ulid(),
+                        fullName: role,
+                        password: hashedPassword,
+                        email: `${role.toLowerCase()}@test.com`,
+                        userLevelId: userLevel!.id,
+                    },
+                });
+                await prisma.dekan.create({
+                    data: {
+                        id: ulid(),
+                        name: role,
+                        nip: "198003262014041004",
+                        userId: user.id,
+                    },
+                });
+            } else {
+                await prisma.user.create({
+                    data: {
+                        id: ulid(),
+                        fullName: role,
+                        password: hashedPassword,
+                        email: `${role.toLowerCase()}@test.com`,
+                        userLevelId: userLevel!.id,
+                    },
+                });
             }
-        })
 
-        console.log("Admin seeded")
+            console.log(`${role} seeded`);
+        }
     }
 
-    if (countUser === 0) {
-        const hashedPassword = await bcrypt.hash("user123", 12)
-
-        await prisma.user.create({
-            data: {
-                id: ulid(),
-                fullName: "User",
-                password: hashedPassword,
-                email: "user@test.com",
-                role: Roles.USER
-            }
-        })
-
-        console.log("User seeded")
-    }
-
-    console.log("Admin already seeded")
+    console.log("All roles seeded");
 }
