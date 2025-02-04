@@ -38,11 +38,7 @@ export async function validateLoginDTO(c: Context, next: Next) {
     const data: UserLoginDTO = await c.req.json();
 
     const invalidFields = [];
-    // if(!data.email) invalidFields.push("email is required")
-    if (!data.email && !data.noIdentitas)
-        invalidFields.push(
-            generateErrorStructure("email or noIdentitas", "at least one of email or noIdentitas must be filled")
-        );
+    if (!data.email) invalidFields.push("email is required");
     if (data.email) {
         if (!validateEmailFormat(data.email))
             invalidFields.push(generateErrorStructure("email", '"email format is invalid"'));
