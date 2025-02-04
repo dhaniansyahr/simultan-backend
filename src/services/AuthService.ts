@@ -14,7 +14,7 @@ function createToken(user: User) {
 
 export async function logIn(data: UserLoginDTO): Promise<ServiceResponse<any>> {
     try {
-        const { email, password, noIdentitas } = data;
+        const { email, password } = data;
 
         // const user: any = await prisma.user.findUnique({
         //     where: {
@@ -36,17 +36,17 @@ export async function logIn(data: UserLoginDTO): Promise<ServiceResponse<any>> {
                     },
                     {
                         Mahasiswa: {
-                            npm: noIdentitas,
+                            npm: email,
                         },
                     },
                     {
                         Dosen: {
-                            nip: noIdentitas,
+                            nip: email,
                         },
                     },
                     {
                         Dekan: {
-                            nip: noIdentitas,
+                            nip: email,
                         },
                     },
                 ],

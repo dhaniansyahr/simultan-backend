@@ -7,7 +7,6 @@ export interface UserJWTDAO {
 
 export interface UserLoginDTO {
     email: string;
-    noIdentitas?: string;
     password: string;
 }
 
