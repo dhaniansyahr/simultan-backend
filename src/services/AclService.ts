@@ -1,4 +1,5 @@
 import { AclCreateDTO } from "$entities/Acl";
+import { FilteringQueryV2, PagedList } from "$entities/Query";
 import {
     INTERNAL_SERVER_ERROR_SERVICE_RESPONSE,
     INVALID_ID_SERVICE_RESPONSE,
@@ -6,8 +7,9 @@ import {
 } from "$entities/Service";
 import Logger from "$pkg/logger";
 import { prisma } from "$utils/prisma.utils";
-import { Prisma } from "@prisma/client";
+import { Prisma, UserLevel } from "@prisma/client";
 import { ulid } from "ulid";
+import { buildFilterQueryLimitOffsetV2 } from "./helpers/FilterQueryV2";
 
 export async function create(data: AclCreateDTO): Promise<ServiceResponse<{}>> {
     try {
@@ -95,6 +97,35 @@ export async function getAllFeature(): Promise<ServiceResponse<{}>> {
         };
     } catch (error) {
         Logger.error(`AclService.getByUserLevelId: ${error}`);
+        return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
+    }
+}
+
+export type GetAllResponse = PagedList<UserLevel[]> | {};
+export async function getAllLevelAkses(filters: FilteringQueryV2): Promise<ServiceResponse<GetAllResponse>> {
+    try {
+        const usedFilters = buildFilterQueryLimitOffsetV2(filters);
+
+        const [userLevel, totalData] = await Promise.all([
+            prisma.userLevel.findMany(usedFilters),
+            prisma.userLevel.count({
+                where: usedFilters.where,
+            }),
+        ]);
+
+        let totalPage = 1;
+        if (totalData > usedFilters.take) totalPage = Math.ceil(totalData / usedFilters.take);
+
+        return {
+            status: true,
+            data: {
+                entries: userLevel,
+                totalData,
+                totalPage,
+            },
+        };
+    } catch (err) {
+        Logger.error(`CutiSementaraService.getAll : ${err} `);
         return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
     }
 }
