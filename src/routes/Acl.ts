@@ -7,18 +7,10 @@ const AclRoutes = new Hono();
 
 AclRoutes.post("/", AuthMiddleware.checkJwt, AclValidations.validateAclDTO, AclController.create);
 
-AclRoutes.get(
-    "/features",
-    AuthMiddleware.checkJwt,
-    AuthMiddleware.checkAccess("ACL", "VIEW"),
-    AclController.getAllFeatures
-);
+AclRoutes.get("/features", AuthMiddleware.checkJwt, AclController.getAllFeatures);
 
-AclRoutes.get(
-    "/:userLevelId",
-    AuthMiddleware.checkJwt,
-    AuthMiddleware.checkAccess("ACL", "VIEW"),
-    AclController.getByUserLevelId
-);
+AclRoutes.get("/level-akses", AuthMiddleware.checkJwt, AclController.getAllLevelAkses);
+
+AclRoutes.get("/:userLevelId", AuthMiddleware.checkJwt, AclController.getByUserLevelId);
 
 export default AclRoutes;

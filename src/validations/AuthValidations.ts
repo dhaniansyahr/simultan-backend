@@ -39,10 +39,10 @@ export async function validateLoginDTO(c: Context, next: Next) {
 
     const invalidFields = [];
     if (!data.email) invalidFields.push("email is required");
-    if (data.email) {
-        if (!validateEmailFormat(data.email))
-            invalidFields.push(generateErrorStructure("email", '"email format is invalid"'));
-    }
+    // if (data.email) {
+    //     if (!validateEmailFormat(data.email))
+    //         invalidFields.push(generateErrorStructure("email", '"email format is invalid"'));
+    // }
     if (!data.password) invalidFields.push(generateErrorStructure("password", "password is required"));
 
     if (invalidFields.length > 0) {

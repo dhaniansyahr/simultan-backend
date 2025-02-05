@@ -6,38 +6,35 @@ import {
 } from "$entities/Service";
 import Logger from "$pkg/logger";
 import { prisma } from "$utils/prisma.utils";
-import { User } from "@prisma/client";
-import { UserDTO, UserRegisterDTO } from "$entities/User";
+import { UserLevel } from "@prisma/client";
 import { buildFilterQueryLimitOffsetV2 } from "./helpers/FilterQueryV2";
+import { UserLevelDTO } from "$entities/UserLevel";
 
-export type CreateResponse = User | {};
-export async function create(data: UserRegisterDTO): Promise<ServiceResponse<CreateResponse>> {
+export type CreateResponse = UserLevel | {};
+export async function create(data: UserLevelDTO): Promise<ServiceResponse<CreateResponse>> {
     try {
-        const user = await prisma.user.create({
+        const userLevel = await prisma.userLevel.create({
             data,
         });
 
         return {
             status: true,
-            data: user,
+            data: userLevel,
         };
     } catch (err) {
-        Logger.error(`UserService.create : ${err}`);
+        Logger.error(`UserLevelService.create : ${err}`);
         return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
     }
 }
 
-export type GetAllResponse = PagedList<User[]> | {};
+export type GetAllResponse = PagedList<UserLevel[]> | {};
 export async function getAll(filters: FilteringQueryV2): Promise<ServiceResponse<GetAllResponse>> {
     try {
         const usedFilters = buildFilterQueryLimitOffsetV2(filters);
-        usedFilters.include = {
-            UserLevel: true,
-        };
 
-        const [user, totalData] = await Promise.all([
-            prisma.user.findMany(usedFilters),
-            prisma.user.count({
+        const [userLevel, totalData] = await Promise.all([
+            prisma.userLevel.findMany(usedFilters),
+            prisma.userLevel.count({
                 where: usedFilters.where,
             }),
         ]);
@@ -48,50 +45,53 @@ export async function getAll(filters: FilteringQueryV2): Promise<ServiceResponse
         return {
             status: true,
             data: {
-                entries: user,
+                entries: userLevel,
                 totalData,
                 totalPage,
             },
         };
     } catch (err) {
-        Logger.error(`UserService.getAll : ${err} `);
+        Logger.error(`UserLevelService.getAll : ${err} `);
         return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
     }
 }
 
-export type GetByIdResponse = User | {};
+export type GetByIdResponse = UserLevel | {};
 export async function getById(id: string): Promise<ServiceResponse<GetByIdResponse>> {
     try {
-        let user = await prisma.user.findUnique({
+        let userLevel = await prisma.userLevel.findUnique({
             where: {
                 id,
             },
+            include: {
+                acl: true,
+            },
         });
 
-        if (!user) return INVALID_ID_SERVICE_RESPONSE;
+        if (!userLevel) return INVALID_ID_SERVICE_RESPONSE;
 
         return {
             status: true,
-            data: user,
+            data: userLevel,
         };
     } catch (err) {
-        Logger.error(`UserService.getById : ${err}`);
+        Logger.error(`UserLevelService.getById : ${err}`);
         return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
     }
 }
 
-export type UpdateResponse = User | {};
-export async function update(id: string, data: UserDTO): Promise<ServiceResponse<UpdateResponse>> {
+export type UpdateResponse = UserLevel | {};
+export async function update(id: string, data: UserLevelDTO): Promise<ServiceResponse<UpdateResponse>> {
     try {
-        let user = await prisma.user.findUnique({
+        let userLevel = await prisma.userLevel.findUnique({
             where: {
                 id,
             },
         });
 
-        if (!user) return INVALID_ID_SERVICE_RESPONSE;
+        if (!userLevel) return INVALID_ID_SERVICE_RESPONSE;
 
-        user = await prisma.user.update({
+        userLevel = await prisma.userLevel.update({
             where: {
                 id,
             },
@@ -100,10 +100,10 @@ export async function update(id: string, data: UserDTO): Promise<ServiceResponse
 
         return {
             status: true,
-            data: user,
+            data: userLevel,
         };
     } catch (err) {
-        Logger.error(`UserService.update : ${err}`);
+        Logger.error(`UserLevelService.update : ${err}`);
         return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
     }
 }
@@ -113,7 +113,7 @@ export async function deleteByIds(ids: string): Promise<ServiceResponse<{}>> {
         const idArray: string[] = JSON.parse(ids);
 
         idArray.forEach(async (id) => {
-            await prisma.user.delete({
+            await prisma.userLevel.delete({
                 where: {
                     id,
                 },
@@ -125,7 +125,7 @@ export async function deleteByIds(ids: string): Promise<ServiceResponse<{}>> {
             data: {},
         };
     } catch (err) {
-        Logger.error(`UserService.deleteByIds : ${err}`);
+        Logger.error(`UserLevelService.deleteByIds : ${err}`);
         return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
     }
 }
