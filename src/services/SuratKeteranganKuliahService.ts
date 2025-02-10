@@ -1,17 +1,19 @@
 import { FilteringQueryV2, PagedList } from "$entities/Query";
 import {
+    BadRequestWithMessage,
     INTERNAL_SERVER_ERROR_SERVICE_RESPONSE,
     INVALID_ID_SERVICE_RESPONSE,
     ServiceResponse,
 } from "$entities/Service";
 import Logger from "$pkg/logger";
 import { prisma } from "$utils/prisma.utils";
-import { Status, SuratKeteranganKuliah } from "@prisma/client";
+import { StatusAction, SuratKeteranganKuliah } from "@prisma/client";
 import { buildFilterQueryLimitOffsetV2 } from "./helpers/FilterQueryV2";
 import { SuratKeteranganKuliahDTO, VerifikasiSuratDTO } from "$entities/SuratKeteranganKuliah";
 import { UserJWTDAO } from "$entities/User";
 import { buildBufferPDF } from "$utils/buffer.utils";
 import { DateTime } from "luxon";
+import { ulid } from "ulid";
 
 export type CreateResponse = SuratKeteranganKuliah | {};
 export async function create(
@@ -19,16 +21,28 @@ export async function create(
     user: UserJWTDAO
 ): Promise<ServiceResponse<CreateResponse>> {
     try {
-        let suratKeteranganKuliah: any;
-
         data.offerById = user.id;
-        suratKeteranganKuliah = await prisma.suratKeteranganKuliah.create({
-            data,
+        const status = await prisma.$transaction(async (prisma) => {
+            const surat = await prisma.suratKeteranganKuliah.create({
+                data,
+            });
+
+            await prisma.statusHistory.create({
+                data: {
+                    id: ulid(),
+                    action: StatusAction.SEDANG_DIPROSES,
+                    description: `Sedang Diproses Operator Akademik`,
+                    suratKeteranganKuliahId: surat.id,
+                    userId: user.id,
+                },
+            });
+
+            return surat;
         });
 
         return {
             status: true,
-            data: suratKeteranganKuliah,
+            data: status,
         };
     } catch (err) {
         Logger.error(`SuratKeteranganKuliahService.create : ${err}`);
@@ -42,7 +56,16 @@ export async function getAll(filters: FilteringQueryV2): Promise<ServiceResponse
         const usedFilters = buildFilterQueryLimitOffsetV2(filters);
 
         const [SuratKeterangaKuliah, totalData] = await Promise.all([
-            prisma.suratKeteranganKuliah.findMany(usedFilters),
+            prisma.suratKeteranganKuliah.findMany({
+                ...usedFilters,
+                include: {
+                    statusHistory: {
+                        include: {
+                            User: true,
+                        },
+                    },
+                },
+            }),
             prisma.suratKeteranganKuliah.count({
                 where: usedFilters.where,
             }),
@@ -70,28 +93,15 @@ export async function getById(id: string): Promise<ServiceResponse<GetByIdRespon
     try {
         let SuratKeterangaKuliah = await prisma.suratKeteranganKuliah.findUnique({
             include: {
-                approvedBy: {
-                    select: {
-                        fullName: true,
-                        email: true,
-                    },
-                },
-                rejectedBy: {
-                    select: {
-                        fullName: true,
-                        email: true,
-                    },
-                },
-                remainingApproved: {
-                    select: {
-                        fullName: true,
-                        email: true,
-                    },
-                },
                 offerBy: {
                     select: {
                         fullName: true,
                         email: true,
+                    },
+                },
+                statusHistory: {
+                    include: {
+                        User: true,
                     },
                 },
             },
@@ -169,35 +179,66 @@ export async function verificationStatus(
     user: UserJWTDAO
 ): Promise<ServiceResponse<VerificationSuratResponse>> {
     try {
-        let suratKeteranganKuliah = await prisma.suratKeteranganKuliah.findUnique({
+        const suratKeteranganKuliah = await prisma.suratKeteranganKuliah.findUnique({
             where: {
                 id,
+            },
+            include: {
+                statusHistory: {
+                    include: {
+                        User: true,
+                    },
+                },
             },
         });
 
         if (!suratKeteranganKuliah) return INVALID_ID_SERVICE_RESPONSE;
 
+        const verificationExist = await prisma.suratKeteranganKuliah.findFirst({
+            where: {
+                OR: [
+                    {
+                        statusHistory: {
+                            some: {
+                                userId: user.id,
+                                action: StatusAction.DISETUJUI,
+                            },
+                        },
+                    },
+                    {
+                        statusHistory: {
+                            some: {
+                                userId: user.id,
+                                action: StatusAction.DITOLAK,
+                            },
+                        },
+                    },
+                ],
+            },
+        });
+
+        if (verificationExist) return BadRequestWithMessage("Kamu Sudah Melakukan Verifikasi Pada Surat Ini!");
+
         if (data.action === "DISETUJUI") {
-            suratKeteranganKuliah = await prisma.suratKeteranganKuliah.update({
-                where: {
-                    id,
-                },
+            await prisma.statusHistory.create({
                 data: {
-                    status: Status.DISETUJUI,
-                    approvedById: user.id,
+                    id: ulid(),
+                    action: StatusAction.DISETUJUI,
+                    description: `DiSetujui oleh ${user.fullName}`,
+                    userId: user.id,
+                    suratKeteranganKuliahId: id,
                 },
             });
         }
 
         if (data.action === "DITOLAK") {
-            suratKeteranganKuliah = await prisma.suratKeteranganKuliah.update({
-                where: {
-                    id,
-                },
+            await prisma.statusHistory.create({
                 data: {
-                    status: Status.DITOLAK,
-                    reason: data.reason,
-                    rejectedById: user.id,
+                    id: ulid(),
+                    action: StatusAction.DITOLAK,
+                    description: `DiTolak oleh ${user.fullName}`,
+                    userId: user.id,
+                    suratKeteranganKuliahId: id,
                 },
             });
         }
