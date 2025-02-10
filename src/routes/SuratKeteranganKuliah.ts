@@ -37,7 +37,7 @@ SuratKeteranganKuliahRoutes.put(
 SuratKeteranganKuliahRoutes.put(
     "/:id/verification",
     AuthMiddleware.checkJwt,
-    AuthMiddleware.checkAccess("SURAT_KETERANGAN_KULIAH", "VERIFIKASI"),
+    AuthMiddleware.checkAccess("SURAT_KETERANGAN_KULIAH", "VERIFICATION"),
     SuratKeteranganKuliahValidation.validateVerificationSuratKeteranganKuliahDTO,
     SuratKeteranganKuliahController.verificationSurat
 );
