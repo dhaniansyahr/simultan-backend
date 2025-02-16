@@ -11,6 +11,7 @@ export async function validateSuratKeteranganKuliahDTO(c: Context, next: Next) {
 
     if (!data.fileUrl) invalidFields.push(generateErrorStructure("fileUrl", "fileUrl cannot be empty"));
     if (!data.type) invalidFields.push(generateErrorStructure("type", "type cannot be empty"));
+    if (!data.description) invalidFields.push(generateErrorStructure("description", "description is required"));
 
     if (!Object.values(TypeForSuratKeteranganKuliah).find((item: any) => item === data.type)) {
         invalidFields.push(generateErrorStructure("type", "Invalid value of type"));

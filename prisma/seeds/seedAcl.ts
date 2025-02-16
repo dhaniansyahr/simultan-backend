@@ -17,11 +17,22 @@ export async function seedAcl(prisma: PrismaClient) {
         },
         {
             featureName: "SURAT_KETERANGAN_KULIAH",
-            actions: ["CREATE", "VIEW", "UPDATE", "DELETE", "VERIFICATION", "EXPORT"],
+            actions: ["CREATE", "VIEW", "VERIFICATION", "EXPORT"],
         },
         {
             featureName: "CUTI_SEMENTARA",
-            actions: ["CREATE", "VIEW", "UPDATE", "DELETE", "VERIFICATION", "EXPORT"],
+            actions: ["CREATE", "VIEW", "VERIFICATION", "EXPORT"],
+        },
+    ];
+
+    const featuresMahasiswa = [
+        {
+            featureName: "SURAT_KETERANGAN_KULIAH",
+            actions: ["CREATE", "VIEW", "EXPORT"],
+        },
+        {
+            featureName: "CUTI_SEMENTARA",
+            actions: ["CREATE", "VIEW", "EXPORT"],
         },
     ];
 
@@ -66,7 +77,7 @@ export async function seedAcl(prisma: PrismaClient) {
         });
     }
 
-    const [allSubFeatures, userLevel, adminUser] = await Promise.all([
+    const [allSubFeatures, userLevel, adminUser, userLevelMhs] = await Promise.all([
         prisma.action.findMany({
             include: {
                 feature: true,
@@ -74,12 +85,17 @@ export async function seedAcl(prisma: PrismaClient) {
         }),
         prisma.userLevel.findUnique({
             where: {
-                name: "Admin",
+                name: "ADMIN",
             },
         }),
         prisma.user.findUnique({
             where: {
                 email: "admin@test.com",
+            },
+        }),
+        prisma.userLevel.findUnique({
+            where: {
+                name: "MAHASISWA",
             },
         }),
     ]);

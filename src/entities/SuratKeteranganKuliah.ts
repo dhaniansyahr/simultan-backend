@@ -5,9 +5,7 @@ export interface SuratKeteranganKuliahDTO {
     type: TypeForSuratKeteranganKuliah;
     fileUrl: string;
     reason: string;
-    approvedById: string;
-    remainingApprovedId: string;
-    rejectedById: string;
+    description: string;
     offerById: string;
 }
 
