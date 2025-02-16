@@ -39,7 +39,6 @@ export async function create(data: CutiSementaraDTO, user: UserJWTDAO): Promise<
         return {
             status: true,
             data: status,
-            data: status,
         };
     } catch (err) {
         Logger.error(`CutiSementaraService.create : ${err}`);
@@ -193,14 +192,24 @@ export async function verificationStatus(
             nextStatus = getNextVerificationStatus(data.action as VerificationStatusKemahasiswaan);
         }
 
-        await prisma.statusHistory.create({
-            data: {
-                id: ulid(),
-                action: nextStatus,
-                description: `${nextStatus} oleh ${user.fullName}`,
-                userId: user.id,
-                suratKeteranganKuliahId: id,
-            },
+        await prisma.$transaction(async (prisma) => {
+            await prisma.statusHistory.create({
+                data: {
+                    id: ulid(),
+                    action: nextStatus,
+                    description: `${nextStatus} oleh ${user.fullName}`,
+                    userId: user.id,
+                    suratKeteranganKuliahId: id,
+                },
+            });
+
+            // Update the `reason` field if the status is `USULAN_DITOLAK`
+            if (data.action === VerificationStatusKemahasiswaan.USULAN_DITOLAK) {
+                await prisma.cutiSementara.update({
+                    where: { id },
+                    data: { rejectedReason: data.reason },
+                });
+            }
         });
 
         const cutiSementara = await prisma.cutiSementara.findUnique({

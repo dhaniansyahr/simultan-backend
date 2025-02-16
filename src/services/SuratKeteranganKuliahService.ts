@@ -199,14 +199,24 @@ export async function verificationStatus(
             nextStatus = getNextVerificationStatus(data.action as VerificationStatusKemahasiswaan);
         }
 
-        await prisma.statusHistory.create({
-            data: {
-                id: ulid(),
-                action: nextStatus,
-                description: `${nextStatus} oleh ${user.fullName}`,
-                userId: user.id,
-                suratKeteranganKuliahId: id,
-            },
+        await prisma.$transaction(async (prisma) => {
+            await prisma.statusHistory.create({
+                data: {
+                    id: ulid(),
+                    action: nextStatus,
+                    description: `${nextStatus} oleh ${user.fullName}`,
+                    userId: user.id,
+                    suratKeteranganKuliahId: id,
+                },
+            });
+
+            // Update the `reason` field if the status is `USULAN_DITOLAK`
+            if (data.action === VerificationStatusKemahasiswaan.USULAN_DITOLAK) {
+                await prisma.suratKeteranganKuliah.update({
+                    where: { id },
+                    data: { reason: data.reason },
+                });
+            }
         });
 
         const suratKeteranganKuliah = await prisma.suratKeteranganKuliah.findUnique({

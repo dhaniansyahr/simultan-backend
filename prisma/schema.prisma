@@ -159,6 +159,7 @@ model CutiSementara {
   status                      VerificationStatusKemahasiswaan @default(DIPROSES_OPERATOR_KEMAHASISWAAN)
   noSurat                     String?
   reason                      String
+  rejectedReason              String?
   offerById                   String
   createdAt                   DateTime                        @default(now())
   updatedAt                   DateTime                        @updatedAt

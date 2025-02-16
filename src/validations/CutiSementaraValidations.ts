@@ -28,12 +28,12 @@ export async function validateVerificationSuratKeteranganKuliahDTO(c: Context, n
 
     if (!data.action) invalidFields.push(generateErrorStructure("action", "action cannot be empty"));
 
-    if (data.action !== "DISETUJUI" && data.action !== "DITOLAK")
+    if (data.action !== "USULAN_DISETUJUI" && data.action !== "USULAN_DITOLAK")
         invalidFields.push(
             generateErrorStructure("action", 'action is required, expected action "DISETUJUI" or "DITOLAK". ')
         );
 
-    if (data.action === "DITOLAK") {
+    if (data.action === "USULAN_DITOLAK") {
         if (!data.reason) invalidFields.push(generateErrorStructure("reason", "reason cannot be empty"));
     }
 

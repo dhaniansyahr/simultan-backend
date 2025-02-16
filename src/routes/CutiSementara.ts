@@ -26,13 +26,6 @@ CutiSementaraRoutes.post(
 );
 
 CutiSementaraRoutes.put(
-    "/:id",
-    AuthMiddleware.checkJwt,
-    AuthMiddleware.checkAccess("CUTI_SEMENTARA", "UPDATE"),
-    CutiSementaraController.update
-);
-
-CutiSementaraRoutes.put(
     "/:id/verifikasi",
     AuthMiddleware.checkJwt,
     AuthMiddleware.checkAccess("CUTI_SEMENTARA", "VERIFICATION"),
