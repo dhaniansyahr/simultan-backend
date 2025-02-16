@@ -49,7 +49,7 @@ jobs:
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
                   script: |
-                      cd /home/<project_name>/backend
+                      cd /home/simultan/backend
 
             - name: Fetch Code and Reset Directory
               uses: appleboy/ssh-action@master
@@ -58,7 +58,7 @@ jobs:
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
                   script: |
-                      cd /home/<project_name>/backend 
+                      cd /home/simultan/backend 
                       git add . && git stash && git fetch origin develop && git pull
               continue-on-error: false
 
@@ -69,7 +69,7 @@ jobs:
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
                   script: |
-                      cd /home/<project_name>/backend 
+                      cd /home/simultan/backend 
                       npm install
                   continue-on-error: false
 
@@ -80,7 +80,7 @@ jobs:
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
                   script: |
-                      cd /home/<project_name>/backend
+                      cd /home/simultan/backend
                       npx prisma migrate deploy
                   continue-on-error: false
 
@@ -91,7 +91,7 @@ jobs:
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
                   script: |
-                      cd /home/<project_name>/backend 
+                      cd /home/simultan/backend 
                       npx prisma generate
                   continue-on-error: false
 
@@ -102,7 +102,7 @@ jobs:
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
                   script: |
-                      cd /home/<project_name>/backend 
+                      cd /home/simultan/backend 
                       npm run seed
                   continue-on-error: false
 
@@ -113,6 +113,6 @@ jobs:
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
                   script: |
-                      cd /home/<project_name>/backend 
+                      cd /home/simultan/backend 
                       pm2 restart process-name
                   continue-on-error: false
