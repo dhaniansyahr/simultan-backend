@@ -28,13 +28,6 @@ SuratKeteranganKuliahRoutes.get(
 );
 
 SuratKeteranganKuliahRoutes.put(
-    "/:id",
-    AuthMiddleware.checkJwt,
-    AuthMiddleware.checkAccess("SURAT_KETERANGAN_KULIAH", "UPDATE"),
-    SuratKeteranganKuliahController.update
-);
-
-SuratKeteranganKuliahRoutes.put(
     "/:id/verification",
     AuthMiddleware.checkJwt,
     AuthMiddleware.checkAccess("SURAT_KETERANGAN_KULIAH", "VERIFICATION"),
@@ -47,13 +40,6 @@ SuratKeteranganKuliahRoutes.get(
     AuthMiddleware.checkJwt,
     AuthMiddleware.checkAccess("SURAT_KETERANGAN_KULIAH", "EXPORT"),
     SuratKeteranganKuliahController.cetakSurat
-);
-
-SuratKeteranganKuliahRoutes.delete(
-    "/",
-    AuthMiddleware.checkJwt,
-    AuthMiddleware.checkAccess("SURAT_KETERANGAN_KULIAH", "DELETE"),
-    SuratKeteranganKuliahController.deleteByIds
 );
 
 export default SuratKeteranganKuliahRoutes;

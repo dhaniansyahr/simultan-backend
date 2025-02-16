@@ -104,12 +104,6 @@ model Acl {
   @@unique([featureName, actionName, userLevelId])
 }
 
-enum Status {
-  MENUNGGU
-  DISETUJUI
-  DITOLAK
-}
-
 enum TypeForSuratKeteranganKuliah {
   KP4
   SK_PENSIUN
@@ -118,31 +112,36 @@ enum TypeForSuratKeteranganKuliah {
 }
 
 model SuratKeteranganKuliah {
-  id          String                       @id @unique
+  id          String                          @id @unique
   type        TypeForSuratKeteranganKuliah
   fileUrl     String
   description String
   noSurat     String?
   reason      String?
   offerById   String
-  createdAt   DateTime                     @default(now())
-  updatedAt   DateTime                     @updatedAt
+  status      VerificationStatusKemahasiswaan @default(DIPROSES_OPERATOR_KEMAHASISWAAN)
+  createdAt   DateTime                        @default(now())
+  updatedAt   DateTime                        @updatedAt
 
   offerBy       User            @relation("offerBy", fields: [offerById], references: [id])
   statusHistory StatusHistory[]
 }
 
-enum StatusAction {
-  SEDANG_DIPROSES
-  DISETUJUI
-  DITOLAK
-  PROSES_SURAT
+enum VerificationStatusKemahasiswaan {
+  DIPROSES_OPERATOR_KEMAHASISWAAN
+  DISETUJUI_OPERATOR_KEMAHASISWAAN
+  DIPROSES_KASUBBAG_KEMAHASISWAAN
+  DISETUJUI_KASUBBAG_KEMAHASISWAAN
+  SURAT_DIPROSES
+  USULAN_DISETUJUI
+  USULAN_DITOLAK
 }
 
 model StatusHistory {
-  id          String       @id @unique
-  action      StatusAction
+  id          String                          @id @unique
+  action      VerificationStatusKemahasiswaan
   description String
+  createdAt   DateTime                        @default(now())
 
   userId                  String
   User                    User                   @relation(fields: [userId], references: [id])
@@ -153,16 +152,16 @@ model StatusHistory {
 }
 
 model CutiSementara {
-  id                          String   @id @unique
+  id                          String                          @id @unique
   suratPersetujuanOrangTuaUrl String
   bebasPustakaUrl             String
   bssFormUrl                  String
-  status                      Status   @default(MENUNGGU)
+  status                      VerificationStatusKemahasiswaan @default(DIPROSES_OPERATOR_KEMAHASISWAAN)
   noSurat                     String?
   reason                      String
   offerById                   String
-  createdAt                   DateTime @default(now())
-  updatedAt                   DateTime @updatedAt
+  createdAt                   DateTime                        @default(now())
+  updatedAt                   DateTime                        @updatedAt
 
   offerBy       User            @relation("offerBy", fields: [offerById], references: [id])
   statusHistory StatusHistory[]

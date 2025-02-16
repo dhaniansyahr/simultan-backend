@@ -27,8 +27,9 @@ export async function create(c: Context): Promise<TypedResponse> {
 
 export async function getAll(c: Context): Promise<TypedResponse> {
     const filters: FilteringQueryV2 = checkFilteringQueryV2(c);
+    const user: UserJWTDAO = c.get("jwtPayload");
 
-    const serviceResponse = await SuratKeteranganKuliahService.getAll(filters);
+    const serviceResponse = await SuratKeteranganKuliahService.getAll(filters, user);
 
     if (!serviceResponse.status) {
         return handleServiceErrorWithResponse(c, serviceResponse);
@@ -47,31 +48,6 @@ export async function getById(c: Context): Promise<TypedResponse> {
     }
 
     return response_success(c, serviceResponse.data, "Successfully fetched SuratKeteranganKuliah by id!");
-}
-
-export async function update(c: Context): Promise<TypedResponse> {
-    const data: SuratKeteranganKuliahDTO = await c.req.json();
-    const id = c.req.param("id");
-
-    const serviceResponse = await SuratKeteranganKuliahService.update(id, data);
-
-    if (!serviceResponse.status) {
-        return handleServiceErrorWithResponse(c, serviceResponse);
-    }
-
-    return response_success(c, serviceResponse.data, "Successfully updated SuratKeteranganKuliah!");
-}
-
-export async function deleteByIds(c: Context): Promise<TypedResponse> {
-    const ids = c.req.query("ids") as string;
-
-    const serviceResponse = await SuratKeteranganKuliahService.deleteByIds(ids);
-
-    if (!serviceResponse.status) {
-        return handleServiceErrorWithResponse(c, serviceResponse);
-    }
-
-    return response_success(c, serviceResponse.data, "Successfully deleted SuratKeteranganKuliah!");
 }
 
 export async function verificationSurat(c: Context): Promise<Response | TypedResponse> {
