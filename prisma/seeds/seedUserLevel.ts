@@ -4,6 +4,8 @@ import { ulid } from "ulid";
 export async function seedUserLevel(prisma: PrismaClient) {
     const userLevels = [
         "ADMIN",
+        "OPERATOR_KEMAHASISWAAN",
+        "OPERATOR_AKADEMIK",
         "MAHASISWA",
         "DOSEN",
         "KTU",

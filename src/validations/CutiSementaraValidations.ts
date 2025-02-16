@@ -2,7 +2,7 @@ import { Context, Next } from "hono";
 import { response_bad_request } from "$utils/response.utils";
 import { ErrorStructure, generateErrorStructure } from "./helper";
 
-import { CutiSementaraDTO } from "$entities/CutiSementara";
+import { CutiSementaraDTO, VerificationCutiDTO } from "$entities/CutiSementara";
 
 export async function validateCutiSementaraDTO(c: Context, next: Next) {
     const data: CutiSementaraDTO = await c.req.json();
@@ -18,8 +18,25 @@ export async function validateCutiSementaraDTO(c: Context, next: Next) {
 
     if (!data.bssFormUrl) invalidFields.push(generateErrorStructure("bssFormUrl", "bssFormUrl cannot be empty"));
 
-    if (!data.reason) invalidFields.push(generateErrorStructure("reason", "reason cannot be empty"));
-
     if (invalidFields.length !== 0) return response_bad_request(c, "Validation Error", invalidFields);
     next();
+}
+
+export async function validateVerificationSuratKeteranganKuliahDTO(c: Context, next: Next) {
+    const data: VerificationCutiDTO = await c.req.json();
+    const invalidFields: ErrorStructure[] = [];
+
+    if (!data.action) invalidFields.push(generateErrorStructure("action", "action cannot be empty"));
+
+    if (data.action !== "DISETUJUI" && data.action !== "DITOLAK")
+        invalidFields.push(
+            generateErrorStructure("action", 'action is required, expected action "DISETUJUI" or "DITOLAK". ')
+        );
+
+    if (data.action === "DITOLAK") {
+        if (!data.reason) invalidFields.push(generateErrorStructure("reason", "reason cannot be empty"));
+    }
+
+    if (invalidFields.length !== 0) return response_bad_request(c, "Validation Error", invalidFields);
+    await next();
 }
