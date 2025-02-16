@@ -183,7 +183,7 @@ export async function verificationStatus(
                     action: StatusAction.DISETUJUI,
                     description: `DiSetujui oleh ${user.fullName}`,
                     userId: user.id,
-                    suratKeteranganKuliahId: id,
+                    cutiSementaraId: id,
                 },
             });
         }
@@ -195,7 +195,7 @@ export async function verificationStatus(
                     action: StatusAction.DITOLAK,
                     description: `DiTolak oleh ${user.fullName}`,
                     userId: user.id,
-                    suratKeteranganKuliahId: id,
+                    cutiSementaraId: id,
                 },
             });
         }
