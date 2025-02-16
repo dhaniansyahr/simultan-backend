@@ -32,11 +32,11 @@ CutiSementaraRoutes.put(
     CutiSementaraController.update
 );
 
-CutiSementaraRoutes.delete(
-    "/",
+CutiSementaraRoutes.put(
+    "/:id/verifikasi",
     AuthMiddleware.checkJwt,
-    AuthMiddleware.checkAccess("CUTI_SEMENTARA", "DELETE"),
-    CutiSementaraController.deleteByIds
+    AuthMiddleware.checkAccess("CUTI_SEMENTARA", "VERIFICATION"),
+    CutiSementaraController.verificationCuti
 );
 
 export default CutiSementaraRoutes;

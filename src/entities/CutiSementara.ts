@@ -8,7 +8,7 @@ export interface CutiSementaraDTO {
     offerById: string;
 }
 
-export interface VerificationCutiDTO {
+export interface VerifikasiCutiDTO {
     action: "DISETUJUI" | "DITOLAK";
     reason?: string;
 }

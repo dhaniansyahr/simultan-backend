@@ -8,7 +8,7 @@ import {
 import Logger from "$pkg/logger";
 import { prisma } from "$utils/prisma.utils";
 import { CutiSementara, StatusAction } from "@prisma/client";
-import { CutiSementaraDTO, VerificationCutiDTO } from "$entities/CutiSementara";
+import { CutiSementaraDTO, VerifikasiCutiDTO } from "$entities/CutiSementara";
 import { buildFilterQueryLimitOffsetV2 } from "./helpers/FilterQueryV2";
 import { UserJWTDAO } from "$entities/User";
 import { ulid } from "ulid";
@@ -137,31 +137,9 @@ export async function update(id: string, data: CutiSementaraDTO): Promise<Servic
     }
 }
 
-export async function deleteByIds(ids: string): Promise<ServiceResponse<{}>> {
-    try {
-        const idArray: string[] = JSON.parse(ids);
-
-        idArray.forEach(async (id) => {
-            await prisma.cutiSementara.delete({
-                where: {
-                    id,
-                },
-            });
-        });
-
-        return {
-            status: true,
-            data: {},
-        };
-    } catch (err) {
-        Logger.error(`CutiSementaraService.deleteByIds : ${err}`);
-        return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
-    }
-}
-
 export async function verificationStatus(
     id: string,
-    data: VerificationCutiDTO,
+    data: VerifikasiCutiDTO,
     user: UserJWTDAO
 ): Promise<ServiceResponse<{}>> {
     try {
