@@ -14,6 +14,7 @@ import { UserJWTDAO } from "$entities/User";
 import { buildBufferPDF } from "$utils/buffer.utils";
 import { DateTime } from "luxon";
 import { ulid } from "ulid";
+import { getCurrentAcademicInfo } from "$utils/strings.utils";
 
 export type CreateResponse = SuratKeteranganKuliah | {};
 export async function create(
@@ -62,6 +63,11 @@ export async function getAll(filters: FilteringQueryV2): Promise<ServiceResponse
                     statusHistory: {
                         include: {
                             User: true,
+                        },
+                    },
+                    offerBy: {
+                        include: {
+                            Mahasiswa: true,
                         },
                     },
                 },
@@ -263,14 +269,30 @@ export async function cetakSurat(id: string, user: UserJWTDAO): Promise<ServiceR
 
         if (!suratKeteranganKuliah) return INVALID_ID_SERVICE_RESPONSE;
 
+        const findUser = await prisma.user.findUnique({
+            where: {
+                id: user.id,
+            },
+            include: {
+                Mahasiswa: true,
+            },
+        });
+
         let pdfData: any = {};
+        console.log("USER : ", findUser);
+
+        const akademikInfo = getCurrentAcademicInfo();
 
         pdfData.title = "SURAT KETERANGAN KULIAH";
-        pdfData.data = { ...suratKeteranganKuliah, ...user };
+        pdfData.data = { ...suratKeteranganKuliah, ...findUser };
         pdfData.date = DateTime.now().toFormat("dd MMMM yyyy");
+        pdfData.tahunAkademik = akademikInfo.tahunAkademik;
+        pdfData.semester = akademikInfo.semester;
+
+        console.log("DATA PDF : ", pdfData.data);
 
         const buffer = await buildBufferPDF("surat-keterangan-kuliah", pdfData);
-        const fileName = "Daftar_Pembayaran_Kolektif_Voucher";
+        const fileName = `Surat-Keterangan-Kuliah-${findUser?.Mahasiswa?.npm}`;
 
         return {
             status: true,

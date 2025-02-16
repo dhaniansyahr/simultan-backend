@@ -55,7 +55,8 @@
                     </table>
 
                     <h3 style="text-align: center; font-weight: normal; margin: 0">{{title}}</h3>
-                    <h3 style="text-align: center; margin: 0px 0px 10px 0px; font-weight: normal">Nomor:</h3>
+                    <h3 style="text-align: center; margin: 0px 0px 10px 0px; font-weight: normal">Nomor:
+                        {{data.noSurat}}</h3>
 
                     <div>
                         <p>
@@ -65,24 +66,27 @@
                         <table style="width: 100%">
                             <tr>
                                 <td style="padding-left: 5%; width: 25%">Nama</td>
-                                <td>: {{data.fullName}}</td>
+                                <td>: {{data.Mahasiswa.name}}</td>
                             </tr>
                             <tr>
                                 <td style="padding-left: 5%; width: 25%">NPM</td>
-                                <td>: {{data.npm}}</td>
+                                <td>: {{data.Mahasiswa.npm}}</td>
                             </tr>
                             <tr>
                                 <td style="padding-left: 5%; width: 25%">Departemen/Prodi</td>
-                                <td>: {{data.prodi}}</td>
+                                <td>: {{data.prodi}} - </td>
                             </tr>
                         </table>
                         <p>
                             adalah benar mahasiswa Fakultas Pertanian Universitas Syiah Kuala, dan terdaftar pada
-                            Semester Ganjil Tahun Akademik 2024/2025.
+                            Semester
+                            {{semester}}
+                            Tahun Akademik
+                            {{tahunAkademik}}.
                         </p>
                         <p>
-                            Demikian keterangan ini dibuat untuk kelengkapan administrasi pada Badan Penyelenggara
-                            Jaminan Sosial (BPJS) Kesehatan.
+                            Demikian keterangan ini dibuat
+                            {{data.description}}.
                         </p>
 
                         <table style="width: 100%; padding-top: 20px">
@@ -109,12 +113,12 @@
                             <tr>
                                 <td style="width: 30%"></td>
                                 <td style="width: 30%"></td>
-                                <td style="width: 40%">Dr. Ir Wira Dharma, S.Si., M.P., M.Si</td>
+                                <td style="width: 40%">Prof. Ir. Sugianto, M.Sc, Ph.D</td>
                             </tr>
                             <tr>
                                 <td style="width: 30%"></td>
                                 <td style="width: 30%"></td>
-                                <td style="width: 40%">NIP 197105232006041001</td>
+                                <td style="width: 40%">NIP. 196502231992031003</td>
                             </tr>
                         </table>
                     </div>

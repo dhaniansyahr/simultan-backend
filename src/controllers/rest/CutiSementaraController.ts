@@ -1,7 +1,7 @@
 import { Context, TypedResponse } from "hono";
 import * as CutiSementaraService from "$services/CutiSementaraService";
 import { handleServiceErrorWithResponse, response_created, response_success } from "$utils/response.utils";
-import { CutiSementaraDTO } from "$entities/CutiSementara";
+import { CutiSementaraDTO, VerifikasiCutiDTO } from "$entities/CutiSementara";
 import { FilteringQueryV2 } from "$entities/Query";
 import { checkFilteringQueryV2 } from "$controllers/helpers/CheckFilteringQuery";
 import { UserJWTDAO } from "$entities/User";
@@ -56,14 +56,14 @@ export async function update(c: Context): Promise<TypedResponse> {
     return response_success(c, serviceResponse.data, "Successfully updated CutiSementara!");
 }
 
-export async function deleteByIds(c: Context): Promise<TypedResponse> {
-    const ids = c.req.query("ids") as string;
+export async function verificationCuti(c: Context): Promise<Response | TypedResponse> {
+    const data: VerifikasiCutiDTO = await c.req.json();
+    const id = c.req.param("id");
+    const user: UserJWTDAO = c.get("jwtPayload");
 
-    const serviceResponse = await CutiSementaraService.deleteByIds(ids);
+    const serviceResponse = await CutiSementaraService.verificationStatus(id, data, user);
 
-    if (!serviceResponse.status) {
-        return handleServiceErrorWithResponse(c, serviceResponse);
-    }
+    if (!serviceResponse.status) return handleServiceErrorWithResponse(c, serviceResponse);
 
-    return response_success(c, serviceResponse.data, "Successfully deleted CutiSementara!");
+    return response_success(c, serviceResponse.data, "Successfully verificated SuratKeteranganKuliah!");
 }
