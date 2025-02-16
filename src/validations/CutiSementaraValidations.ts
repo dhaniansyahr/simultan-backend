@@ -2,7 +2,7 @@ import { Context, Next } from "hono";
 import { response_bad_request } from "$utils/response.utils";
 import { ErrorStructure, generateErrorStructure } from "./helper";
 
-import { CutiSementaraDTO, VerificationCutiDTO } from "$entities/CutiSementara";
+import { CutiSementaraDTO, VerifikasiCutiDTO } from "$entities/CutiSementara";
 
 export async function validateCutiSementaraDTO(c: Context, next: Next) {
     const data: CutiSementaraDTO = await c.req.json();
@@ -23,7 +23,7 @@ export async function validateCutiSementaraDTO(c: Context, next: Next) {
 }
 
 export async function validateVerificationSuratKeteranganKuliahDTO(c: Context, next: Next) {
-    const data: VerificationCutiDTO = await c.req.json();
+    const data: VerifikasiCutiDTO = await c.req.json();
     const invalidFields: ErrorStructure[] = [];
 
     if (!data.action) invalidFields.push(generateErrorStructure("action", "action cannot be empty"));
