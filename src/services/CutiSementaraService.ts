@@ -59,6 +59,11 @@ export async function getAll(filters: FilteringQueryV2): Promise<ServiceResponse
                             Mahasiswa: true,
                         },
                     },
+                    statusHistory: {
+                        include: {
+                            User: true,
+                        },
+                    },
                 },
             }),
             prisma.cutiSementara.count({

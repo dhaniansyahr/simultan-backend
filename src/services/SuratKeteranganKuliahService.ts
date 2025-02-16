@@ -65,6 +65,11 @@ export async function getAll(filters: FilteringQueryV2): Promise<ServiceResponse
                             User: true,
                         },
                     },
+                    offerBy: {
+                        include: {
+                            Mahasiswa: true,
+                        },
+                    },
                 },
             }),
             prisma.suratKeteranganKuliah.count({
