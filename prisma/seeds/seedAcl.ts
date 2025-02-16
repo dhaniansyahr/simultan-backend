@@ -25,17 +25,6 @@ export async function seedAcl(prisma: PrismaClient) {
         },
     ];
 
-    const featuresMahasiswa = [
-        {
-            featureName: "SURAT_KETERANGAN_KULIAH",
-            actions: ["CREATE", "VIEW", "EXPORT"],
-        },
-        {
-            featureName: "CUTI_SEMENTARA",
-            actions: ["CREATE", "VIEW", "EXPORT"],
-        },
-    ];
-
     for (const feature of features) {
         const existingFeature = await prisma.feature.findUnique({
             where: {
