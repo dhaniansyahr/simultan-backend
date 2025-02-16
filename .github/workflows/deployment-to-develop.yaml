@@ -42,27 +42,6 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-            - name: Debug secrets
-                run: |
-                    if [ -z "${{ secrets.HOST }}" ]; then
-                    echo "HOST secret is empty or not set"
-                    exit 1
-                    else
-                    echo "HOST secret is set (value not shown for security)"
-                    fi
-                    if [ -z "${{ secrets.USERNAME }}" ]; then
-                    echo "USERNAME secret is empty or not set"
-                    exit 1
-                    else
-                    echo "USERNAME secret is set (value not shown for security)"
-                    fi
-                    if [ -z "${{ secrets.PASSWORD }}" ]; then
-                    echo "PASSWORD secret is empty or not set"
-                    exit 1
-                    else
-                    echo "PASSWORD secret is set (value not shown for security)"
-                    fi
-
             - name: SSH to Server
               uses: appleboy/ssh-action@master
               with:
