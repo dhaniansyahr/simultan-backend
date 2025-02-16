@@ -114,5 +114,5 @@ jobs:
                   password: ${{ secrets.PASSWORD }}
                   script: |
                       cd /home/simultan/backend 
-                      pm2 restart process-name
+                      pm2 restart simultan-backend
                   continue-on-error: false
