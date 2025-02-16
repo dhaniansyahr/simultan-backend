@@ -39,6 +39,7 @@ export async function create(data: CutiSementaraDTO, user: UserJWTDAO): Promise<
         return {
             status: true,
             data: status,
+            data: status,
         };
     } catch (err) {
         Logger.error(`CutiSementaraService.create : ${err}`);
