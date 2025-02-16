@@ -5,8 +5,10 @@ export interface CutiSementaraDTO {
     bssFormUrl: string;
     noSurat: string;
     reason: string;
-    approvedById: string;
-    remainingApprovedId: string;
-    rejectedById: string;
     offerById: string;
+}
+
+export interface VerificationCutiDTO {
+    action: "DISETUJUI" | "DITOLAK";
+    reason?: string;
 }
