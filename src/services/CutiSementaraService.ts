@@ -51,7 +51,16 @@ export async function getAll(filters: FilteringQueryV2): Promise<ServiceResponse
         const usedFilters = buildFilterQueryLimitOffsetV2(filters);
 
         const [cutiSementara, totalData] = await Promise.all([
-            prisma.cutiSementara.findMany(usedFilters),
+            prisma.cutiSementara.findMany({
+                ...usedFilters,
+                include: {
+                    offerBy: {
+                        include: {
+                            Mahasiswa: true,
+                        },
+                    },
+                },
+            }),
             prisma.cutiSementara.count({
                 where: usedFilters.where,
             }),
