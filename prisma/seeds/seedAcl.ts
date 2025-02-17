@@ -21,7 +21,7 @@ export async function seedAcl(prisma: PrismaClient) {
         },
         {
             featureName: "CUTI_SEMENTARA",
-            actions: ["CREATE", "VIEW", "VERIFICATION", "EXPORT"],
+            actions: ["CREATE", "VIEW", "VERIFICATION"],
         },
     ];
 
@@ -89,7 +89,7 @@ export async function seedAcl(prisma: PrismaClient) {
         }),
     ]);
 
-    if (!userLevel || !adminUser) {
+    if (!userLevel || !adminUser || !userLevelMhs) {
         return "seedAcl error";
     }
 
@@ -123,6 +123,29 @@ export async function seedAcl(prisma: PrismaClient) {
                 featureName: action.featureName,
                 userLevelId: userLevel.id,
             });
+        }
+
+        if (action.featureName === "SURAT_KETERANGAN_KULIAH" || action.featureName === "CUTI_SEMENTARA") {
+            if (action.name !== "VERIFICATION") {
+                const aclMhsMappingExist = await prisma.acl.findUnique({
+                    where: {
+                        featureName_actionName_userLevelId: {
+                            featureName: action.featureName,
+                            actionName: action.name,
+                            userLevelId: userLevelMhs.id,
+                        },
+                    },
+                });
+
+                if (!aclMhsMappingExist) {
+                    aclCreateManyData.push({
+                        id: ulid(),
+                        actionName: action.name,
+                        featureName: action.featureName,
+                        userLevelId: userLevelMhs.id,
+                    });
+                }
+            }
         }
     }
 
