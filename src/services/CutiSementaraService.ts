@@ -199,7 +199,7 @@ export async function verificationStatus(
                     action: nextStatus,
                     description: `${nextStatus} oleh ${user.fullName}`,
                     userId: user.id,
-                    suratKeteranganKuliahId: id,
+                    cutiSementaraId: id,
                 },
             });
 
