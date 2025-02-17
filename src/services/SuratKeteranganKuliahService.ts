@@ -196,7 +196,7 @@ export async function verificationStatus(
 
         let nextStatus: VerificationStatusKemahasiswaan = "DIPROSES_OPERATOR_KEMAHASISWAAN";
         if (data.action === "DISETUJUI") {
-            nextStatus = getNextVerificationStatus(data.action as VerificationStatusKemahasiswaan);
+            nextStatus = getNextVerificationStatus(VerificationStatusKemahasiswaan.DISETUJUI_OPERATOR_KEMAHASISWAAN);
         }
 
         await prisma.$transaction(async (prisma) => {
