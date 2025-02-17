@@ -1,4 +1,4 @@
-import { PrismaClient, TypeForSuratKeteranganKuliah } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { ulid } from "ulid";
 
 export async function seedCutiSementara(prisma: PrismaClient) {
