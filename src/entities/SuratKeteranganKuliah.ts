@@ -1,4 +1,4 @@
-import { Status, TypeForSuratKeteranganKuliah } from "@prisma/client";
+import { TypeForSuratKeteranganKuliah } from "@prisma/client";
 
 export interface SuratKeteranganKuliahDTO {
     id: string;
@@ -10,6 +10,6 @@ export interface SuratKeteranganKuliahDTO {
 }
 
 export interface VerifikasiSuratDTO {
-    action: Status;
+    action: "DISETUJUI" | "DITOLAK";
     reason?: string;
 }

@@ -66,7 +66,7 @@ export async function seedAcl(prisma: PrismaClient) {
         });
     }
 
-    const [allSubFeatures, userLevel, adminUser] = await Promise.all([
+    const [allSubFeatures, userLevel, adminUser, userLevelMhs] = await Promise.all([
         prisma.action.findMany({
             include: {
                 feature: true,

@@ -9,6 +9,6 @@ export interface CutiSementaraDTO {
 }
 
 export interface VerifikasiCutiDTO {
-    action: "DISETUJUI" | "DITOLAK";
+    action: "USULAN_DISETUJUI" | "USULAN_DITOLAK";
     reason?: string;
 }

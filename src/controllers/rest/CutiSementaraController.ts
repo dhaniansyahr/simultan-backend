@@ -21,8 +21,9 @@ export async function create(c: Context): Promise<TypedResponse> {
 
 export async function getAll(c: Context): Promise<TypedResponse> {
     const filters: FilteringQueryV2 = checkFilteringQueryV2(c);
+    const user: UserJWTDAO = c.get("jwtPayload");
 
-    const serviceResponse = await CutiSementaraService.getAll(filters);
+    const serviceResponse = await CutiSementaraService.getAll(filters, user);
 
     if (!serviceResponse.status) {
         return handleServiceErrorWithResponse(c, serviceResponse);
@@ -41,19 +42,6 @@ export async function getById(c: Context): Promise<TypedResponse> {
     }
 
     return response_success(c, serviceResponse.data, "Successfully fetched CutiSementara by id!");
-}
-
-export async function update(c: Context): Promise<TypedResponse> {
-    const data: CutiSementaraDTO = await c.req.json();
-    const id = c.req.param("id");
-
-    const serviceResponse = await CutiSementaraService.update(id, data);
-
-    if (!serviceResponse.status) {
-        return handleServiceErrorWithResponse(c, serviceResponse);
-    }
-
-    return response_success(c, serviceResponse.data, "Successfully updated CutiSementara!");
 }
 
 export async function verificationCuti(c: Context): Promise<Response | TypedResponse> {
