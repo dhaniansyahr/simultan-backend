@@ -65,32 +65,32 @@ export async function getAll(filters: FilteringQueryV2, user: UserJWTDAO): Promi
             });
         }
 
-        if (userLevel.name === "OPERATOR_KEMAHASISWAAN") {
-            usedFilters.where.AND.push({
-                statusHistory: {
-                    some: {
-                        action: {
-                            notIn: [
-                                VerificationStatusKemahasiswaan.DISETUJUI_OPERATOR_KEMAHASISWAAN,
-                                VerificationStatusKemahasiswaan.USULAN_DISETUJUI,
-                            ],
-                        },
-                    },
-                },
-            });
-        }
+        // if (userLevel.name === "OPERATOR_KEMAHASISWAAN") {
+        //     usedFilters.where.AND.push({
+        //         statusHistory: {
+        //             some: {
+        //                 action: {
+        //                     notIn: [
+        //                         VerificationStatusKemahasiswaan.DISETUJUI_OPERATOR_KEMAHASISWAAN,
+        //                         VerificationStatusKemahasiswaan.USULAN_DISETUJUI,
+        //                     ],
+        //                 },
+        //             },
+        //         },
+        //     });
+        // }
 
-        if (userLevel.name === "KASUBBAG_KEMAHASISWAAN") {
-            usedFilters.where.AND.push({
-                statusHistory: {
-                    some: {
-                        action: {
-                            not: VerificationStatusKemahasiswaan.DISETUJUI_KASUBBAG_KEMAHASISWAAN,
-                        },
-                    },
-                },
-            });
-        }
+        // if (userLevel.name === "KASUBBAG_KEMAHASISWAAN") {
+        //     usedFilters.where.AND.push({
+        //         statusHistory: {
+        //             some: {
+        //                 action: {
+        //                     not: VerificationStatusKemahasiswaan.DISETUJUI_KASUBBAG_KEMAHASISWAAN,
+        //                 },
+        //             },
+        //         },
+        //     });
+        // }
 
         usedFilters.include = {
             statusHistory: {
