@@ -195,7 +195,7 @@ export async function verificationStatus(
         if (verificationExist) return BadRequestWithMessage("Kamu Sudah Melakukan Verifikasi Pada Surat Ini!");
 
         let nextStatus: VerificationStatusKemahasiswaan = "DIPROSES_OPERATOR_KEMAHASISWAAN";
-        if (data.action === VerificationStatusKemahasiswaan.USULAN_DISETUJUI) {
+        if (data.action === "DISETUJUI") {
             nextStatus = getNextVerificationStatus(data.action as VerificationStatusKemahasiswaan);
         }
 
@@ -211,7 +211,7 @@ export async function verificationStatus(
             });
 
             // Update the `reason` field if the status is `USULAN_DITOLAK`
-            if (data.action === VerificationStatusKemahasiswaan.USULAN_DITOLAK) {
+            if (data.action === "DITOLAK") {
                 await prisma.suratKeteranganKuliah.update({
                     where: { id },
                     data: { reason: data.reason },
