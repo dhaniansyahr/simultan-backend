@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { ulid } from "ulid";
+
 export async function seedAdmin(prisma: PrismaClient) {
     const roles = [
         "ADMIN",
