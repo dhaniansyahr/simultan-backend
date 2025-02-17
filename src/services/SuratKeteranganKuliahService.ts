@@ -242,11 +242,11 @@ export async function cetakSurat(id: string, user: UserJWTDAO): Promise<ServiceR
         const suratKeteranganKuliah = await prisma.suratKeteranganKuliah.findUnique({
             where: {
                 id,
-                statusHistory: {
-                    some: {
-                        action: VerificationStatusKemahasiswaan.USULAN_DISETUJUI,
-                    },
-                },
+                // statusHistory: {
+                //     some: {
+                //         action: VerificationStatusKemahasiswaan.USULAN_DISETUJUI,
+                //     },
+                // },
             },
         });
 
