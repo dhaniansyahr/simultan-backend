@@ -2,25 +2,25 @@ import { PrismaClient } from "@prisma/client";
 import { ulid } from "ulid";
 
 export async function seedAksesLevel(prisma: PrismaClient) {
-        const userLevels = [
-                "ADMIN",
-                "OPERATOR_KEMAHASISWAAN",
-                "OPERATOR_AKADEMIK",
-                "KTU",
-                "KASUBBAG_AKADEMIK",
-                "KASUBBAG_KEMAHASISWAAN",
-                "DEKAN",
-                "WD_1",
-                "KEPALA_DEPARTEMEN",
-                "KEPALA_PRODI",
-                "PIMPINAN_FAKULTAS",
-                "MAHASISWA",
+        const aksesLevels = [
+                { name: "ADMIN" },
+                { name: "OPERATOR_KEMAHASISWAAN" },
+                { name: "OPERATOR_AKADEMIK" },
+                { name: "KTU" },
+                { name: "KASUBBAG_KEMAHASISWAAN" },
+                { name: "KASUBBAG_AKADEMIK" },
+                { name: "DEKAN" },
+                { name: "WD1" },
+                { name: "KADEP" },
+                { name: "KAPRODI" },
+                { name: "PIMPINAN_FAKULTAS" },
+                { name: "MAHASISWA" },
         ];
 
-        for (const level of userLevels) {
+        for (const level of aksesLevels) {
                 const existingLevel = await prisma.aksesLevel.findUnique({
                         where: {
-                                name: level,
+                                name: level.name,
                         },
                 });
 
@@ -28,11 +28,11 @@ export async function seedAksesLevel(prisma: PrismaClient) {
                         await prisma.aksesLevel.create({
                                 data: {
                                         ulid: ulid(),
-                                        name: level,
+                                        name: level.name,
                                 },
                         });
                 }
         }
 
-        console.log("All Akses Level Seeded");
+        console.log("Akses Level seeded");
 }
