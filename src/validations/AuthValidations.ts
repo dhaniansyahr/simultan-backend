@@ -11,48 +11,54 @@ import { checkIdentityNumber } from "$utils/strings.utils";
 // }
 
 export async function validateRegisterDTO(c: Context, next: Next) {
-    const data: UserRegisterDTO = await c.req.json();
+        const data: UserRegisterDTO = await c.req.json();
 
-    const invalidFields = [];
-    if (!data.nama) invalidFields.push("nama is required!");
-    if (data.npm) {
-        if (checkIdentityNumber(data.npm) !== "NPM")
-            invalidFields.push("NPM anda tidak valid, pastikan untuk mengecek kembali NPM yang anda masukan");
-    }
+        const invalidFields = [];
+        if (!data.nama) invalidFields.push("nama is required!");
+        if (data.npm) {
+                if (checkIdentityNumber(data.npm) !== "NPM")
+                        invalidFields.push(
+                                "NPM anda tidak valid, pastikan untuk mengecek kembali NPM yang anda masukan"
+                        );
+        }
 
-    if (!data.password) invalidFields.push("password is required");
+        if (!data.password) invalidFields.push("password is required");
 
-    const userExist = await prisma.user.findUnique({
-        where: {
-            npm: data.npm,
-        },
-    });
+        const userExist = await prisma.user.findUnique({
+                where: {
+                        npm: data.npm,
+                },
+        });
 
-    if (userExist != null) {
-        invalidFields.push("npm sudah digunakan!");
-    }
-    if (invalidFields.length > 0) {
-        return response_bad_request(c, "Bad Request", invalidFields);
-    }
+        if (userExist != null) {
+                invalidFields.push("npm sudah digunakan!");
+        }
+        if (invalidFields.length > 0) {
+                return response_bad_request(c, "Bad Request", invalidFields);
+        }
 
-    await next();
+        await next();
 }
 
 export async function validateLoginDTO(c: Context, next: Next) {
-    const data: UserLoginDTO = await c.req.json();
+        const data: UserLoginDTO = await c.req.json();
 
-    const invalidFields = [];
-    if (!data.identityNumber) invalidFields.push("NPM/NIP is required");
+        const invalidFields = [];
+        if (!data.identityNumber) invalidFields.push("NPM/NIP is required");
 
-    const validIdentityNumber = checkIdentityNumber(data.identityNumber);
-    if (validIdentityNumber !== "NPM" && validIdentityNumber !== "NIP")
-        invalidFields.push(generateErrorStructure("identityNumber", "NIP/NPM tidak valid, Harap Perikas kembali!"));
+        console.log("IDENTITY NUMBER : ", data.identityNumber);
 
-    if (!data.password) invalidFields.push(generateErrorStructure("password", "password is required"));
+        const validIdentityNumber = checkIdentityNumber(data.identityNumber);
+        if (validIdentityNumber !== "NPM" && validIdentityNumber !== "NIP")
+                invalidFields.push(
+                        generateErrorStructure("identityNumber", "NIP/NPM tidak valid, Harap Perikas kembali!")
+                );
 
-    if (invalidFields.length > 0) {
-        return response_bad_request(c, "Bad Request", invalidFields);
-    }
+        // if (!data.password) invalidFields.push(generateErrorStructure("password", "password is required"));
 
-    await next();
+        if (invalidFields.length > 0) {
+                return response_bad_request(c, "Bad Request", invalidFields);
+        }
+
+        await next();
 }
