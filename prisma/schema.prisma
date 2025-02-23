@@ -199,13 +199,13 @@ model Feature {
 model Action {
   id        Int      @id @default(autoincrement())
   ulid      String   @unique
-  nama      String   @unique
+  nama      String
   namaFitur String
-  featureId Int
   createdAt DateTime @default(now())
 
-  feature Feature @relation(fields: [featureId], references: [id])
-  acl     Acl[]
+  feature Feature @relation(fields: [namaFitur], references: [nama])
+
+  @@unique([namaFitur, nama])
 }
 
 model Acl {
@@ -214,13 +214,12 @@ model Acl {
   namaFitur    String
   namaAksi     String
   aksesLevelId Int
-  featureId    Int
-  actionId     Int
   createdAt    DateTime @default(now())
 
-  feature    Feature    @relation(fields: [featureId], references: [id])
-  action     Action     @relation(fields: [actionId], references: [id])
+  feature    Feature    @relation(fields: [namaFitur], references: [nama])
   aksesLevel AksesLevel @relation(fields: [aksesLevelId], references: [id])
+
+  @@unique([namaFitur, namaAksi, aksesLevelId])
 }
 
 enum TipeSuratKeteranganKuliah {
