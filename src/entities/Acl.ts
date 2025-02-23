@@ -5,6 +5,9 @@ export interface AclDTO {
 }
 
 export interface AclCreateDTO {
-    userLevelId: string;
-    acl: AclDTO[];
+    aksesLevelId: number;
+    acl: {
+        namaFitur: string;
+        actions: string[];
+    }[];
 }

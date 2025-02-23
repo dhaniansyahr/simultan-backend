@@ -7,7 +7,7 @@ import {
 } from "$entities/Service";
 import Logger from "$pkg/logger";
 import { prisma } from "$utils/prisma.utils";
-import { CutiSementara, VerificationStatusKemahasiswaan } from "@prisma/client";
+import { CutiSementara, VerifikasiStatusBagianKemahasiswaan } from "@prisma/client";
 import { CutiSementaraDTO, VerifikasiCutiDTO } from "$entities/CutiSementara";
 import { buildFilterQueryLimitOffsetV2 } from "./helpers/FilterQueryV2";
 import { UserJWTDAO } from "$entities/User";
@@ -17,28 +17,43 @@ import { getNextVerificationStatus } from "$utils/helper.utils";
 export type CreateResponse = CutiSementara | {};
 export async function create(data: CutiSementaraDTO, user: UserJWTDAO): Promise<ServiceResponse<CreateResponse>> {
     try {
-        data.offerById = user.id;
-        const status = await prisma.$transaction(async (trx) => {
-            const cuti = await prisma.cutiSementara.create({
-                data,
-            });
+        const initialStatus = await prisma.status.create({
+            data: {
+                ulid: ulid(),
+                nama: VerifikasiStatusBagianKemahasiswaan.DIPROSES_OPERATOR_KEMAHASISWAAN,
+                deskripsi: `Pengajuan Cuti oleh ${user.nama} dan ${VerifikasiStatusBagianKemahasiswaan.DIPROSES_OPERATOR_KEMAHASISWAAN}`,
+                userId: user.id,
+            },
+        });
 
-            await trx.statusHistory.create({
-                data: {
-                    id: ulid(),
-                    action: VerificationStatusKemahasiswaan.DIPROSES_OPERATOR_KEMAHASISWAAN,
-                    cutiSementaraId: cuti.id,
-                    description: VerificationStatusKemahasiswaan.DIPROSES_OPERATOR_KEMAHASISWAAN,
-                    userId: user.id,
-                },
-            });
+        // Create the letter
+        const cuti = await prisma.cutiSementara.create({
+            data: {
+                ulid: ulid(),
+                alasanPengajuan: data.alasanPengajuan,
+                suratBebasPustakaUrl: data.suratBebasPustakaUrl,
+                suratBssUrl: data.suratBssUrl,
+                suratIzinOrangTuaUrl: data.suratIzinOrangTuaUrl,
+                verifikasiStatus: VerifikasiStatusBagianKemahasiswaan.DIPROSES_OPERATOR_KEMAHASISWAAN,
+                statusId: initialStatus.id,
+                userId: user.id,
+            },
+        });
 
-            return cuti;
+        // Create log entry
+        await prisma.log.create({
+            data: {
+                ulid: ulid(),
+                flagMenu: "SURAT_KETERANGAN_KULIAH",
+                deskripsi: `Pengajuan Cuti Sementara baru dengan ID ${cuti.ulid}`,
+                aksesLevelId: user.aksesLevelId,
+                userId: user.id,
+            },
         });
 
         return {
             status: true,
-            data: status,
+            data: cuti,
         };
     } catch (err) {
         Logger.error(`CutiSementaraService.create : ${err}`);
@@ -51,58 +66,38 @@ export async function getAll(filters: FilteringQueryV2, user: UserJWTDAO): Promi
     try {
         const usedFilters = buildFilterQueryLimitOffsetV2(filters);
 
-        const userLevel = await prisma.userLevel.findUnique({
+        const aksesLevel = await prisma.aksesLevel.findUnique({
             where: {
-                id: user.userLevelId,
+                id: user.aksesLevelId,
             },
         });
 
-        if (!userLevel) return INVALID_ID_SERVICE_RESPONSE;
+        if (!aksesLevel) return BadRequestWithMessage("Akses level tidak ditemukan");
 
-        if (userLevel.name === "MAHASISWA") {
+        // For Mahasiswa
+        if (aksesLevel.name === "MAHASISWA") {
             usedFilters.where.AND.push({
-                offerById: user.id,
+                userId: user.id,
             });
         }
 
-        // if (userLevel.name === "OPERATOR_KEMAHASISWAAN") {
-        //     usedFilters.where.AND.push({
-        //         statusHistory: {
-        //             some: {
-        //                 action: {
-        //                     notIn: [
-        //                         VerificationStatusKemahasiswaan.DISETUJUI_OPERATOR_KEMAHASISWAAN,
-        //                         VerificationStatusKemahasiswaan.USULAN_DISETUJUI,
-        //                     ],
-        //                 },
-        //             },
-        //         },
-        //     });
-        // }
-
-        // if (userLevel.name === "KASUBBAG_KEMAHASISWAAN") {
-        //     usedFilters.where.AND.push({
-        //         statusHistory: {
-        //             some: {
-        //                 action: {
-        //                     not: VerificationStatusKemahasiswaan.DISETUJUI_KASUBBAG_KEMAHASISWAAN,
-        //                 },
-        //             },
-        //         },
-        //     });
-        // }
+        // For Operator and Kasubbag, show letters that are not yet approved or rejected
+        if (aksesLevel.name === "OPERATOR_KEMAHASISWAAN" || aksesLevel.name === "KASUBBAG_KEMAHASISWAAN") {
+            usedFilters.where.AND.push({
+                verifikasiStatus: {
+                    notIn: ["USULAN_DISETUJUI", "USULAN_DITOLAK"],
+                },
+            });
+        }
 
         usedFilters.include = {
-            statusHistory: {
-                include: {
-                    User: true,
+            user: {
+                select: {
+                    nama: true,
+                    npm: true,
                 },
             },
-            offerBy: {
-                include: {
-                    Mahasiswa: true,
-                },
-            },
+            status: true,
         };
 
         const [cutiSementara, totalData] = await Promise.all([
@@ -133,21 +128,17 @@ export type GetByIdResponse = CutiSementara | {};
 export async function getById(id: string): Promise<ServiceResponse<GetByIdResponse>> {
     try {
         let cutiSementara = await prisma.cutiSementara.findUnique({
-            where: {
-                id,
-            },
             include: {
-                offerBy: {
+                user: {
                     select: {
-                        fullName: true,
-                        email: true,
+                        nama: true,
+                        npm: true,
                     },
                 },
-                statusHistory: {
-                    include: {
-                        User: true,
-                    },
-                },
+                status: true,
+            },
+            where: {
+                ulid: id,
             },
         });
 
@@ -169,60 +160,56 @@ export async function verificationStatus(
     user: UserJWTDAO
 ): Promise<ServiceResponse<{}>> {
     try {
-        const verificationExist = await prisma.cutiSementara.findFirst({
-            where: {
-                statusHistory: {
-                    some: {
-                        userId: user.id,
-                        action: {
-                            in: [
-                                VerificationStatusKemahasiswaan.USULAN_DISETUJUI,
-                                VerificationStatusKemahasiswaan.USULAN_DITOLAK,
-                            ],
-                        },
-                    },
-                },
-            },
+        const cuti = await prisma.cutiSementara.findUnique({
+            where: { ulid: id },
         });
 
-        if (verificationExist) return BadRequestWithMessage("Kamu Sudah Melakukan Verifikasi Pada Surat Ini!");
+        if (!cuti) return INVALID_ID_SERVICE_RESPONSE;
 
-        let nextStatus: VerificationStatusKemahasiswaan = "DIPROSES_OPERATOR_KEMAHASISWAAN";
-        if (data.action === VerificationStatusKemahasiswaan.USULAN_DISETUJUI) {
-            nextStatus = getNextVerificationStatus(data.action as VerificationStatusKemahasiswaan);
+        const currentStatus = cuti.verifikasiStatus;
+        let nextStatus: VerifikasiStatusBagianKemahasiswaan;
+
+        if (data.action === "USULAN_DISETUJUI") {
+            nextStatus = getNextVerificationStatus(currentStatus);
+        } else {
+            nextStatus = VerifikasiStatusBagianKemahasiswaan.USULAN_DITOLAK;
         }
 
-        await prisma.$transaction(async (prisma) => {
-            await prisma.statusHistory.create({
-                data: {
-                    id: ulid(),
-                    action: nextStatus,
-                    description: `${nextStatus} oleh ${user.fullName}`,
-                    userId: user.id,
-                    cutiSementaraId: id,
-                },
-            });
-
-            // Update the `reason` field if the status is `USULAN_DITOLAK`
-            if (data.action === VerificationStatusKemahasiswaan.USULAN_DITOLAK) {
-                await prisma.cutiSementara.update({
-                    where: { id },
-                    data: { rejectedReason: data.reason },
-                });
-            }
-        });
-
-        const cutiSementara = await prisma.cutiSementara.findUnique({
-            where: {
-                id,
+        // Create new status
+        const newStatus = await prisma.status.create({
+            data: {
+                ulid: ulid(),
+                nama: nextStatus,
+                deskripsi:
+                    data.action === "USULAN_DISETUJUI"
+                        ? `Surat disetujui oleh ${user.nama}`
+                        : `Surat ditolak oleh ${user.nama}: ${data.alasanPenolakan}`,
+                userId: user.id,
             },
         });
 
-        if (!cutiSementara) return INVALID_ID_SERVICE_RESPONSE;
+        const updateCuti = await prisma.cutiSementara.update({
+            where: { ulid: id },
+            data: {
+                verifikasiStatus: nextStatus,
+                statusId: newStatus.id,
+                alasanPenolakan: data.action === "USULAN_DITOLAK" ? data.alasanPenolakan : null,
+            },
+        });
+
+        await prisma.log.create({
+            data: {
+                ulid: ulid(),
+                flagMenu: "CUTI_SEMENTARA",
+                deskripsi: `Verifikasi surat: ${nextStatus}`,
+                aksesLevelId: user.aksesLevelId,
+                userId: user.id,
+            },
+        });
 
         return {
             status: true,
-            data: cutiSementara,
+            data: updateCuti,
         };
     } catch (error) {
         Logger.error(`CutiSementaraService.verificationStatus : ${error}`);

@@ -5,6 +5,7 @@ import { BadRequestWithMessage, INTERNAL_SERVER_ERROR_SERVICE_RESPONSE, ServiceR
 import { prisma } from "$utils/prisma.utils";
 import Logger from "$pkg/logger";
 import bcrypt from "bcrypt";
+import { ulid } from "ulid";
 
 function createToken(user: User) {
     const jwtPayload = exclude(user, "password") as UserJWTDAO;
@@ -14,62 +15,108 @@ function createToken(user: User) {
 
 export async function logIn(data: UserLoginDTO): Promise<ServiceResponse<any>> {
     try {
-        const { email, password } = data;
-
-        // const user: any = await prisma.user.findUnique({
-        //     where: {
-        //         email,
-        //     },
-        // });
+        const { identityNumber, password } = data;
 
         const user = await prisma.user.findFirst({
-            include: {
-                Mahasiswa: true,
-                Dosen: true,
-                Dekan: true,
-                UserLevel: true,
-            },
             where: {
                 OR: [
+                    { npm: identityNumber },
                     {
-                        email: email,
-                    },
-                    {
-                        Mahasiswa: {
-                            npm: email,
+                        admin: {
+                            nip: identityNumber,
                         },
                     },
                     {
-                        Dosen: {
-                            nip: email,
+                        operatorKemahasiswaan: {
+                            nip: identityNumber,
                         },
                     },
                     {
-                        Dekan: {
-                            nip: email,
+                        operatorAkademik: {
+                            nip: identityNumber,
+                        },
+                    },
+                    {
+                        ktu: {
+                            nip: identityNumber,
+                        },
+                    },
+                    {
+                        kasubbagKemahasiswaan: {
+                            nip: identityNumber,
+                        },
+                    },
+                    {
+                        kasubbagAkademik: {
+                            nip: identityNumber,
+                        },
+                    },
+                    {
+                        dekan: {
+                            nip: identityNumber,
+                        },
+                    },
+                    {
+                        wd1: {
+                            nip: identityNumber,
+                        },
+                    },
+                    {
+                        kadep: {
+                            nip: identityNumber,
+                        },
+                    },
+                    {
+                        kaprodi: {
+                            nip: identityNumber,
+                        },
+                    },
+                    {
+                        pimpinanFakultas: {
+                            nip: identityNumber,
                         },
                     },
                 ],
+            },
+            include: {
+                admin: true,
+                operatorKemahasiswaan: true,
+                operatorAkademik: true,
+                ktu: true,
+                kasubbagKemahasiswaan: true,
+                kasubbagAkademik: true,
+                dekan: true,
+                wd1: true,
+                kadep: true,
+                kaprodi: true,
+                pimpinanFakultas: true,
+                aksesLevel: true,
             },
         });
 
         if (!user) return BadRequestWithMessage("User not found!");
 
-        const isPasswordVerified = await bcrypt.compareSync(password, user!.password);
+        const isPasswordVerified = await bcrypt.compare(password, user.password);
 
-        if (user && isPasswordVerified) {
-            const token = createToken(user);
-            return { status: true, data: { user: exclude(user, "password"), token } };
-        } else {
+        if (!isPasswordVerified) {
             return {
                 status: false,
                 err: {
-                    message: "Invalid credential!",
+                    message: "Invalid password!",
                     code: 404,
                 },
                 data: {},
             };
         }
+
+        const token = createToken(user);
+        return {
+            status: true,
+            data: {
+                user: exclude(user, "password"),
+                token,
+            },
+        };
     } catch (err) {
         Logger.error(`AuthService.login : ${err}`);
         return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
@@ -78,10 +125,13 @@ export async function logIn(data: UserLoginDTO): Promise<ServiceResponse<any>> {
 
 export async function register(data: UserRegisterDTO): Promise<ServiceResponse<any>> {
     try {
-        data.password = await bcrypt.hash(data.password, 12);
-
         const newUser = await prisma.user.create({
-            data,
+            data: {
+                ulid: ulid(),
+                nama: data.nama,
+                npm: data?.npm,
+                password: await bcrypt.hash(data.password, 12),
+            },
         });
 
         const token = createToken(newUser);
@@ -125,7 +175,7 @@ export function verifyToken(token: string): ServiceResponse<any> {
 }
 
 export async function changePassword(
-    userId: string,
+    userId: number,
     oldPassword: string,
     newPassword: string
 ): Promise<ServiceResponse<any>> {

@@ -1,14 +1,13 @@
 export interface CutiSementaraDTO {
     id: string;
-    suratPersetujuanOrangTuaUrl: string;
-    bebasPustakaUrl: string;
-    bssFormUrl: string;
-    noSurat: string;
-    reason: string;
-    offerById: string;
+    ulid: string;
+    suratIzinOrangTuaUrl: string;
+    suratBebasPustakaUrl: string;
+    suratBssUrl: string;
+    alasanPengajuan: string;
 }
 
 export interface VerifikasiCutiDTO {
     action: "USULAN_DISETUJUI" | "USULAN_DITOLAK";
-    reason?: string;
+    alasanPenolakan?: string;
 }

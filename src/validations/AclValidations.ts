@@ -1,7 +1,6 @@
 import { Context, Next } from "hono";
 import { response_bad_request } from "$utils/response.utils";
 import { ErrorStructure, generateErrorStructure } from "./helper";
-
 import { AclCreateDTO } from "$entities/Acl";
 import { prisma } from "$utils/prisma.utils";
 
@@ -14,44 +13,53 @@ export async function validateAclDTO(c: Context, next: Next) {
     } else {
         let index = 0;
         for (const acl of data.acl) {
-            if (!acl.featureName)
-                invalidFields.push(generateErrorStructure(`acl[${index}].featureName`, "featureName cannot be empty"));
+            if (!acl.namaFitur)
+                invalidFields.push(generateErrorStructure(`acl[${index}].namaFitur`, "namaFitur cannot be empty"));
             if (!acl.actions || acl.actions.length == 0)
-                invalidFields.push(generateErrorStructure("actions", "actions cannot be empty"));
-
+                invalidFields.push(generateErrorStructure(`acl[${index}].actions`, "actions cannot be empty"));
             index++;
         }
     }
 
-    if (!data.userLevelId) invalidFields.push(generateErrorStructure("", " cannot be empty"));
+    if (!data.aksesLevelId) invalidFields.push(generateErrorStructure("aksesLevelId", "aksesLevelId cannot be empty"));
 
     if (invalidFields.length !== 0) return response_bad_request(c, "Validation Error", invalidFields);
 
-    const userLevel = await prisma.userLevel.findUnique({
+    // Validate aksesLevel exists
+    const aksesLevel = await prisma.aksesLevel.findUnique({
         where: {
-            id: data.userLevelId,
+            id: data.aksesLevelId,
         },
     });
 
-    if (!userLevel) invalidFields.push(generateErrorStructure("userLevelId", "userLevelId not found"));
+    if (!aksesLevel) invalidFields.push(generateErrorStructure("aksesLevelId", "aksesLevelId not found"));
 
+    // Validate features and actions exist
     for (const acl of data.acl) {
-        let index = 0;
+        const feature = await prisma.feature.findUnique({
+            where: {
+                nama: acl.namaFitur,
+            },
+        });
 
-        for (const action of acl.actions) {
-            const actionExist = await prisma.action.findUnique({
+        if (!feature) {
+            invalidFields.push(generateErrorStructure("namaFitur", `Feature ${acl.namaFitur} not found`));
+            continue;
+        }
+
+        for (const actionName of acl.actions) {
+            const action = await prisma.action.findFirst({
                 where: {
-                    featureName_name: {
-                        featureName: acl.featureName,
-                        name: action,
-                    },
+                    nama: actionName,
+                    featureId: feature.id,
                 },
             });
 
-            if (!actionExist)
+            if (!action) {
                 invalidFields.push(
-                    generateErrorStructure(`acl[${index}]`, `feature ${acl.featureName} and action ${action} not found`)
+                    generateErrorStructure("action", `Action ${actionName} not found for feature ${acl.namaFitur}`)
                 );
+            }
         }
     }
 
