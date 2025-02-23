@@ -1,155 +1,333 @@
-import { Prisma, PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { ulid } from "ulid";
 
+interface FeatureAction {
+    feature: string;
+    actions: string[];
+}
+
 export async function seedAcl(prisma: PrismaClient) {
-    const features = [
+    // Define features and their actions
+    const featuresAndActions: FeatureAction[] = [
         {
-            featureName: "MANAGEMENT_USER",
-            actions: ["CREATE", "VIEW", "UPDATE", "DELETE"],
+            feature: "SURAT_KETERANGAN_KULIAH",
+            actions: ["CREATE", "READ", "VERIFICATION"],
         },
         {
-            featureName: "USER_LEVEL",
-            actions: ["CREATE", "VIEW", "UPDATE", "DELETE"],
+            feature: "CUTI_SEMENTARA",
+            actions: ["CREATE", "READ", "VERIFICATION"],
         },
         {
-            featureName: "ACL",
-            actions: ["CREATE", "VIEW", "UPDATE", "DELETE"],
+            feature: "PENGAJUAN_YUDISIUM",
+            actions: ["CREATE", "READ", "VERIFICATION"],
         },
         {
-            featureName: "SURAT_KETERANGAN_KULIAH",
-            actions: ["CREATE", "VIEW", "VERIFICATION", "EXPORT"],
+            feature: "LEGALISIR_IJAZAH",
+            actions: ["CREATE", "READ", "VERIFICATION"],
         },
         {
-            featureName: "CUTI_SEMENTARA",
-            actions: ["CREATE", "VIEW", "VERIFICATION"],
+            feature: "USER_MANAGEMENT",
+            actions: ["CREATE", "READ", "UPDATE", "DELETE"],
+        },
+        {
+            feature: "ACL",
+            actions: ["CREATE", "READ", "UPDATE", "DELETE"],
         },
     ];
 
-    for (const feature of features) {
-        const existingFeature = await prisma.feature.findUnique({
-            where: {
-                name: feature.featureName,
-            },
-        });
-
-        if (!existingFeature) {
-            await prisma.feature.create({
-                data: {
-                    id: ulid(),
-                    name: feature.featureName,
-                },
-            });
-        }
-
-        const actionCreateManyData: Prisma.ActionCreateManyInput[] = [];
-        for (const action of feature.actions) {
-            const existingFeatureAction = await prisma.action.findUnique({
-                where: {
-                    featureName_name: {
-                        name: action,
-                        featureName: feature.featureName,
-                    },
-                },
-            });
-
-            if (!existingFeatureAction) {
-                actionCreateManyData.push({
-                    id: ulid(),
-                    name: action,
-                    featureName: feature.featureName,
-                });
-            }
-        }
-
-        await prisma.action.createMany({
-            data: actionCreateManyData,
-        });
-    }
-
-    const [allSubFeatures, userLevel, adminUser, userLevelMhs] = await Promise.all([
-        prisma.action.findMany({
-            include: {
-                feature: true,
-            },
-        }),
-        prisma.userLevel.findUnique({
-            where: {
-                name: "ADMIN",
-            },
-        }),
-        prisma.user.findUnique({
-            where: {
-                email: "admin@test.com",
-            },
-        }),
-        prisma.userLevel.findUnique({
-            where: {
-                name: "MAHASISWA",
-            },
-        }),
-    ]);
-
-    if (!userLevel || !adminUser || !userLevelMhs) {
-        return "seedAcl error";
-    }
-
-    if (!adminUser.userLevelId) {
-        await prisma.user.update({
-            where: {
-                id: adminUser.id,
-            },
+    // Create features and actions
+    for (const featureAction of featuresAndActions) {
+        // Create feature
+        const feature = await prisma.feature.create({
             data: {
-                userLevelId: userLevel.id,
+                ulid: ulid(),
+                nama: featureAction.feature,
             },
         });
-    }
 
-    const aclCreateManyData: Prisma.AclCreateManyInput[] = [];
-    for (const action of allSubFeatures) {
-        const aclAdminMappingExist = await prisma.acl.findUnique({
-            where: {
-                featureName_actionName_userLevelId: {
-                    featureName: action.featureName,
-                    actionName: action.name,
-                    userLevelId: userLevel.id,
+        // Create actions for the feature
+        for (const actionName of featureAction.actions) {
+            await prisma.action.create({
+                data: {
+                    ulid: ulid(),
+                    nama: actionName,
+                    namaFitur: feature.nama,
+                    featureId: feature.id,
                 },
-            },
-        });
-
-        if (!aclAdminMappingExist) {
-            aclCreateManyData.push({
-                id: ulid(),
-                actionName: action.name,
-                featureName: action.featureName,
-                userLevelId: userLevel.id,
             });
         }
+    }
 
-        if (action.featureName === "SURAT_KETERANGAN_KULIAH" || action.featureName === "CUTI_SEMENTARA") {
-            if (action.name !== "VERIFICATION") {
-                const aclMhsMappingExist = await prisma.acl.findUnique({
-                    where: {
-                        featureName_actionName_userLevelId: {
-                            featureName: action.featureName,
-                            actionName: action.name,
-                            userLevelId: userLevelMhs.id,
-                        },
-                    },
+    // Define access level permissions
+    const accessPermissions = [
+        {
+            level: "ADMIN",
+            acl: [
+                {
+                    feature: "SURAT_KETERANGAN_KULIAH",
+                    actions: ["READ"],
+                },
+                {
+                    feature: "CUTI_SEMENTARA",
+                    actions: ["READ"],
+                },
+                {
+                    feature: "PENGAJUAN_YUDISIUM",
+                    actions: ["READ"],
+                },
+                {
+                    feature: "LEGALISIR_IJAZAH",
+                    actions: ["READ"],
+                },
+                {
+                    feature: "USER_MANAGEMENT",
+                    actions: ["CREATE", "READ", "UPDATE", "DELETE"],
+                },
+                {
+                    feature: "ACL",
+                    actions: ["CREATE", "READ", "UPDATE", "DELETE"],
+                },
+            ],
+        },
+        {
+            level: "OPERATOR_KEMAHASISWAAN",
+            acl: [
+                {
+                    feature: "SURAT_KETERANGAN_KULIAH",
+                    actions: ["READ", "VERIFICATION"],
+                },
+                {
+                    feature: "CUTI_SEMENTARA",
+                    actions: ["READ", "VERIFICATION"],
+                },
+            ],
+        },
+        {
+            level: "OPERATOR_AKADEMIK",
+            acl: [
+                {
+                    feature: "PENGAJUAN_YUDISIUM",
+                    actions: ["READ", "VERIFICATION"],
+                },
+                {
+                    feature: "LEGALISIR_IJAZAH",
+                    actions: ["READ", "VERIFICATION"],
+                },
+            ],
+        },
+        {
+            level: "KTU",
+            acl: [
+                {
+                    feature: "SURAT_KETERANGAN_KULIAH",
+                    actions: ["READ"],
+                },
+                {
+                    feature: "CUTI_SEMENTARA",
+                    actions: ["READ"],
+                },
+                {
+                    feature: "PENGAJUAN_YUDISIUM",
+                    actions: ["READ"],
+                },
+                {
+                    feature: "LEGALISIR_IJAZAH",
+                    actions: ["READ"],
+                },
+            ],
+        },
+        {
+            level: "KASUBBAG_AKADEMIK",
+            acl: [
+                {
+                    feature: "PENGAJUAN_YUDISIUM",
+                    actions: ["READ", "VERIFICATION"],
+                },
+                {
+                    feature: "LEGALISIR_IJAZAH",
+                    actions: ["READ", "VERIFICATION"],
+                },
+            ],
+        },
+        {
+            level: "KASUBBAG_KEMAHASISWAAN",
+            acl: [
+                {
+                    feature: "SURAT_KETERANGAN_KULIAH",
+                    actions: ["READ", "VERIFICATION"],
+                },
+                {
+                    feature: "CUTI_SEMENTARA",
+                    actions: ["READ", "VERIFICATION"],
+                },
+            ],
+        },
+        {
+            level: "DEKAN",
+            acl: [
+                {
+                    feature: "SURAT_KETERANGAN_KULIAH",
+                    actions: ["READ"],
+                },
+                {
+                    feature: "CUTI_SEMENTARA",
+                    actions: ["READ"],
+                },
+                {
+                    feature: "PENGAJUAN_YUDISIUM",
+                    actions: ["READ"],
+                },
+                {
+                    feature: "LEGALISIR_IJAZAH",
+                    actions: ["READ"],
+                },
+            ],
+        },
+        {
+            level: "WD_1",
+            acl: [
+                {
+                    feature: "SURAT_KETERANGAN_KULIAH",
+                    actions: ["READ"],
+                },
+                {
+                    feature: "CUTI_SEMENTARA",
+                    actions: ["READ"],
+                },
+                {
+                    feature: "PENGAJUAN_YUDISIUM",
+                    actions: ["READ"],
+                },
+                {
+                    feature: "LEGALISIR_IJAZAH",
+                    actions: ["READ"],
+                },
+            ],
+        },
+        {
+            level: "KEPALA_DEPARTEMEN",
+            acl: [
+                {
+                    feature: "SURAT_KETERANGAN_KULIAH",
+                    actions: ["READ"],
+                },
+                {
+                    feature: "CUTI_SEMENTARA",
+                    actions: ["READ"],
+                },
+                {
+                    feature: "PENGAJUAN_YUDISIUM",
+                    actions: ["READ"],
+                },
+                {
+                    feature: "LEGALISIR_IJAZAH",
+                    actions: ["READ"],
+                },
+            ],
+        },
+        {
+            level: "KEPALA_PRODI",
+            acl: [
+                {
+                    feature: "SURAT_KETERANGAN_KULIAH",
+                    actions: ["READ"],
+                },
+                {
+                    feature: "CUTI_SEMENTARA",
+                    actions: ["READ"],
+                },
+                {
+                    feature: "PENGAJUAN_YUDISIUM",
+                    actions: ["READ"],
+                },
+                {
+                    feature: "LEGALISIR_IJAZAH",
+                    actions: ["READ"],
+                },
+            ],
+        },
+        {
+            level: "PIMPINAN_FAKULTAS",
+            acl: [
+                {
+                    feature: "SURAT_KETERANGAN_KULIAH",
+                    actions: ["READ"],
+                },
+                {
+                    feature: "CUTI_SEMENTARA",
+                    actions: ["READ"],
+                },
+                {
+                    feature: "PENGAJUAN_YUDISIUM",
+                    actions: ["READ"],
+                },
+                {
+                    feature: "LEGALISIR_IJAZAH",
+                    actions: ["READ"],
+                },
+            ],
+        },
+        {
+            level: "MAHASISWA",
+            acl: [
+                {
+                    feature: "SURAT_KETERANGAN_KULIAH",
+                    actions: ["CREATE", "READ"],
+                },
+                {
+                    feature: "CUTI_SEMENTARA",
+                    actions: ["CREATE", "READ"],
+                },
+                {
+                    feature: "PENGAJUAN_YUDISIUM",
+                    actions: ["CREATE", "READ"],
+                },
+                {
+                    feature: "LEGALISIR_IJAZAH",
+                    actions: ["CREATE", "READ"],
+                },
+            ],
+        },
+    ];
+
+    // Update the ACL creation loop
+    for (const permission of accessPermissions) {
+        const aksesLevel = await prisma.aksesLevel.findUnique({
+            where: { name: permission.level },
+        });
+
+        if (aksesLevel) {
+            for (const aclItem of permission.acl) {
+                const feature = await prisma.feature.findUnique({
+                    where: { nama: aclItem.feature },
                 });
 
-                if (!aclMhsMappingExist) {
-                    aclCreateManyData.push({
-                        id: ulid(),
-                        actionName: action.name,
-                        featureName: action.featureName,
-                        userLevelId: userLevelMhs.id,
-                    });
+                if (feature) {
+                    for (const actionName of aclItem.actions) {
+                        const action = await prisma.action.findFirst({
+                            where: {
+                                nama: actionName,
+                                featureId: feature.id,
+                            },
+                        });
+
+                        if (action) {
+                            await prisma.acl.create({
+                                data: {
+                                    ulid: ulid(),
+                                    namaFitur: feature.nama,
+                                    namaAksi: action.nama,
+                                    aksesLevelId: aksesLevel.id,
+                                    featureId: feature.id,
+                                    actionId: action.id,
+                                },
+                            });
+                        }
+                    }
                 }
             }
         }
     }
 
-    await prisma.acl.createMany({
-        data: aclCreateManyData,
-    });
+    console.log("All ACL entries seeded");
 }

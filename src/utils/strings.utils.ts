@@ -62,3 +62,15 @@ export const getCurrentAcademicInfo = () => {
         semester: semester,
     };
 };
+
+export function checkIdentityNumber(value: string): string {
+    const cleanValue = value.replace(/\D/g, "");
+
+    if (cleanValue.length === 12) {
+        return "NPM";
+    } else if (cleanValue.length === 16) {
+        return "NIP";
+    } else {
+        throw new Error("Invalid identity number length. Must be either 12 digits (NPM) or 16 digits (NIP)");
+    }
+}

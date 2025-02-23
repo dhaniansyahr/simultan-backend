@@ -1,26 +1,27 @@
 export interface UserJWTDAO {
-    id: string;
-    email: string;
-    fullName: string;
-    userLevelId: string;
+    id: number;
+    ulid: string;
+    nama: string;
+    aksesLevelId: number;
 }
 
 export interface UserLoginDTO {
-    email: string;
+    identityNumber: string;
     password: string;
 }
 
 export interface UserRegisterDTO {
-    id: string;
-    fullName: string;
-    email: string;
+    id: number;
+    ulid: string;
+    nama: string;
+    npm?: string;
     password: string;
 }
 
 export interface UserDTO {
-    id: string;
-    fullName: string;
-    email: string;
+    id: number;
+    nama: string;
+    npm?: string;
 }
 
 // Exclude keys from user

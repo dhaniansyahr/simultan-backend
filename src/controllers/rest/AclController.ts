@@ -18,9 +18,9 @@ export async function create(c: Context): Promise<TypedResponse> {
 }
 
 export async function getByUserLevelId(c: Context): Promise<TypedResponse> {
-    const userLevelId = c.req.param("userLevelId");
+    const aksesLevelId = c.req.param("aksesLevelId");
 
-    const serviceResponse = await AclService.getByUserLevelId(userLevelId);
+    const serviceResponse = await AclService.getByAksesLevelId(Number(aksesLevelId));
 
     if (!serviceResponse.status) {
         handleServiceErrorWithResponse(c, serviceResponse);
@@ -41,7 +41,8 @@ export async function getAllFeatures(c: Context): Promise<TypedResponse> {
 
 export async function getAllLevelAkses(c: Context): Promise<TypedResponse> {
     const filters: FilteringQueryV2 = checkFilteringQueryV2(c);
-    const serviceResponse = await AclService.getAllLevelAkses(filters);
+
+    const serviceResponse = await AclService.getAllAksesLevel(filters);
 
     if (!serviceResponse.status) {
         handleServiceErrorWithResponse(c, serviceResponse);

@@ -1,15 +1,18 @@
-import { TypeForSuratKeteranganKuliah } from "@prisma/client";
+import { TipeSuratKeteranganKuliah } from "@prisma/client";
 
 export interface SuratKeteranganKuliahDTO {
-    id: string;
-    type: TypeForSuratKeteranganKuliah;
-    fileUrl: string;
-    reason: string;
-    description: string;
-    offerById: string;
+        id: number;
+        ulid: string;
+        tipeSurat: TipeSuratKeteranganKuliah;
+        deskripsi: string;
+        dokumenUrl: string;
 }
 
 export interface VerifikasiSuratDTO {
-    action: "DISETUJUI" | "DITOLAK";
-    reason?: string;
+        action: "DISETUJUI" | "DITOLAK";
+        alasanPenolakan?: string;
+}
+
+export interface LetterProcessDTO {
+        nomorSurat: string;
 }

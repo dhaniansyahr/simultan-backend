@@ -12,122 +12,225 @@ datasource db {
 }
 
 model User {
-  id          String  @id @unique
-  fullName    String
-  email       String  @unique
-  password    String
-  userLevelId String?
+  id                      Int      @id @default(autoincrement())
+  ulid                    String   @unique
+  password                String
+  nama                    String?
+  npm                     String?  @unique
+  adminId                 Int?
+  operatorKemahasiswaanId Int?
+  operatorAkademikId      Int?
+  ktuId                   Int?
+  kasubbagKemahasiswaanId Int?
+  kasubbagAkademikId      Int?
+  dekanId                 Int?
+  wd1Id                   Int?
+  kadepId                 Int?
+  kaprodiId               Int?
+  pimpinanFakultasId      Int?
+  aksesLevelId            Int?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
 
-  offerBy       SuratKeteranganKuliah[] @relation("offerBy")
-  UserLevel     UserLevel?              @relation(fields: [userLevelId], references: [id])
-  Mahasiswa     Mahasiswa?
-  Dosen         Dosen?
-  Dekan         Dekan?
-  offerCutiBy   CutiSementara[]         @relation("offerBy")
-  StatusHistory StatusHistory[]
+  admin                 Admin?                 @relation(fields: [adminId], references: [id])
+  operatorKemahasiswaan OperatorKemahasiswaan? @relation(fields: [operatorKemahasiswaanId], references: [id])
+  operatorAkademik      OperatorAkademik?      @relation(fields: [operatorAkademikId], references: [id])
+  ktu                   Ktu?                   @relation(fields: [ktuId], references: [id])
+  kasubbagKemahasiswaan KasubbagKemahasiswaan? @relation(fields: [kasubbagKemahasiswaanId], references: [id])
+  kasubbagAkademik      KasubbagAkademik?      @relation(fields: [kasubbagAkademikId], references: [id])
+  dekan                 Dekan?                 @relation(fields: [dekanId], references: [id])
+  wd1                   Wd1?                   @relation(fields: [wd1Id], references: [id])
+  kadep                 KepalaDepertemen?      @relation(fields: [kadepId], references: [id])
+  kaprodi               KepalaProdi?           @relation(fields: [kaprodiId], references: [id])
+  pimpinanFakultas      PimpinanFakultas?      @relation(fields: [pimpinanFakultasId], references: [id])
+  aksesLevel            AksesLevel?            @relation(fields: [aksesLevelId], references: [id])
+
+  suratKeteranganKuliah SuratKeteranganKuliah[]
+  cutiSementara         CutiSementara[]
+  pengajuanYudisium     PengajuanYudisium[]
+  legalisirIjazah       LegalisirIjazah[]
+  status                Status[]
+  log                   Log[]
 }
 
-model Mahasiswa {
-  id        String   @id @unique
-  name      String
-  npm       String   @unique
-  birthday  String
-  semester  String
-  isActive  Boolean
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  User      User?    @relation(fields: [userId], references: [id])
-  userId    String?  @unique
-}
-
-model Dosen {
-  id        String   @id @unique
-  name      String
+model Admin {
+  id        Int      @id @default(autoincrement())
+  ulid      String   @unique
+  nama      String
+  email     String
   nip       String   @unique
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  User      User?    @relation(fields: [userId], references: [id])
-  userId    String?  @unique
+  users     User[]
+}
+
+model OperatorKemahasiswaan {
+  id        Int      @id @default(autoincrement())
+  ulid      String   @unique
+  nama      String
+  email     String
+  nip       String   @unique
+  createdAt DateTime @default(now())
+  users     User[]
+}
+
+model OperatorAkademik {
+  id        Int      @id @default(autoincrement())
+  ulid      String   @unique
+  nama      String
+  email     String
+  nip       String   @unique
+  createdAt DateTime @default(now())
+  users     User[]
+}
+
+model Ktu {
+  id        Int      @id @default(autoincrement())
+  ulid      String   @unique
+  nama      String
+  email     String
+  nip       String   @unique
+  createdAt DateTime @default(now())
+  users     User[]
+}
+
+model KasubbagKemahasiswaan {
+  id        Int      @id @default(autoincrement())
+  ulid      String   @unique
+  nama      String
+  email     String
+  nip       String   @unique
+  createdAt DateTime @default(now())
+  users     User[]
+}
+
+model KasubbagAkademik {
+  id        Int      @id @default(autoincrement())
+  ulid      String   @unique
+  nama      String
+  email     String
+  nip       String   @unique
+  createdAt DateTime @default(now())
+  users     User[]
 }
 
 model Dekan {
-  id        String   @id @unique
-  name      String
+  id        Int      @id @default(autoincrement())
+  ulid      String   @unique
+  nama      String
+  email     String
   nip       String   @unique
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  User      User?    @relation(fields: [userId], references: [id])
-  userId    String?  @unique
+  users     User[]
 }
 
-model UserLevel {
-  id        String   @id @unique
+model Wd1 {
+  id        Int      @id @default(autoincrement())
+  ulid      String   @unique
+  nama      String
+  email     String
+  nip       String   @unique
+  createdAt DateTime @default(now())
+  users     User[]
+}
+
+model KepalaDepertemen {
+  id        Int      @id @default(autoincrement())
+  ulid      String   @unique
+  nama      String
+  email     String
+  nip       String   @unique
+  createdAt DateTime @default(now())
+  users     User[]
+}
+
+model KepalaProdi {
+  id        Int      @id @default(autoincrement())
+  ulid      String   @unique
+  nama      String
+  email     String
+  nip       String   @unique
+  createdAt DateTime @default(now())
+  users     User[]
+}
+
+model PimpinanFakultas {
+  id        Int      @id @default(autoincrement())
+  ulid      String   @unique
+  nama      String
+  email     String
+  nip       String   @unique
+  createdAt DateTime @default(now())
+  users     User[]
+}
+
+model AksesLevel {
+  id        Int      @id @default(autoincrement())
+  ulid      String   @unique
   name      String   @unique
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  users     User[]
+  menu      Menu[]
+  acl       Acl[]
+}
 
-  User User[]
-  acl  Acl[]
+model Menu {
+  id           Int      @id @default(autoincrement())
+  ulid         String   @unique
+  title        String
+  path         String
+  icon         String?
+  aksesLevelId Int
+  aclId        Int
+  createdAt    DateTime @default(now())
+
+  aksesLevel AksesLevel @relation(fields: [aksesLevelId], references: [id])
 }
 
 model Feature {
-  id        String   @id @unique
-  name      String   @unique
+  id        Int      @id @default(autoincrement())
+  ulid      String   @unique
+  nama      String   @unique
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  action    Action[]
-  Acl       Acl[]
+
+  actions Action[]
+  acl     Acl[]
 }
 
 model Action {
-  id          String   @id @unique
-  name        String
-  featureName String
-  feature     Feature  @relation(fields: [featureName], references: [name], onDelete: Cascade)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  ulid      String   @unique
+  nama      String   @unique
+  namaFitur String
+  featureId Int
+  createdAt DateTime @default(now())
 
-  @@unique([featureName, name])
+  feature Feature @relation(fields: [featureId], references: [id])
+  acl     Acl[]
 }
 
 model Acl {
-  id          String   @id @unique
-  featureName String
-  actionName  String
-  userLevelId String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           Int      @id @default(autoincrement())
+  ulid         String   @unique
+  namaFitur    String
+  namaAksi     String
+  aksesLevelId Int
+  featureId    Int
+  actionId     Int
+  createdAt    DateTime @default(now())
 
-  feature   Feature   @relation(fields: [featureName], references: [name], onDelete: Cascade)
-  userLevel UserLevel @relation(fields: [userLevelId], references: [id], onDelete: Cascade)
-
-  @@unique([featureName, actionName, userLevelId])
+  feature    Feature    @relation(fields: [featureId], references: [id])
+  action     Action     @relation(fields: [actionId], references: [id])
+  aksesLevel AksesLevel @relation(fields: [aksesLevelId], references: [id])
 }
 
-enum TypeForSuratKeteranganKuliah {
+enum TipeSuratKeteranganKuliah {
   KP4
   SK_PENSIUN
   SURAT_KETERANGAN_PERUSAHAAN
   LAINNYA
 }
 
-model SuratKeteranganKuliah {
-  id          String                          @id @unique
-  type        TypeForSuratKeteranganKuliah
-  fileUrl     String
-  description String
-  noSurat     String?
-  reason      String?
-  offerById   String
-  status      VerificationStatusKemahasiswaan @default(DIPROSES_OPERATOR_KEMAHASISWAAN)
-  createdAt   DateTime                        @default(now())
-  updatedAt   DateTime                        @updatedAt
-
-  offerBy       User            @relation("offerBy", fields: [offerById], references: [id])
-  statusHistory StatusHistory[]
-}
-
-enum VerificationStatusKemahasiswaan {
+enum VerifikasiStatusBagianKemahasiswaan {
   DIPROSES_OPERATOR_KEMAHASISWAAN
   DISETUJUI_OPERATOR_KEMAHASISWAAN
   DIPROSES_KASUBBAG_KEMAHASISWAAN
@@ -137,33 +240,100 @@ enum VerificationStatusKemahasiswaan {
   USULAN_DITOLAK
 }
 
-model StatusHistory {
-  id          String                          @id @unique
-  action      VerificationStatusKemahasiswaan
-  description String
-  createdAt   DateTime                        @default(now())
+model SuratKeteranganKuliah {
+  id               Int                                 @id @default(autoincrement())
+  ulid             String                              @unique
+  tipeSurat        TipeSuratKeteranganKuliah
+  deskripsi        String                              @db.Text
+  dokumenUrl       String
+  verifikasiStatus VerifikasiStatusBagianKemahasiswaan @default(DIPROSES_OPERATOR_KEMAHASISWAAN)
+  alasanPenolakan  String?                             @db.Text
+  nomorSurat       String?
+  statusId         Int
+  userId           Int
+  createdAt        DateTime                            @default(now())
 
-  userId                  String
-  User                    User                   @relation(fields: [userId], references: [id])
-  SuratKeteranganKuliah   SuratKeteranganKuliah? @relation(fields: [suratKeteranganKuliahId], references: [id])
-  suratKeteranganKuliahId String?
-  CutiSementara           CutiSementara?         @relation(fields: [cutiSementaraId], references: [id])
-  cutiSementaraId         String?
+  status Status @relation(fields: [statusId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
 }
 
 model CutiSementara {
-  id                          String                          @id @unique
-  suratPersetujuanOrangTuaUrl String
-  bebasPustakaUrl             String
-  bssFormUrl                  String
-  status                      VerificationStatusKemahasiswaan @default(DIPROSES_OPERATOR_KEMAHASISWAAN)
-  noSurat                     String?
-  reason                      String
-  rejectedReason              String?
-  offerById                   String
-  createdAt                   DateTime                        @default(now())
-  updatedAt                   DateTime                        @updatedAt
+  id                   Int                                 @id @default(autoincrement())
+  ulid                 String                              @unique
+  suratIzinOrangTuaUrl String
+  suratBssUrl          String
+  suratBebasPustakaUrl String
+  alasanPengajuan      String                              @db.Text
+  verifikasiStatus     VerifikasiStatusBagianKemahasiswaan
+  alasanPenolakan      String?                             @db.Text
+  statusId             Int
+  userId               Int
+  createdAt            DateTime                            @default(now())
 
-  offerBy       User            @relation("offerBy", fields: [offerById], references: [id])
-  statusHistory StatusHistory[]
+  status Status @relation(fields: [statusId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+enum VerifikasiStatusBagianAkademik {
+  DIPROSES_OPERATOR_AKADEMIK
+  DISETUJUI_OPERATOR_AKADEMIK
+  DIPROSES_KASUBBAG_AKADEMIK
+  DISETUJUI_KASUBBAG_AKADEMIK
+  USULAN_DISETUJUI
+  USULAN_DITOLAK
+}
+
+model PengajuanYudisium {
+  id               Int                            @id @default(autoincrement())
+  ulid             String                         @unique
+  dokumenUrl       String
+  verifikasiStatus VerifikasiStatusBagianAkademik
+  alasanPenolakan  String?                        @db.Text
+  statusId         Int
+  userId           Int
+  createdAt        DateTime                       @default(now())
+
+  status Status @relation(fields: [statusId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+model LegalisirIjazah {
+  id               Int                            @id @default(autoincrement())
+  ulid             String                         @unique
+  dokumenUrl       String
+  verifikasiStatus VerifikasiStatusBagianAkademik
+  alasanPenolakan  String?                        @db.Text
+  statusId         Int
+  userId           Int
+  createdAt        DateTime                       @default(now())
+
+  status Status @relation(fields: [statusId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+model Status {
+  id        Int      @id @default(autoincrement())
+  ulid      String   @unique
+  nama      String
+  deskripsi String   @db.Text
+  userId    Int
+  createdAt DateTime @default(now())
+
+  user                  User                    @relation(fields: [userId], references: [id])
+  suratKeteranganKuliah SuratKeteranganKuliah[]
+  cutiSementara         CutiSementara[]
+  pengajuanYudisium     PengajuanYudisium[]
+  legalisirIjazah       LegalisirIjazah[]
+}
+
+model Log {
+  id           Int      @id @default(autoincrement())
+  ulid         String   @unique
+  flagMenu     String
+  deskripsi    String   @db.Text
+  aksesLevelId Int
+  userId       Int
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
 }

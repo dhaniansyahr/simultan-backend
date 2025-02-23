@@ -1,29 +1,47 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, VerifikasiStatusBagianKemahasiswaan } from "@prisma/client";
 import { ulid } from "ulid";
 
 export async function seedCutiSementara(prisma: PrismaClient) {
-    const countCutiSementara = await prisma.cutiSementara.count();
+        const countCutiSementara = await prisma.cutiSementara.count();
 
-    if (countCutiSementara === 0) {
-        const findMhs = await prisma.user.findFirst({
-            where: {
-                UserLevel: {
-                    name: "MAHASISWA",
-                },
-            },
-        });
+        if (countCutiSementara === 0) {
+                const findMhs = await prisma.user.findFirst({
+                        where: {
+                                aksesLevel: {
+                                        name: "MAHASISWA",
+                                },
+                        },
+                });
 
-        await prisma.cutiSementara.create({
-            data: {
-                id: ulid(),
-                suratPersetujuanOrangTuaUrl: "https://google.com",
-                bebasPustakaUrl: "https://google.com",
-                bssFormUrl: "https://google.com",
-                reason: "Pengen Cuti",
-                offerById: findMhs!.id,
-            },
-        });
-    }
+                if (!findMhs) {
+                        console.log("No student user found for Cuti Sementara seeding");
+                        return;
+                }
 
-    console.log("Cuti Sementara seeded");
+                // Create initial status
+                const initialStatus = await prisma.status.create({
+                        data: {
+                                ulid: ulid(),
+                                nama: VerifikasiStatusBagianKemahasiswaan.DIPROSES_OPERATOR_KEMAHASISWAAN,
+                                deskripsi: `Pengajuan Cuti oleh ${findMhs.nama}`,
+                                userId: findMhs.id,
+                        },
+                });
+
+                // Create Cuti Sementara entry
+                await prisma.cutiSementara.create({
+                        data: {
+                                ulid: ulid(),
+                                suratIzinOrangTuaUrl: "https://example.com/surat-izin",
+                                suratBssUrl: "https://example.com/surat-bss",
+                                suratBebasPustakaUrl: "https://example.com/surat-bebas-pustaka",
+                                alasanPengajuan: "Alasan pengajuan cuti sementara",
+                                verifikasiStatus: VerifikasiStatusBagianKemahasiswaan.DIPROSES_OPERATOR_KEMAHASISWAAN,
+                                statusId: initialStatus.id,
+                                userId: findMhs.id,
+                        },
+                });
+        }
+
+        console.log("Cuti Sementara seeded");
 }

@@ -19,21 +19,23 @@ router.route("/api/users", RoutesRegistry.UserRoutes);
 router.route("/api/surat-keterangan-kuliah", RoutesRegistry.SuratKeteranganKuliahRoutes);
 router.route("/api/acl", RoutesRegistry.AclRoutes);
 router.route("/api/cuti-sementara", RoutesRegistry.CutiSementaraRoutes);
+router.route("/api/pengajuan-yudisium", RoutesRegistry.PengajuanYudisiumRoutes);
+router.route("/api/legalisir-ijazah", RoutesRegistry.LegalisirIjazahRoutes);
 
 router.get("/", (c: Context) => {
-    return response_success(c, "main routes!");
+        return response_success(c, "main routes!");
 });
 
 router.get("/robots.txt", (c: Context) => {
-    return c.text(`User-agent: *\nAllow: /`);
+        return c.text(`User-agent: *\nAllow: /`);
 });
 
 router.get("/ping", (c: Context) => {
-    return response_success(c, "pong!");
+        return response_success(c, "pong!");
 });
 
 router.all("*", (c: Context) => {
-    return response_not_found(c);
+        return response_not_found(c);
 });
 
 export default router;

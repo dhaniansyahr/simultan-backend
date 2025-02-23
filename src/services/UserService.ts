@@ -9,10 +9,12 @@ import { prisma } from "$utils/prisma.utils";
 import { User } from "@prisma/client";
 import { UserDTO, UserRegisterDTO } from "$entities/User";
 import { buildFilterQueryLimitOffsetV2 } from "./helpers/FilterQueryV2";
+import { ulid } from "ulid";
 
 export type CreateResponse = User | {};
 export async function create(data: UserRegisterDTO): Promise<ServiceResponse<CreateResponse>> {
     try {
+        data.ulid = ulid();
         const user = await prisma.user.create({
             data,
         });
@@ -60,7 +62,7 @@ export async function getAll(filters: FilteringQueryV2): Promise<ServiceResponse
 }
 
 export type GetByIdResponse = User | {};
-export async function getById(id: string): Promise<ServiceResponse<GetByIdResponse>> {
+export async function getById(id: number): Promise<ServiceResponse<GetByIdResponse>> {
     try {
         let user = await prisma.user.findUnique({
             where: {
@@ -81,7 +83,7 @@ export async function getById(id: string): Promise<ServiceResponse<GetByIdRespon
 }
 
 export type UpdateResponse = User | {};
-export async function update(id: string, data: UserDTO): Promise<ServiceResponse<UpdateResponse>> {
+export async function update(id: number, data: UserDTO): Promise<ServiceResponse<UpdateResponse>> {
     try {
         let user = await prisma.user.findUnique({
             where: {
@@ -115,7 +117,7 @@ export async function deleteByIds(ids: string): Promise<ServiceResponse<{}>> {
         idArray.forEach(async (id) => {
             await prisma.user.delete({
                 where: {
-                    id,
+                    id: Number(id),
                 },
             });
         });

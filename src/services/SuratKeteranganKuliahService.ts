@@ -1,15 +1,15 @@
 import { FilteringQueryV2, PagedList } from "$entities/Query";
 import {
-    BadRequestWithMessage,
-    INTERNAL_SERVER_ERROR_SERVICE_RESPONSE,
-    INVALID_ID_SERVICE_RESPONSE,
-    ServiceResponse,
+        BadRequestWithMessage,
+        INTERNAL_SERVER_ERROR_SERVICE_RESPONSE,
+        INVALID_ID_SERVICE_RESPONSE,
+        ServiceResponse,
 } from "$entities/Service";
 import Logger from "$pkg/logger";
 import { prisma } from "$utils/prisma.utils";
-import { SuratKeteranganKuliah, VerificationStatusKemahasiswaan } from "@prisma/client";
+import { SuratKeteranganKuliah, VerifikasiStatusBagianKemahasiswaan } from "@prisma/client";
 import { buildFilterQueryLimitOffsetV2 } from "./helpers/FilterQueryV2";
-import { SuratKeteranganKuliahDTO, VerifikasiSuratDTO } from "$entities/SuratKeteranganKuliah";
+import { LetterProcessDTO, SuratKeteranganKuliahDTO, VerifikasiSuratDTO } from "$entities/SuratKeteranganKuliah";
 import { UserJWTDAO } from "$entities/User";
 import { buildBufferPDF } from "$utils/buffer.utils";
 import { DateTime } from "luxon";
@@ -19,270 +19,356 @@ import { getNextVerificationStatus } from "$utils/helper.utils";
 
 export type CreateResponse = SuratKeteranganKuliah | {};
 export async function create(
-    data: SuratKeteranganKuliahDTO,
-    user: UserJWTDAO
+        data: SuratKeteranganKuliahDTO,
+        user: UserJWTDAO
 ): Promise<ServiceResponse<CreateResponse>> {
-    try {
-        data.offerById = user.id;
-        const status = await prisma.$transaction(async (prisma) => {
-            const surat = await prisma.suratKeteranganKuliah.create({
-                data,
-            });
+        try {
+                const initialStatus = await prisma.status.create({
+                        data: {
+                                ulid: ulid(),
+                                nama: VerifikasiStatusBagianKemahasiswaan.DIPROSES_OPERATOR_KEMAHASISWAAN,
+                                deskripsi: `Pengajuan Surat oleh ${user.nama} dan ${VerifikasiStatusBagianKemahasiswaan.DIPROSES_OPERATOR_KEMAHASISWAAN}`,
+                                userId: user.id,
+                        },
+                });
 
-            await prisma.statusHistory.create({
-                data: {
-                    id: ulid(),
-                    action: VerificationStatusKemahasiswaan.DIPROSES_OPERATOR_KEMAHASISWAAN,
-                    description: VerificationStatusKemahasiswaan.DIPROSES_OPERATOR_KEMAHASISWAAN,
-                    suratKeteranganKuliahId: surat.id,
-                    userId: user.id,
-                },
-            });
+                // Create the letter
+                const surat = await prisma.suratKeteranganKuliah.create({
+                        data: {
+                                ulid: ulid(),
+                                tipeSurat: data.tipeSurat,
+                                deskripsi: data.deskripsi,
+                                dokumenUrl: data.dokumenUrl,
+                                verifikasiStatus: VerifikasiStatusBagianKemahasiswaan.DIPROSES_OPERATOR_KEMAHASISWAAN,
+                                statusId: initialStatus.id,
+                                userId: user.id,
+                        },
+                });
 
-            return surat;
-        });
+                // Create log entry
+                await prisma.log.create({
+                        data: {
+                                ulid: ulid(),
+                                flagMenu: "SURAT_KETERANGAN_KULIAH",
+                                deskripsi: `Pengajuan surat keterangan kuliah baru dengan ID ${surat.ulid}`,
+                                aksesLevelId: user.aksesLevelId,
+                                userId: user.id,
+                        },
+                });
 
-        return {
-            status: true,
-            data: status,
-        };
-    } catch (err) {
-        Logger.error(`SuratKeteranganKuliahService.create : ${err}`);
-        return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
-    }
+                return {
+                        status: true,
+                        data: surat,
+                };
+        } catch (err) {
+                Logger.error(`SuratKeteranganKuliahService.create : ${err}`);
+                return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
+        }
 }
 
 export type GetAllResponse = PagedList<SuratKeteranganKuliah[]> | {};
 export async function getAll(filters: FilteringQueryV2, user: UserJWTDAO): Promise<ServiceResponse<GetAllResponse>> {
-    try {
-        const usedFilters = buildFilterQueryLimitOffsetV2(filters);
+        try {
+                const usedFilters = buildFilterQueryLimitOffsetV2(filters);
 
-        const userLevel = await prisma.userLevel.findUnique({
-            where: {
-                id: user.userLevelId,
-            },
-        });
+                const aksesLevel = await prisma.aksesLevel.findUnique({
+                        where: {
+                                id: user.aksesLevelId,
+                        },
+                });
 
-        if (!userLevel) return INVALID_ID_SERVICE_RESPONSE;
+                if (!aksesLevel) return BadRequestWithMessage("Akses Level tidak ditemukan!");
 
-        if (userLevel.name === "MAHASISWA") {
-            usedFilters.where.AND.push({
-                offerById: user.id,
-            });
+                // For students, only show their own letters
+                if (aksesLevel.name === "MAHASISWA") {
+                        usedFilters.where.AND.push({
+                                userId: user.id,
+                        });
+                }
+
+                // For Operator and Kasubbag, show letters that are not yet approved or rejected
+                if (aksesLevel.name === "OPERATOR_KEMAHASISWAAN" || aksesLevel.name === "KASUBBAG_KEMAHASISWAAN") {
+                        usedFilters.where.AND.push({
+                                verifikasiStatus: {
+                                        notIn: ["USULAN_DISETUJUI", "USULAN_DITOLAK"],
+                                },
+                        });
+                }
+
+                usedFilters.include = {
+                        user: {
+                                select: {
+                                        nama: true,
+                                        npm: true,
+                                },
+                        },
+                        status: true,
+                };
+
+                const [suratKeteranganKuliah, totalData] = await Promise.all([
+                        prisma.suratKeteranganKuliah.findMany(usedFilters),
+                        prisma.suratKeteranganKuliah.count({
+                                where: usedFilters.where,
+                        }),
+                ]);
+
+                let totalPage = 1;
+                if (totalData > usedFilters.take) totalPage = Math.ceil(totalData / usedFilters.take);
+
+                return {
+                        status: true,
+                        data: {
+                                entries: suratKeteranganKuliah,
+                                totalData,
+                                totalPage,
+                        },
+                };
+        } catch (err) {
+                Logger.error(`SuratKeteranganKuliahService.getAll : ${err} `);
+                return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
         }
-
-        // if (userLevel.name === "OPERATOR_KEMAHASISWAAN") {
-        //     usedFilters.where.AND.push({
-        //         statusHistory: {
-        //             some: {
-        //                 action: {
-        //                     notIn: [
-        //                         VerificationStatusKemahasiswaan.DISETUJUI_OPERATOR_KEMAHASISWAAN,
-        //                         VerificationStatusKemahasiswaan.USULAN_DISETUJUI,
-        //                     ],
-        //                 },
-        //             },
-        //         },
-        //     });
-        // }
-
-        // if (userLevel.name === "KASUBBAG_KEMAHASISWAAN") {
-        //     usedFilters.where.AND.push({
-        //         statusHistory: {
-        //             some: {
-        //                 action: {
-        //                     not: VerificationStatusKemahasiswaan.DISETUJUI_KASUBBAG_KEMAHASISWAAN,
-        //                 },
-        //             },
-        //         },
-        //     });
-        // }
-
-        usedFilters.include = {
-            statusHistory: {
-                include: {
-                    User: true,
-                },
-            },
-            offerBy: {
-                include: {
-                    Mahasiswa: true,
-                },
-            },
-        };
-
-        const [SuratKeterangaKuliah, totalData] = await Promise.all([
-            prisma.suratKeteranganKuliah.findMany(usedFilters),
-            prisma.suratKeteranganKuliah.count({
-                where: usedFilters.where,
-            }),
-        ]);
-
-        let totalPage = 1;
-        if (totalData > usedFilters.take) totalPage = Math.ceil(totalData / usedFilters.take);
-
-        return {
-            status: true,
-            data: {
-                entries: SuratKeterangaKuliah,
-                totalData,
-                totalPage,
-            },
-        };
-    } catch (err) {
-        Logger.error(`SuratKeteranganKuliahService.getAll : ${err} `);
-        return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
-    }
 }
 
 export type GetByIdResponse = SuratKeteranganKuliah | {};
 export async function getById(id: string): Promise<ServiceResponse<GetByIdResponse>> {
-    try {
-        let SuratKeterangaKuliah = await prisma.suratKeteranganKuliah.findUnique({
-            include: {
-                offerBy: {
-                    select: {
-                        fullName: true,
-                        email: true,
-                    },
-                },
-                statusHistory: {
-                    include: {
-                        User: true,
-                    },
-                },
-            },
-            where: {
-                id,
-            },
-        });
+        try {
+                const suratKeteranganKuliah = await prisma.suratKeteranganKuliah.findUnique({
+                        include: {
+                                user: {
+                                        select: {
+                                                nama: true,
+                                                npm: true,
+                                        },
+                                },
+                                status: true,
+                        },
+                        where: {
+                                ulid: id,
+                        },
+                });
 
-        if (!SuratKeterangaKuliah) return INVALID_ID_SERVICE_RESPONSE;
+                if (!suratKeteranganKuliah) return INVALID_ID_SERVICE_RESPONSE;
 
-        return {
-            status: true,
-            data: SuratKeterangaKuliah,
-        };
-    } catch (err) {
-        Logger.error(`SuratKeteranganKuliahService.getById : ${err}`);
-        return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
-    }
+                return {
+                        status: true,
+                        data: suratKeteranganKuliah,
+                };
+        } catch (err) {
+                Logger.error(`SuratKeteranganKuliahService.getById : ${err}`);
+                return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
+        }
 }
 
 export type VerificationSuratResponse = SuratKeteranganKuliah | {};
 export async function verificationStatus(
-    id: string,
-    data: VerifikasiSuratDTO,
-    user: UserJWTDAO
+        id: string,
+        data: VerifikasiSuratDTO,
+        user: UserJWTDAO
 ): Promise<ServiceResponse<VerificationSuratResponse>> {
-    try {
-        const verificationExist = await prisma.suratKeteranganKuliah.findFirst({
-            where: {
-                statusHistory: {
-                    some: {
-                        userId: user.id,
-                        action: {
-                            in: [
-                                VerificationStatusKemahasiswaan.USULAN_DISETUJUI,
-                                VerificationStatusKemahasiswaan.USULAN_DITOLAK,
-                            ],
-                        },
-                    },
-                },
-            },
-        });
-
-        if (verificationExist) return BadRequestWithMessage("Kamu Sudah Melakukan Verifikasi Pada Surat Ini!");
-
-        let nextStatus: VerificationStatusKemahasiswaan = "DIPROSES_OPERATOR_KEMAHASISWAAN";
-        if (data.action === "DISETUJUI") {
-            nextStatus = getNextVerificationStatus(VerificationStatusKemahasiswaan.DISETUJUI_OPERATOR_KEMAHASISWAAN);
-        }
-
-        await prisma.$transaction(async (prisma) => {
-            await prisma.statusHistory.create({
-                data: {
-                    id: ulid(),
-                    action: nextStatus,
-                    description: `${nextStatus} oleh ${user.fullName}`,
-                    userId: user.id,
-                    suratKeteranganKuliahId: id,
-                },
-            });
-
-            // Update the `reason` field if the status is `USULAN_DITOLAK`
-            if (data.action === "DITOLAK") {
-                await prisma.suratKeteranganKuliah.update({
-                    where: { id },
-                    data: { reason: data.reason },
+        try {
+                const surat = await prisma.suratKeteranganKuliah.findUnique({
+                        where: { ulid: id },
                 });
-            }
-        });
 
-        const suratKeteranganKuliah = await prisma.suratKeteranganKuliah.findUnique({
-            where: {
-                id,
-            },
-        });
+                if (!surat) return INVALID_ID_SERVICE_RESPONSE;
 
-        if (!suratKeteranganKuliah) return INVALID_ID_SERVICE_RESPONSE;
+                // Get current verification status
+                const currentStatus = surat.verifikasiStatus;
+                let nextStatus: VerifikasiStatusBagianKemahasiswaan;
 
-        return {
-            status: true,
-            data: suratKeteranganKuliah,
-        };
-    } catch (error) {
-        Logger.error(`SuratKeteranganKuliahService.verificationStatus : ${error}`);
-        return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
-    }
+                if (data.action === "DISETUJUI") {
+                        nextStatus = getNextVerificationStatus(currentStatus);
+                } else {
+                        nextStatus = VerifikasiStatusBagianKemahasiswaan.USULAN_DITOLAK;
+                }
+
+                // Create new status
+                const newStatus = await prisma.status.create({
+                        data: {
+                                ulid: ulid(),
+                                nama: nextStatus,
+                                deskripsi:
+                                        data.action === "DISETUJUI"
+                                                ? `Surat disetujui oleh ${user.nama}`
+                                                : `Surat ditolak oleh ${user.nama}: ${data.alasanPenolakan}`,
+                                userId: user.id,
+                        },
+                });
+
+                // Update the letter
+                const updatedSurat = await prisma.suratKeteranganKuliah.update({
+                        where: { ulid: id },
+                        data: {
+                                verifikasiStatus: nextStatus,
+                                statusId: newStatus.id,
+                                alasanPenolakan: data.action === "DITOLAK" ? data.alasanPenolakan : undefined,
+                        },
+                });
+
+                // Create log entry
+                await prisma.log.create({
+                        data: {
+                                ulid: ulid(),
+                                flagMenu: "SURAT_KETERANGAN_KULIAH",
+                                deskripsi: `Verifikasi surat: ${nextStatus}`,
+                                aksesLevelId: user.aksesLevelId,
+                                userId: user.id,
+                        },
+                });
+
+                return {
+                        status: true,
+                        data: updatedSurat,
+                };
+        } catch (error) {
+                Logger.error(`SuratKeteranganKuliahService.verificationStatus : ${error}`);
+                return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
+        }
+}
+
+export async function letterProcess(
+        id: string,
+        user: UserJWTDAO,
+        data: LetterProcessDTO
+): Promise<ServiceResponse<{}>> {
+        try {
+                const suratKeteranganKuliah = await prisma.suratKeteranganKuliah.findUnique({
+                        where: {
+                                ulid: id,
+                        },
+                        include: {
+                                user: {
+                                        select: {
+                                                nama: true,
+                                                npm: true,
+                                        },
+                                },
+                                status: true,
+                        },
+                });
+
+                if (!suratKeteranganKuliah) return INVALID_ID_SERVICE_RESPONSE;
+
+                // Get current verification status
+                const currentStatus = suratKeteranganKuliah.verifikasiStatus;
+
+                // Check if the letter is already processed
+                if (currentStatus === "USULAN_DISETUJUI") {
+                        return BadRequestWithMessage("Surat sudah diproses!");
+                } else if (currentStatus === "USULAN_DITOLAK") {
+                        return BadRequestWithMessage(
+                                "Surat ditolak, Mohon periksa alasan penolakan dan ajukan surat baru!"
+                        );
+                }
+
+                // Get the next status
+                const nextStatus = getNextVerificationStatus(currentStatus);
+                // Create new status
+                const newStatus = await prisma.status.create({
+                        data: {
+                                ulid: ulid(),
+                                nama: nextStatus,
+                                deskripsi: `Surat diproses oleh ${user.nama}`,
+                                userId: user.id,
+                        },
+                });
+
+                // Update the letter
+                const updatedSurat = await prisma.suratKeteranganKuliah.update({
+                        where: { ulid: id },
+                        data: {
+                                verifikasiStatus: nextStatus,
+                                statusId: newStatus.id,
+                                nomorSurat: data.nomorSurat,
+                        },
+                });
+
+                // Create log entry
+                await prisma.log.create({
+                        data: {
+                                ulid: ulid(),
+                                flagMenu: "SURAT_KETERANGAN_KULIAH",
+                                deskripsi: `Surat diproses oleh ${user.nama}`,
+                                aksesLevelId: user.aksesLevelId,
+                                userId: user.id,
+                        },
+                });
+                return {
+                        status: true,
+                        data: updatedSurat,
+                };
+        } catch (error) {
+                Logger.error(`SuratKeteranganKuliahService.letterProcess : ${error}`);
+                return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
+        }
 }
 
 export async function cetakSurat(id: string, user: UserJWTDAO): Promise<ServiceResponse<any>> {
-    try {
-        const suratKeteranganKuliah = await prisma.suratKeteranganKuliah.findUnique({
-            where: {
-                id,
-                // statusHistory: {
-                //     some: {
-                //         action: VerificationStatusKemahasiswaan.USULAN_DISETUJUI,
-                //     },
-                // },
-            },
-        });
+        try {
+                const suratKeteranganKuliah = await prisma.suratKeteranganKuliah.findUnique({
+                        where: {
+                                ulid: id,
+                                verifikasiStatus: "USULAN_DISETUJUI",
+                        },
+                        include: {
+                                user: {
+                                        select: {
+                                                nama: true,
+                                                npm: true,
+                                        },
+                                },
+                                status: true,
+                        },
+                });
 
-        if (!suratKeteranganKuliah) return INVALID_ID_SERVICE_RESPONSE;
+                if (!suratKeteranganKuliah) {
+                        return BadRequestWithMessage("Surat tidak ditemukan atau belum disetujui!");
+                }
 
-        const findUser = await prisma.user.findUnique({
-            where: {
-                id: user.id,
-            },
-            include: {
-                Mahasiswa: true,
-            },
-        });
+                // Check if the user has permission to print
+                // if (
+                //     user.id !== suratKeteranganKuliah.userId &&
+                //     !["OPERATOR_KEMAHASISWAAN", "KASUBBAG_KEMAHASISWAAN"].includes(user.aksesLevel.name)
+                // ) {
+                //     return BadRequestWithMessage("Anda tidak memiliki akses untuk mencetak surat ini!");
+                // }
 
-        let pdfData: any = {};
+                let pdfData = {
+                        title: "SURAT KETERANGAN KULIAH",
+                        data: {
+                                ...suratKeteranganKuliah,
+                                nama: suratKeteranganKuliah.user.nama,
+                                npm: suratKeteranganKuliah.user.npm,
+                                tipeSurat: suratKeteranganKuliah.tipeSurat,
+                                deskripsi: suratKeteranganKuliah.deskripsi,
+                        },
+                        date: DateTime.now().toFormat("dd MMMM yyyy"),
+                        ...getCurrentAcademicInfo(),
+                };
 
-        const akademikInfo = getCurrentAcademicInfo();
+                const buffer = await buildBufferPDF("surat-keterangan-kuliah", pdfData);
+                const fileName = `Surat-Keterangan-Kuliah-${suratKeteranganKuliah.user.npm}`;
 
-        pdfData.title = "SURAT KETERANGAN KULIAH";
-        pdfData.data = { ...suratKeteranganKuliah, ...findUser };
-        pdfData.date = DateTime.now().toFormat("dd MMMM yyyy");
-        pdfData.tahunAkademik = akademikInfo.tahunAkademik;
-        pdfData.semester = akademikInfo.semester;
+                // Create log entry for printing
+                await prisma.log.create({
+                        data: {
+                                ulid: ulid(),
+                                flagMenu: "SURAT_KETERANGAN_KULIAH",
+                                deskripsi: `Surat dengan ID ${id} dicetak oleh ${user.nama}`,
+                                aksesLevelId: user.aksesLevelId,
+                                userId: user.id,
+                        },
+                });
 
-        const buffer = await buildBufferPDF("surat-keterangan-kuliah", pdfData);
-        const fileName = `Surat-Keterangan-Kuliah-${findUser?.Mahasiswa?.npm}`;
-
-        return {
-            status: true,
-            data: {
-                buffer,
-                fileName,
-            },
-        };
-    } catch (err) {
-        Logger.error(`PembayaranKolektifVoucherService.exportPDF : ${err}`);
-        return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
-    }
+                return {
+                        status: true,
+                        data: {
+                                buffer,
+                                fileName,
+                        },
+                };
+        } catch (err) {
+                Logger.error(`SuratKeteranganKuliahService.cetakSurat : ${err}`);
+                return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
+        }
 }

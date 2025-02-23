@@ -25,13 +25,9 @@ export function checkAccess(featureName: string, action: string) {
     return async (c: Context, next: Next) => {
         const user: UserJWTDAO = await c.get("jwtPayload");
 
-        const mappingExist = await prisma.acl.findUnique({
+        const mappingExist = await prisma.acl.findFirst({
             where: {
-                featureName_actionName_userLevelId: {
-                    actionName: action,
-                    featureName: featureName,
-                    userLevelId: user.userLevelId,
-                },
+                AND: [{ namaFitur: featureName }, { namaAksi: action }, { aksesLevelId: user.aksesLevelId }],
             },
         });
 
@@ -39,7 +35,7 @@ export function checkAccess(featureName: string, action: string) {
             if (mappingExist) {
                 await next();
             } else {
-                return response_forbidden(c, "Anda tidak dapat mengakses fitur ini!!!");
+                return response_forbidden(c, "You don't have permission to access this feature!");
             }
         } catch (err) {
             return response_internal_server_error(c, (err as Error).message);
