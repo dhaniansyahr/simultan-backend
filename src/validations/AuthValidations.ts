@@ -46,8 +46,6 @@ export async function validateLoginDTO(c: Context, next: Next) {
         const invalidFields = [];
         if (!data.identityNumber) invalidFields.push("NPM/NIP is required");
 
-        console.log("IDENTITY NUMBER : ", data.identityNumber);
-
         const validIdentityNumber = checkIdentityNumber(data.identityNumber);
         if (validIdentityNumber !== "NPM" && validIdentityNumber !== "NIP")
                 invalidFields.push(
