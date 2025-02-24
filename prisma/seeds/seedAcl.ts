@@ -11,7 +11,7 @@ export async function seedAcl(prisma: PrismaClient) {
         const featuresAndActions: FeatureAction[] = [
                 {
                         feature: "SURAT_KETERANGAN_KULIAH",
-                        actions: ["CREATE", "READ", "VERIFICATION"],
+                        actions: ["CREATE", "READ", "EXPORT", "VERIFICATION"],
                 },
                 {
                         feature: "CUTI_SEMENTARA",
