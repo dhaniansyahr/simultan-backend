@@ -12,22 +12,22 @@ export async function seedMenu(prisma: PrismaClient) {
                 {
                         title: "Surat Keterangan Kuliah",
                         path: "/college-certificate",
-                        aksesLevel: ["ADMIN", "OPERATOR_KEMAHASISWAAN", "MAHASISWA"],
+                        aksesLevel: ["ADMIN", "OPERATOR_KEMAHASISWAAN", "MAHASISWA", "KASUBBAG_KEMAHASISWAAN"],
                 },
                 {
                         title: "Cuti Sementara",
                         path: "/temporary-leave",
-                        aksesLevel: ["ADMIN", "OPERATOR_KEMAHASISWAAN", "MAHASISWA"],
+                        aksesLevel: ["ADMIN", "OPERATOR_KEMAHASISWAAN", "MAHASISWA", "KASUBBAG_KEMAHASISWAAN"],
                 },
                 {
                         title: "Pengajuan Yudisium",
                         path: "/graduation-submission",
-                        aksesLevel: ["ADMIN", "OPERATOR_AKADEMIK", "MAHASISWA"],
+                        aksesLevel: ["ADMIN", "OPERATOR_AKADEMIK", "MAHASISWA", "KASUBBAG_AKADEMIK"],
                 },
                 {
                         title: "Legalisir Ijazah",
                         path: "/certificate-legalization",
-                        aksesLevel: ["ADMIN", "OPERATOR_AKADEMIK", "MAHASISWA"],
+                        aksesLevel: ["ADMIN", "OPERATOR_AKADEMIK", "MAHASISWA", "KASUBBAG_AKADEMIK"],
                 },
                 {
                         title: "User Management",
@@ -38,23 +38,6 @@ export async function seedMenu(prisma: PrismaClient) {
                         title: "Access Control List",
                         path: "/acl",
                         aksesLevel: ["ADMIN"],
-                },
-                {
-                        title: "Dashboard",
-                        path: "/dashboard",
-                        aksesLevel: [
-                                "ADMIN",
-                                "OPERATOR_KEMAHASISWAAN",
-                                "OPERATOR_AKADEMIK",
-                                "KTU",
-                                "KASUBBAG_AKADEMIK",
-                                "KASUBBAG_KEMAHASISWAAN",
-                                "DEKAN",
-                                "WD_1",
-                                "KEPALA_DEPARTEMEN",
-                                "KEPALA_PRODI",
-                                "PIMPINAN_FAKULTAS",
-                        ],
                 },
         ];
 
