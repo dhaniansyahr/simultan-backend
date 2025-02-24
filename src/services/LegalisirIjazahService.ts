@@ -11,7 +11,7 @@ import { buildFilterQueryLimitOffsetV2 } from "./helpers/FilterQueryV2";
 import { ulid } from "ulid";
 import { VerifikasiStatusBagianAkademik } from "@prisma/client";
 import { UserJWTDAO } from "$entities/User";
-import { getNextVerificationStatusAkademik } from "$utils/helper.utils";
+import { flowCreatingStatusVeificationAkademik, getNextVerificationStatusAkademik } from "$utils/helper.utils";
 import { LegalisirIjazahDTO, VerifikasiLegalisirIjazahDTO } from "$entities/LegalisirIjazah";
 
 export type CreateResponse = LegalisirIjazahDTO | {};
@@ -205,6 +205,16 @@ export async function verificationStatus(
                                 userId: user.id,
                         },
                 });
+
+                if (nextStatus !== "USULAN_DISETUJUI" && nextStatus !== "USULAN_DITOLAK") {
+                        await flowCreatingStatusVeificationAkademik(
+                                nextStatus,
+                                legalisirIjazah.ulid,
+                                user.nama,
+                                user.id,
+                                false
+                        );
+                }
 
                 return {
                         status: true,

@@ -12,7 +12,7 @@ import { buildFilterQueryLimitOffsetV2 } from "./helpers/FilterQueryV2";
 import { ulid } from "ulid";
 import { VerifikasiStatusBagianAkademik } from "@prisma/client";
 import { UserJWTDAO } from "$entities/User";
-import { getNextVerificationStatusAkademik } from "$utils/helper.utils";
+import { flowCreatingStatusVeificationAkademik, getNextVerificationStatusAkademik } from "$utils/helper.utils";
 
 export type CreateResponse = PengajuanYudisiumDTO | {};
 export async function create(data: PengajuanYudisiumDTO, user: UserJWTDAO): Promise<ServiceResponse<CreateResponse>> {
@@ -208,6 +208,16 @@ export async function verificationStatus(
                                 userId: user.id,
                         },
                 });
+
+                if (nextStatus !== "USULAN_DISETUJUI" && nextStatus !== "USULAN_DITOLAK") {
+                        await flowCreatingStatusVeificationAkademik(
+                                nextStatus,
+                                yudisium.ulid,
+                                user.nama,
+                                user.id,
+                                true
+                        );
+                }
 
                 return {
                         status: true,

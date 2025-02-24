@@ -19,6 +19,12 @@ export async function validateVerifikasiStatusDTO(c: Context, next: Next) {
 
         if (!data.action) invalidFields.push(generateErrorStructure("action", "action cannot be empty"));
 
+        if (data.action !== "USULAN_DISETUJUI" && data.action !== "USULAN_DITOLAK") {
+                invalidFields.push(
+                        generateErrorStructure("action", "action must be either USULAN_DISETUJUI or USULAN_DITOLAK")
+                );
+        }
+
         if (data.action === "USULAN_DITOLAK") {
                 if (!data.alasanPenolakan)
                         invalidFields.push(

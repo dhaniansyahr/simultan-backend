@@ -128,3 +128,58 @@ export async function flowCreatingStatusVeification(
                 return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
         }
 }
+
+export async function flowCreatingStatusVeificationAkademik(
+        currentStatus: VerifikasiStatusBagianAkademik,
+        id: string,
+        name: string,
+        userId: number,
+        yudisium: boolean
+) {
+        try {
+                const nextStatus: VerifikasiStatusBagianAkademik = getNextVerificationStatusAkademik(currentStatus);
+
+                if (yudisium) {
+                        await prisma.pengajuanYudisium.update({
+                                where: {
+                                        ulid: id,
+                                },
+                                data: {
+                                        verifikasiStatus: nextStatus,
+                                        status: {
+                                                create: [
+                                                        {
+                                                                ulid: ulid(),
+                                                                nama: nextStatus,
+                                                                deskripsi: `Pengajuan Diproses Oleh ${name}`,
+                                                                userId: userId,
+                                                        },
+                                                ],
+                                        },
+                                },
+                        });
+                } else {
+                        await prisma.legalisirIjazah.update({
+                                where: {
+                                        ulid: id,
+                                },
+                                data: {
+                                        verifikasiStatus: nextStatus,
+                                        status: {
+                                                create: [
+                                                        {
+                                                                ulid: ulid(),
+                                                                nama: nextStatus,
+                                                                deskripsi: `Pengajuan Diproses Oleh ${name}`,
+                                                                userId: userId,
+                                                        },
+                                                ],
+                                        },
+                                },
+                        });
+                }
+        } catch (error) {
+                Logger.error(`Helper.flowCreatingStatusVerification : ${error}`);
+                return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
+        }
+}
