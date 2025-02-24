@@ -83,27 +83,27 @@ export async function seedAcl(prisma: PrismaClient) {
                         acl: [
                                 {
                                         feature: "SURAT_KETERANGAN_KULIAH",
-                                        actions: ["READ"],
+                                        actions: ["VIEW"],
                                 },
                                 {
                                         feature: "CUTI_SEMENTARA",
-                                        actions: ["READ"],
+                                        actions: ["VIEW"],
                                 },
                                 {
                                         feature: "PENGAJUAN_YUDISIUM",
-                                        actions: ["READ"],
+                                        actions: ["VIEW"],
                                 },
                                 {
                                         feature: "LEGALISIR_IJAZAH",
-                                        actions: ["READ"],
+                                        actions: ["VIEW"],
                                 },
                                 {
                                         feature: "USER_MANAGEMENT",
-                                        actions: ["CREATE", "READ", "UPDATE", "DELETE"],
+                                        actions: ["CREATE", "VIEW", "UPDATE", "DELETE"],
                                 },
                                 {
                                         feature: "ACL",
-                                        actions: ["CREATE", "READ", "UPDATE", "DELETE"],
+                                        actions: ["CREATE", "VIEW", "UPDATE", "DELETE"],
                                 },
                         ],
                 },
@@ -112,11 +112,11 @@ export async function seedAcl(prisma: PrismaClient) {
                         acl: [
                                 {
                                         feature: "SURAT_KETERANGAN_KULIAH",
-                                        actions: ["READ", "VERIFICATION"],
+                                        actions: ["VIEW", "VERIFICATION"],
                                 },
                                 {
                                         feature: "CUTI_SEMENTARA",
-                                        actions: ["READ", "VERIFICATION"],
+                                        actions: ["VIEW", "VERIFICATION"],
                                 },
                         ],
                 },
@@ -125,11 +125,11 @@ export async function seedAcl(prisma: PrismaClient) {
                         acl: [
                                 {
                                         feature: "PENGAJUAN_YUDISIUM",
-                                        actions: ["READ", "VERIFICATION"],
+                                        actions: ["VIEW", "VERIFICATION"],
                                 },
                                 {
                                         feature: "LEGALISIR_IJAZAH",
-                                        actions: ["READ", "VERIFICATION"],
+                                        actions: ["VIEW", "VERIFICATION"],
                                 },
                         ],
                 },
@@ -138,19 +138,19 @@ export async function seedAcl(prisma: PrismaClient) {
                         acl: [
                                 {
                                         feature: "SURAT_KETERANGAN_KULIAH",
-                                        actions: ["READ"],
+                                        actions: ["VIEW"],
                                 },
                                 {
                                         feature: "CUTI_SEMENTARA",
-                                        actions: ["READ"],
+                                        actions: ["VIEW"],
                                 },
                                 {
                                         feature: "PENGAJUAN_YUDISIUM",
-                                        actions: ["READ"],
+                                        actions: ["VIEW"],
                                 },
                                 {
                                         feature: "LEGALISIR_IJAZAH",
-                                        actions: ["READ"],
+                                        actions: ["VIEW"],
                                 },
                         ],
                 },
@@ -159,11 +159,11 @@ export async function seedAcl(prisma: PrismaClient) {
                         acl: [
                                 {
                                         feature: "PENGAJUAN_YUDISIUM",
-                                        actions: ["READ", "VERIFICATION"],
+                                        actions: ["VIEW", "VERIFICATION"],
                                 },
                                 {
                                         feature: "LEGALISIR_IJAZAH",
-                                        actions: ["READ", "VERIFICATION"],
+                                        actions: ["VIEW", "VERIFICATION"],
                                 },
                         ],
                 },
@@ -172,11 +172,11 @@ export async function seedAcl(prisma: PrismaClient) {
                         acl: [
                                 {
                                         feature: "SURAT_KETERANGAN_KULIAH",
-                                        actions: ["READ", "VERIFICATION"],
+                                        actions: ["VIEW", "VERIFICATION"],
                                 },
                                 {
                                         feature: "CUTI_SEMENTARA",
-                                        actions: ["READ", "VERIFICATION"],
+                                        actions: ["VIEW", "VERIFICATION"],
                                 },
                         ],
                 },
@@ -185,19 +185,19 @@ export async function seedAcl(prisma: PrismaClient) {
                         acl: [
                                 {
                                         feature: "SURAT_KETERANGAN_KULIAH",
-                                        actions: ["READ"],
+                                        actions: ["VIEW"],
                                 },
                                 {
                                         feature: "CUTI_SEMENTARA",
-                                        actions: ["READ"],
+                                        actions: ["VIEW"],
                                 },
                                 {
                                         feature: "PENGAJUAN_YUDISIUM",
-                                        actions: ["READ"],
+                                        actions: ["VIEW"],
                                 },
                                 {
                                         feature: "LEGALISIR_IJAZAH",
-                                        actions: ["READ"],
+                                        actions: ["VIEW"],
                                 },
                         ],
                 },
@@ -206,19 +206,19 @@ export async function seedAcl(prisma: PrismaClient) {
                         acl: [
                                 {
                                         feature: "SURAT_KETERANGAN_KULIAH",
-                                        actions: ["READ"],
+                                        actions: ["VIEW"],
                                 },
                                 {
                                         feature: "CUTI_SEMENTARA",
-                                        actions: ["READ"],
+                                        actions: ["VIEW"],
                                 },
                                 {
                                         feature: "PENGAJUAN_YUDISIUM",
-                                        actions: ["READ"],
+                                        actions: ["VIEW"],
                                 },
                                 {
                                         feature: "LEGALISIR_IJAZAH",
-                                        actions: ["READ"],
+                                        actions: ["VIEW"],
                                 },
                         ],
                 },
@@ -227,19 +227,19 @@ export async function seedAcl(prisma: PrismaClient) {
                         acl: [
                                 {
                                         feature: "SURAT_KETERANGAN_KULIAH",
-                                        actions: ["READ"],
+                                        actions: ["VIEW"],
                                 },
                                 {
                                         feature: "CUTI_SEMENTARA",
-                                        actions: ["READ"],
+                                        actions: ["VIEW"],
                                 },
                                 {
                                         feature: "PENGAJUAN_YUDISIUM",
-                                        actions: ["READ"],
+                                        actions: ["VIEW"],
                                 },
                                 {
                                         feature: "LEGALISIR_IJAZAH",
-                                        actions: ["READ"],
+                                        actions: ["VIEW"],
                                 },
                         ],
                 },
@@ -248,19 +248,19 @@ export async function seedAcl(prisma: PrismaClient) {
                         acl: [
                                 {
                                         feature: "SURAT_KETERANGAN_KULIAH",
-                                        actions: ["READ"],
+                                        actions: ["VIEW"],
                                 },
                                 {
                                         feature: "CUTI_SEMENTARA",
-                                        actions: ["READ"],
+                                        actions: ["VIEW"],
                                 },
                                 {
                                         feature: "PENGAJUAN_YUDISIUM",
-                                        actions: ["READ"],
+                                        actions: ["VIEW"],
                                 },
                                 {
                                         feature: "LEGALISIR_IJAZAH",
-                                        actions: ["READ"],
+                                        actions: ["VIEW"],
                                 },
                         ],
                 },
@@ -269,19 +269,19 @@ export async function seedAcl(prisma: PrismaClient) {
                         acl: [
                                 {
                                         feature: "SURAT_KETERANGAN_KULIAH",
-                                        actions: ["READ"],
+                                        actions: ["VIEW"],
                                 },
                                 {
                                         feature: "CUTI_SEMENTARA",
-                                        actions: ["READ"],
+                                        actions: ["VIEW"],
                                 },
                                 {
                                         feature: "PENGAJUAN_YUDISIUM",
-                                        actions: ["READ"],
+                                        actions: ["VIEW"],
                                 },
                                 {
                                         feature: "LEGALISIR_IJAZAH",
-                                        actions: ["READ"],
+                                        actions: ["VIEW"],
                                 },
                         ],
                 },
@@ -290,19 +290,19 @@ export async function seedAcl(prisma: PrismaClient) {
                         acl: [
                                 {
                                         feature: "SURAT_KETERANGAN_KULIAH",
-                                        actions: ["CREATE", "READ"],
+                                        actions: ["CREATE", "VIEW"],
                                 },
                                 {
                                         feature: "CUTI_SEMENTARA",
-                                        actions: ["CREATE", "READ"],
+                                        actions: ["CREATE", "VIEW"],
                                 },
                                 {
                                         feature: "PENGAJUAN_YUDISIUM",
-                                        actions: ["CREATE", "READ"],
+                                        actions: ["CREATE", "VIEW"],
                                 },
                                 {
                                         feature: "LEGALISIR_IJAZAH",
-                                        actions: ["CREATE", "READ"],
+                                        actions: ["CREATE", "VIEW"],
                                 },
                         ],
                 },
