@@ -21,61 +21,17 @@ export async function logIn(data: UserLoginDTO): Promise<ServiceResponse<any>> {
                         where: {
                                 OR: [
                                         { npm: identityNumber },
-                                        {
-                                                admin: {
-                                                        nip: identityNumber,
-                                                },
-                                        },
-                                        {
-                                                operatorKemahasiswaan: {
-                                                        nip: identityNumber,
-                                                },
-                                        },
-                                        {
-                                                operatorAkademik: {
-                                                        nip: identityNumber,
-                                                },
-                                        },
-                                        {
-                                                ktu: {
-                                                        nip: identityNumber,
-                                                },
-                                        },
-                                        {
-                                                kasubbagKemahasiswaan: {
-                                                        nip: identityNumber,
-                                                },
-                                        },
-                                        {
-                                                kasubbagAkademik: {
-                                                        nip: identityNumber,
-                                                },
-                                        },
-                                        {
-                                                dekan: {
-                                                        nip: identityNumber,
-                                                },
-                                        },
-                                        {
-                                                wd1: {
-                                                        nip: identityNumber,
-                                                },
-                                        },
-                                        {
-                                                kadep: {
-                                                        nip: identityNumber,
-                                                },
-                                        },
-                                        {
-                                                kaprodi: {
-                                                        nip: identityNumber,
-                                                },
-                                        },
-                                        {
-                                                pimpinanFakultas: {
-                                                        nip: identityNumber,
-                                                },
-                                        },
+                                        { admin: { nip: identityNumber } },
+                                        { operatorKemahasiswaan: { nip: identityNumber } },
+                                        { operatorAkademik: { nip: identityNumber } },
+                                        { ktu: { nip: identityNumber } },
+                                        { kasubbagKemahasiswaan: { nip: identityNumber } },
+                                        { kasubbagAkademik: { nip: identityNumber } },
+                                        { dekan: { nip: identityNumber } },
+                                        { wd1: { nip: identityNumber } },
+                                        { kadep: { nip: identityNumber } },
+                                        { kaprodi: { nip: identityNumber } },
+                                        { pimpinanFakultas: { nip: identityNumber } },
                                 ],
                         },
                         include: {
@@ -96,6 +52,25 @@ export async function logIn(data: UserLoginDTO): Promise<ServiceResponse<any>> {
 
                 if (!user) return BadRequestWithMessage("User not found!");
 
+                // Map nama based on role relation
+                const userRole =
+                        user.admin ??
+                        user.operatorKemahasiswaan ??
+                        user.operatorAkademik ??
+                        user.ktu ??
+                        user.kasubbagKemahasiswaan ??
+                        user.kasubbagAkademik ??
+                        user.dekan ??
+                        user.wd1 ??
+                        user.kadep ??
+                        user.kaprodi ??
+                        user.pimpinanFakultas;
+
+                const userData = {
+                        ...user,
+                        nama: userRole?.nama ?? user.nama,
+                };
+
                 const isPasswordVerified = await bcrypt.compare(password, user.password);
 
                 if (!isPasswordVerified) {
@@ -109,12 +84,12 @@ export async function logIn(data: UserLoginDTO): Promise<ServiceResponse<any>> {
                         };
                 }
 
-                const token = createToken(user, 3600);
-                const refreshToken = createToken(user, 3600 * 24);
+                const token = createToken(userData, 3600);
+                const refreshToken = createToken(userData, 3600 * 24);
                 return {
                         status: true,
                         data: {
-                                user: exclude(user, "password"),
+                                user: exclude(userData, "password"),
                                 token,
                                 refreshToken,
                         },
