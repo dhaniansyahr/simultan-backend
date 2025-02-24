@@ -11,27 +11,27 @@ export async function seedAcl(prisma: PrismaClient) {
         const featuresAndActions: FeatureAction[] = [
                 {
                         feature: "SURAT_KETERANGAN_KULIAH",
-                        actions: ["CREATE", "READ", "EXPORT", "VERIFICATION"],
+                        actions: ["CREATE", "VIEW", "EXPORT", "VERIFICATION"],
                 },
                 {
                         feature: "CUTI_SEMENTARA",
-                        actions: ["CREATE", "READ", "VERIFICATION"],
+                        actions: ["CREATE", "VIEW", "VERIFICATION"],
                 },
                 {
                         feature: "PENGAJUAN_YUDISIUM",
-                        actions: ["CREATE", "READ", "VERIFICATION"],
+                        actions: ["CREATE", "VIEW", "VERIFICATION"],
                 },
                 {
                         feature: "LEGALISIR_IJAZAH",
-                        actions: ["CREATE", "READ", "VERIFICATION"],
+                        actions: ["CREATE", "VIEW", "VERIFICATION"],
                 },
                 {
                         feature: "USER_MANAGEMENT",
-                        actions: ["CREATE", "READ", "UPDATE", "DELETE"],
+                        actions: ["CREATE", "VIEW", "UPDATE", "DELETE"],
                 },
                 {
                         feature: "ACL",
-                        actions: ["CREATE", "READ", "UPDATE", "DELETE"],
+                        actions: ["CREATE", "VIEW", "UPDATE", "DELETE"],
                 },
         ];
 
