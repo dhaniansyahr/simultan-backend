@@ -17,23 +17,24 @@ import { LegalisirIjazahDTO, VerifikasiLegalisirIjazahDTO } from "$entities/Lega
 export type CreateResponse = LegalisirIjazahDTO | {};
 export async function create(data: LegalisirIjazahDTO, user: UserJWTDAO): Promise<ServiceResponse<CreateResponse>> {
         try {
-                const initialStatus = await prisma.status.create({
-                        data: {
-                                ulid: ulid(),
-                                nama: VerifikasiStatusBagianAkademik.DIPROSES_OPERATOR_AKADEMIK,
-                                deskripsi: `Pengajuan Legalisir Ijazah oleh ${user.nama} dan ${VerifikasiStatusBagianAkademik.DIPROSES_OPERATOR_AKADEMIK}`,
-                                userId: user.id,
-                        },
-                });
-
-                // Create the letter
+                // Create the letter with initial status
                 const legalisirIjazah = await prisma.legalisirIjazah.create({
                         data: {
                                 ulid: ulid(),
                                 dokumenUrl: data.dokumenUrl,
                                 verifikasiStatus: VerifikasiStatusBagianAkademik.DIPROSES_OPERATOR_AKADEMIK,
-                                statusId: initialStatus.id,
                                 userId: user.id,
+                                status: {
+                                        create: {
+                                                ulid: ulid(),
+                                                nama: VerifikasiStatusBagianAkademik.DIPROSES_OPERATOR_AKADEMIK,
+                                                deskripsi: `Pengajuan Legalisir Ijazah oleh ${user.nama}`,
+                                                userId: user.id,
+                                        },
+                                },
+                        },
+                        include: {
+                                status: true,
                         },
                 });
 
@@ -172,25 +173,26 @@ export async function verificationStatus(
                         nextStatus = VerifikasiStatusBagianAkademik.USULAN_DITOLAK;
                 }
 
-                // Create new status
-                const newStatus = await prisma.status.create({
-                        data: {
-                                ulid: ulid(),
-                                nama: nextStatus,
-                                deskripsi:
-                                        data.action === "USULAN_DISETUJUI"
-                                                ? `Pengajuan disetujui oleh ${user.nama}`
-                                                : `Pengajuan ditolak oleh ${user.nama}: ${data.alasanPenolakan}`,
-                                userId: user.id,
-                        },
-                });
-
+                // Update the letter with new status
                 const updateLegalisirIjazah = await prisma.legalisirIjazah.update({
                         where: { ulid: id },
                         data: {
                                 verifikasiStatus: nextStatus,
-                                statusId: newStatus.id,
                                 alasanPenolakan: data.action === "USULAN_DITOLAK" ? data.alasanPenolakan : null,
+                                status: {
+                                        create: {
+                                                ulid: ulid(),
+                                                nama: nextStatus,
+                                                deskripsi:
+                                                        data.action === "USULAN_DISETUJUI"
+                                                                ? `Pengajuan disetujui oleh ${user.nama}`
+                                                                : `Pengajuan ditolak oleh ${user.nama}: ${data.alasanPenolakan}`,
+                                                userId: user.id,
+                                        },
+                                },
+                        },
+                        include: {
+                                status: true,
                         },
                 });
 
