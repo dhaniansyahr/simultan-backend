@@ -42,7 +42,7 @@ export async function create(data: LegalisirIjazahDTO, user: UserJWTDAO): Promis
                 await prisma.log.create({
                         data: {
                                 ulid: ulid(),
-                                flagMenu: "SURAT_KETERANGAN_KULIAH",
+                                flagMenu: "LEGALISIR_IJAZAH",
                                 deskripsi: `Pengajuan Legalisir Ijazah baru dengan ID ${legalisirIjazah.ulid}`,
                                 aksesLevelId: user.aksesLevelId,
                                 userId: user.id,

@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import * as LegalisirIjazahController from "$controllers/rest/PengajuanYudisiumController";
+import * as LegalisirIjazahController from "$controllers/rest/LegalisirIjazahController";
 import * as AuthMiddleware from "$middlewares/authMiddleware";
 import * as Validation from "$validations/LegalisirIjazahValidation";
 
