@@ -248,12 +248,11 @@ model SuratKeteranganKuliah {
   verifikasiStatus VerifikasiStatusBagianKemahasiswaan @default(DIPROSES_OPERATOR_KEMAHASISWAAN)
   alasanPenolakan  String?                             @db.Text
   nomorSurat       String?
-  statusId         Int
   userId           Int
   createdAt        DateTime                            @default(now())
 
-  status Status @relation(fields: [statusId], references: [id])
-  user   User   @relation(fields: [userId], references: [id])
+  user   User     @relation(fields: [userId], references: [id])
+  status Status[]
 }
 
 model CutiSementara {
@@ -265,12 +264,11 @@ model CutiSementara {
   alasanPengajuan      String                              @db.Text
   verifikasiStatus     VerifikasiStatusBagianKemahasiswaan
   alasanPenolakan      String?                             @db.Text
-  statusId             Int
   userId               Int
   createdAt            DateTime                            @default(now())
 
-  status Status @relation(fields: [statusId], references: [id])
-  user   User   @relation(fields: [userId], references: [id])
+  user   User     @relation(fields: [userId], references: [id])
+  status Status[]
 }
 
 enum VerifikasiStatusBagianAkademik {
@@ -288,12 +286,11 @@ model PengajuanYudisium {
   dokumenUrl       String
   verifikasiStatus VerifikasiStatusBagianAkademik
   alasanPenolakan  String?                        @db.Text
-  statusId         Int
   userId           Int
   createdAt        DateTime                       @default(now())
 
-  status Status @relation(fields: [statusId], references: [id])
-  user   User   @relation(fields: [userId], references: [id])
+  user   User     @relation(fields: [userId], references: [id])
+  status Status[]
 }
 
 model LegalisirIjazah {
@@ -302,12 +299,11 @@ model LegalisirIjazah {
   dokumenUrl       String
   verifikasiStatus VerifikasiStatusBagianAkademik
   alasanPenolakan  String?                        @db.Text
-  statusId         Int
   userId           Int
   createdAt        DateTime                       @default(now())
 
-  status Status @relation(fields: [statusId], references: [id])
-  user   User   @relation(fields: [userId], references: [id])
+  user   User     @relation(fields: [userId], references: [id])
+  status Status[]
 }
 
 model Status {

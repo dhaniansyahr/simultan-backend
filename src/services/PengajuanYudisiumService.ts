@@ -17,23 +17,24 @@ import { getNextVerificationStatusAkademik } from "$utils/helper.utils";
 export type CreateResponse = PengajuanYudisiumDTO | {};
 export async function create(data: PengajuanYudisiumDTO, user: UserJWTDAO): Promise<ServiceResponse<CreateResponse>> {
         try {
-                const initialStatus = await prisma.status.create({
-                        data: {
-                                ulid: ulid(),
-                                nama: VerifikasiStatusBagianAkademik.DIPROSES_OPERATOR_AKADEMIK,
-                                deskripsi: `Pengajuan Yudisium oleh ${user.nama} dan ${VerifikasiStatusBagianAkademik.DIPROSES_OPERATOR_AKADEMIK}`,
-                                userId: user.id,
-                        },
-                });
-
-                // Create the letter
+                // Create the letter with initial status
                 const yudisium = await prisma.pengajuanYudisium.create({
                         data: {
                                 ulid: ulid(),
                                 dokumenUrl: data.dokumenUrl,
                                 verifikasiStatus: VerifikasiStatusBagianAkademik.DIPROSES_OPERATOR_AKADEMIK,
-                                statusId: initialStatus.id,
                                 userId: user.id,
+                                status: {
+                                        create: {
+                                                ulid: ulid(),
+                                                nama: VerifikasiStatusBagianAkademik.DIPROSES_OPERATOR_AKADEMIK,
+                                                deskripsi: `Pengajuan Yudisium oleh ${user.nama} dan ${VerifikasiStatusBagianAkademik.DIPROSES_OPERATOR_AKADEMIK}`,
+                                                userId: user.id,
+                                        },
+                                },
+                        },
+                        include: {
+                                status: true,
                         },
                 });
 
@@ -159,6 +160,9 @@ export async function verificationStatus(
         try {
                 const yudisium = await prisma.pengajuanYudisium.findUnique({
                         where: { ulid: id },
+                        include: {
+                                status: true,
+                        },
                 });
 
                 if (!yudisium) return INVALID_ID_SERVICE_RESPONSE;
@@ -172,25 +176,26 @@ export async function verificationStatus(
                         nextStatus = VerifikasiStatusBagianAkademik.USULAN_DITOLAK;
                 }
 
-                // Create new status
-                const newStatus = await prisma.status.create({
-                        data: {
-                                ulid: ulid(),
-                                nama: nextStatus,
-                                deskripsi:
-                                        data.action === "USULAN_DISETUJUI"
-                                                ? `Surat disetujui oleh ${user.nama}`
-                                                : `Surat ditolak oleh ${user.nama}: ${data.alasanPenolakan}`,
-                                userId: user.id,
-                        },
-                });
-
+                // Update yudisium with new status
                 const updateYudisium = await prisma.pengajuanYudisium.update({
                         where: { ulid: id },
                         data: {
                                 verifikasiStatus: nextStatus,
-                                statusId: newStatus.id,
                                 alasanPenolakan: data.action === "USULAN_DITOLAK" ? data.alasanPenolakan : null,
+                                status: {
+                                        create: {
+                                                ulid: ulid(),
+                                                nama: nextStatus,
+                                                deskripsi:
+                                                        data.action === "USULAN_DISETUJUI"
+                                                                ? `Surat disetujui oleh ${user.nama}`
+                                                                : `Surat ditolak oleh ${user.nama}: ${data.alasanPenolakan}`,
+                                                userId: user.id,
+                                        },
+                                },
+                        },
+                        include: {
+                                status: true,
                         },
                 });
 

@@ -18,24 +18,21 @@ export async function seedPengajuanYudisium(prisma: PrismaClient) {
                         return;
                 }
 
-                // Create initial status
-                const initialStatus = await prisma.status.create({
-                        data: {
-                                ulid: ulid(),
-                                nama: VerifikasiStatusBagianAkademik.DIPROSES_OPERATOR_AKADEMIK,
-                                deskripsi: `Pengajuan Yudisium oleh ${findMhs.nama}`,
-                                userId: findMhs.id,
-                        },
-                });
-
-                // Create Pengajuan Yudisium entry
+                // Create Pengajuan Yudisium entry with initial status
                 await prisma.pengajuanYudisium.create({
                         data: {
                                 ulid: ulid(),
                                 dokumenUrl: "https://example.com/dokumen-yudisium",
                                 verifikasiStatus: VerifikasiStatusBagianAkademik.DIPROSES_OPERATOR_AKADEMIK,
-                                statusId: initialStatus.id,
                                 userId: findMhs.id,
+                                status: {
+                                        create: {
+                                                ulid: ulid(),
+                                                nama: VerifikasiStatusBagianAkademik.DIPROSES_OPERATOR_AKADEMIK,
+                                                deskripsi: `Pengajuan Yudisium oleh ${findMhs.nama}`,
+                                                userId: findMhs.id,
+                                        },
+                                },
                         },
                 });
         }

@@ -18,17 +18,7 @@ export async function seedSuratKeteranganKuliah(prisma: PrismaClient) {
                         return;
                 }
 
-                // Create initial status
-                const initialStatus = await prisma.status.create({
-                        data: {
-                                ulid: ulid(),
-                                nama: VerifikasiStatusBagianKemahasiswaan.DIPROSES_OPERATOR_KEMAHASISWAAN,
-                                deskripsi: `Pengajuan Surat oleh ${findMhs.nama}`,
-                                userId: findMhs.id,
-                        },
-                });
-
-                // Create Surat Keterangan Kuliah entry
+                // Create Surat Keterangan Kuliah entry with initial status
                 await prisma.suratKeteranganKuliah.create({
                         data: {
                                 ulid: ulid(),
@@ -36,8 +26,15 @@ export async function seedSuratKeteranganKuliah(prisma: PrismaClient) {
                                 deskripsi: "Untuk Keperluan BPJS Kesehatan",
                                 dokumenUrl: "https://example.com/dokumen",
                                 verifikasiStatus: VerifikasiStatusBagianKemahasiswaan.DIPROSES_OPERATOR_KEMAHASISWAAN,
-                                statusId: initialStatus.id,
                                 userId: findMhs.id,
+                                status: {
+                                        create: {
+                                                ulid: ulid(),
+                                                nama: VerifikasiStatusBagianKemahasiswaan.DIPROSES_OPERATOR_KEMAHASISWAAN,
+                                                deskripsi: `Pengajuan Surat oleh ${findMhs.nama}`,
+                                                userId: findMhs.id,
+                                        },
+                                },
                         },
                 });
         }

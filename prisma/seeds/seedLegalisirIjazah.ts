@@ -18,24 +18,21 @@ export async function seedLegalisirIjazah(prisma: PrismaClient) {
                         return;
                 }
 
-                // Create initial status
-                const initialStatus = await prisma.status.create({
-                        data: {
-                                ulid: ulid(),
-                                nama: VerifikasiStatusBagianAkademik.DIPROSES_OPERATOR_AKADEMIK,
-                                deskripsi: `Pengajuan Legalisir Ijazah oleh ${findMhs.nama}`,
-                                userId: findMhs.id,
-                        },
-                });
-
-                // Create Legalisir Ijazah entry
+                // Create Legalisir Ijazah entry with initial status
                 await prisma.legalisirIjazah.create({
                         data: {
                                 ulid: ulid(),
                                 dokumenUrl: "https://example.com/dokumen-ijazah",
                                 verifikasiStatus: VerifikasiStatusBagianAkademik.DIPROSES_OPERATOR_AKADEMIK,
-                                statusId: initialStatus.id,
                                 userId: findMhs.id,
+                                status: {
+                                        create: {
+                                                ulid: ulid(),
+                                                nama: VerifikasiStatusBagianAkademik.DIPROSES_OPERATOR_AKADEMIK,
+                                                deskripsi: `Pengajuan Legalisir Ijazah oleh ${findMhs.nama}`,
+                                                userId: findMhs.id,
+                                        }
+                                }
                         },
                 });
         }

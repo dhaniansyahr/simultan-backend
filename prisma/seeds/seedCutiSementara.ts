@@ -18,17 +18,7 @@ export async function seedCutiSementara(prisma: PrismaClient) {
                         return;
                 }
 
-                // Create initial status
-                const initialStatus = await prisma.status.create({
-                        data: {
-                                ulid: ulid(),
-                                nama: VerifikasiStatusBagianKemahasiswaan.DIPROSES_OPERATOR_KEMAHASISWAAN,
-                                deskripsi: `Pengajuan Cuti oleh ${findMhs.nama}`,
-                                userId: findMhs.id,
-                        },
-                });
-
-                // Create Cuti Sementara entry
+                // Create Cuti Sementara entry with initial status
                 await prisma.cutiSementara.create({
                         data: {
                                 ulid: ulid(),
@@ -37,8 +27,15 @@ export async function seedCutiSementara(prisma: PrismaClient) {
                                 suratBebasPustakaUrl: "https://example.com/surat-bebas-pustaka",
                                 alasanPengajuan: "Alasan pengajuan cuti sementara",
                                 verifikasiStatus: VerifikasiStatusBagianKemahasiswaan.DIPROSES_OPERATOR_KEMAHASISWAAN,
-                                statusId: initialStatus.id,
                                 userId: findMhs.id,
+                                status: {
+                                        create: {
+                                                ulid: ulid(),
+                                                nama: VerifikasiStatusBagianKemahasiswaan.DIPROSES_OPERATOR_KEMAHASISWAAN,
+                                                deskripsi: `Pengajuan Cuti oleh ${findMhs.nama}`,
+                                                userId: findMhs.id,
+                                        },
+                                },
                         },
                 });
         }
