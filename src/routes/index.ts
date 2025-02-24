@@ -21,6 +21,7 @@ router.route("/api/acl", RoutesRegistry.AclRoutes);
 router.route("/api/cuti-sementara", RoutesRegistry.CutiSementaraRoutes);
 router.route("/api/pengajuan-yudisium", RoutesRegistry.PengajuanYudisiumRoutes);
 router.route("/api/legalisir-ijazah", RoutesRegistry.LegalisirIjazahRoutes);
+router.route("/api/menu", RoutesRegistry.MenuRoutes);
 
 router.get("/", (c: Context) => {
         return response_success(c, "main routes!");

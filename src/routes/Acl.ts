@@ -11,6 +11,8 @@ AclRoutes.get("/features", AuthMiddleware.checkJwt, AclController.getAllFeatures
 
 AclRoutes.get("/level-akses", AuthMiddleware.checkJwt, AclController.getAllLevelAkses);
 
-AclRoutes.get("/:userLevelId", AuthMiddleware.checkJwt, AclController.getByUserLevelId);
+AclRoutes.get("/:aksesLevelId", AuthMiddleware.checkJwt, AclController.getByUserLevelId);
+
+AclRoutes.get("/menu/:aksesLevelId", AuthMiddleware.checkJwt, AclController.getMenuByAksesLevelId);
 
 export default AclRoutes;

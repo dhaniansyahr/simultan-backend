@@ -4,6 +4,7 @@ import AclRoutes from "./Acl";
 import CutiSementaraRoutes from "./CutiSementara";
 import PengajuanYudisiumRoutes from "./PengajuanYudisium";
 import LegalisirIjazahRoutes from "./LegalisirIjazah";
+import MenuRoutes from "./Menu";
 
 const RoutesRegistry = {
         UserRoutes,
@@ -12,6 +13,7 @@ const RoutesRegistry = {
         CutiSementaraRoutes,
         PengajuanYudisiumRoutes,
         LegalisirIjazahRoutes,
+        MenuRoutes,
 };
 
 export default RoutesRegistry;

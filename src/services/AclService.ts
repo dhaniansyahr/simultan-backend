@@ -94,6 +94,47 @@ export async function getByAksesLevelId(aksesLevelId: number): Promise<ServiceRe
         }
 }
 
+export async function getMenuByAksesLevelId(aksesLevelId: number): Promise<ServiceResponse<{}>> {
+        try {
+                // const features = await prisma.feature.findMany();
+
+                // let acls = await prisma.acl.findMany({
+                //         where: {
+                //                 aksesLevelId,
+                //         },
+                //         include: {
+                //                 feature: true,
+                //         },
+                // });
+
+                // if (acls.length === 0) return INVALID_ID_SERVICE_RESPONSE;
+
+                // const mappingAcl = features.map((feature) => {
+                //         const actions = acls.filter((acl) => acl.namaFitur === feature.nama).map((acl) => acl.namaAksi);
+                //         return {
+                //                 feature: feature.nama,
+                //                 actions,
+                //         };
+                // });
+
+                const menu = await prisma.menu.findMany({
+                        where: {
+                                aksesLevelId,
+                        },
+                });
+
+                if (!menu) return INVALID_ID_SERVICE_RESPONSE;
+
+                return {
+                        status: true,
+                        data: menu,
+                };
+        } catch (error) {
+                Logger.error(`AclService.getByAksesLevelId: ${error}`);
+                return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
+        }
+}
+
 export async function getAllFeature(): Promise<ServiceResponse<{}>> {
         try {
                 const features = await prisma.feature.findMany({
