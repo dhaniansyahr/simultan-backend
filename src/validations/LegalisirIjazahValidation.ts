@@ -10,7 +10,7 @@ export async function validateLegalisirIjazahDTO(c: Context, next: Next) {
         if (!data.dokumenUrl) invalidFields.push(generateErrorStructure("dokumenUrl", "dokumenUrl cannot be empty"));
 
         if (invalidFields.length !== 0) return response_bad_request(c, "Validation Error", invalidFields);
-        next();
+        await next();
 }
 
 export async function validateVerifikasiStatusDTO(c: Context, next: Next) {
@@ -27,5 +27,5 @@ export async function validateVerifikasiStatusDTO(c: Context, next: Next) {
         }
 
         if (invalidFields.length !== 0) return response_bad_request(c, "Validation Error", invalidFields);
-        next();
+        await next();
 }
