@@ -27,7 +27,7 @@ LegalisirIjazahRoutes.get(
         LegalisirIjazahController.getById
 );
 
-LegalisirIjazahRoutes.get(
+LegalisirIjazahRoutes.put(
         "/:id/verifikasi",
         AuthMiddleware.checkJwt,
         AuthMiddleware.checkAccess("PENGAJUAN_YUDISIUM", "VERIFICATION"),

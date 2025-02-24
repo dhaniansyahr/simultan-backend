@@ -27,7 +27,7 @@ PengajuanYudisiumRoutes.get(
         PengajuanYudisiumController.getById
 );
 
-PengajuanYudisiumRoutes.get(
+PengajuanYudisiumRoutes.put(
         "/:id/verifikasi",
         AuthMiddleware.checkJwt,
         AuthMiddleware.checkAccess("PENGAJUAN_YUDISIUM", "VERIFICATION"),
