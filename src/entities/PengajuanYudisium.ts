@@ -3,6 +3,6 @@ export interface PengajuanYudisiumDTO {
 }
 
 export interface VerifikasiPengajuanYudisiumDTO {
-        action: "USULAN_DISETUJUI" | "USULAN_DITOLAK";
+        action: "DISETUJUI" | "DITOLAK";
         alasanPenolakan?: string;
 }

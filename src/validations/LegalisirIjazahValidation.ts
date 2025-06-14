@@ -19,17 +19,12 @@ export async function validateVerifikasiStatusDTO(c: Context, next: Next) {
 
         if (!data.action) invalidFields.push(generateErrorStructure("action", "action cannot be empty"));
 
-        if (data.action !== "USULAN_DISETUJUI" && data.action !== "USULAN_DITOLAK") {
-                invalidFields.push(
-                        generateErrorStructure("action", "action must be either USULAN_DISETUJUI or USULAN_DITOLAK")
-                );
+        if (data.action !== "DISETUJUI" && data.action !== "DITOLAK") {
+                invalidFields.push(generateErrorStructure("action", "action must be either DISETUJUI or DITOLAK"));
         }
 
-        if (data.action === "USULAN_DITOLAK") {
-                if (!data.alasanPenolakan)
-                        invalidFields.push(
-                                generateErrorStructure("alasanPenolakan", "alasanPenolakan cannot be empty")
-                        );
+        if (data.action === "DITOLAK") {
+                if (!data.alasanPenolakan) invalidFields.push(generateErrorStructure("alasanPenolakan", "alasanPenolakan cannot be empty"));
         }
 
         if (invalidFields.length !== 0) return response_bad_request(c, "Validation Error", invalidFields);

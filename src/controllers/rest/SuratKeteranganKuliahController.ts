@@ -1,12 +1,6 @@
 import { Context, TypedResponse } from "hono";
 import * as SuratKeteranganKuliahService from "$services/SuratKeteranganKuliahService";
-import {
-        handleServiceErrorWithResponse,
-        MIME_TYPE,
-        response_buffer,
-        response_created,
-        response_success,
-} from "$utils/response.utils";
+import { handleServiceErrorWithResponse, MIME_TYPE, response_buffer, response_created, response_success } from "$utils/response.utils";
 import { FilteringQueryV2 } from "$entities/Query";
 import { checkFilteringQueryV2 } from "$controllers/helpers/CheckFilteringQuery";
 import { LetterProcessDTO, SuratKeteranganKuliahDTO, VerifikasiSuratDTO } from "$entities/SuratKeteranganKuliah";
@@ -42,6 +36,19 @@ export async function getById(c: Context): Promise<TypedResponse> {
         const id = c.req.param("id");
 
         const serviceResponse = await SuratKeteranganKuliahService.getById(id);
+
+        if (!serviceResponse.status) {
+                return handleServiceErrorWithResponse(c, serviceResponse);
+        }
+
+        return response_success(c, serviceResponse.data, "Successfully fetched SuratKeteranganKuliah by id!");
+}
+
+export async function update(c: Context): Promise<TypedResponse> {
+        const id = c.req.param("id");
+        const data: SuratKeteranganKuliahDTO = await c.req.json();
+
+        const serviceResponse = await SuratKeteranganKuliahService.update(id, data);
 
         if (!serviceResponse.status) {
                 return handleServiceErrorWithResponse(c, serviceResponse);

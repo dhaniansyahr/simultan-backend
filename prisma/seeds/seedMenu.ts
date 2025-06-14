@@ -1,42 +1,79 @@
-import { PrismaClient } from "@prisma/client";
+import { PARENT_MENU, PrismaClient } from "@prisma/client";
 import { ulid } from "ulid";
 
 interface MenuData {
+        parentMenu?: PARENT_MENU;
         title: string;
         path: string;
+        icon?: string;
         aksesLevel: string[];
 }
 
 export async function seedMenu(prisma: PrismaClient) {
         const menus: MenuData[] = [
+                // Kemahasiswaan Parent Group
                 {
-                        title: "Surat Keterangan Kuliah",
-                        path: "/college-certificate",
+                        parentMenu: PARENT_MENU.KEMAHASISWAAN,
+                        title: "Surat Keterangan Aktif Kuliah",
+                        path: "/surat-keterangan-aktif-kuliah",
+                        icon: "file-text",
                         aksesLevel: ["ADMIN", "OPERATOR_KEMAHASISWAAN", "MAHASISWA", "KASUBBAG_KEMAHASISWAAN"],
                 },
                 {
-                        title: "Cuti Sementara",
-                        path: "/temporary-leave",
+                        parentMenu: PARENT_MENU.KEMAHASISWAAN,
+                        title: "Pengajuan Cuti Sementara",
+                        path: "/pengajuan-cuti-sementara",
+                        icon: "clock",
                         aksesLevel: ["ADMIN", "OPERATOR_KEMAHASISWAAN", "MAHASISWA", "KASUBBAG_KEMAHASISWAAN"],
                 },
                 {
+                        parentMenu: PARENT_MENU.KEMAHASISWAAN,
+                        title: "Beasiswa",
+                        path: "/beasiswa",
+                        icon: "award",
+                        aksesLevel: ["ADMIN", "OPERATOR_KEMAHASISWAAN", "MAHASISWA"],
+                },
+
+                // Akademik Parent Group
+                {
+                        parentMenu: PARENT_MENU.AKADEMIK,
                         title: "Pengajuan Yudisium",
-                        path: "/graduation-submission",
+                        path: "/pengajuan-yudisium",
+                        icon: "graduation-cap",
                         aksesLevel: ["ADMIN", "OPERATOR_AKADEMIK", "MAHASISWA", "KASUBBAG_AKADEMIK"],
                 },
                 {
-                        title: "Legalisir Ijazah",
-                        path: "/certificate-legalization",
+                        parentMenu: PARENT_MENU.AKADEMIK,
+                        title: "Pengajuan Legalisir Ijazah",
+                        path: "/legalisir-ijazah",
+                        icon: "file-check",
                         aksesLevel: ["ADMIN", "OPERATOR_AKADEMIK", "MAHASISWA", "KASUBBAG_AKADEMIK"],
+                },
+                {
+                        parentMenu: PARENT_MENU.AKADEMIK,
+                        title: "Transkrip Nilai",
+                        path: "/transkrip-nilai",
+                        icon: "list",
+                        aksesLevel: ["ADMIN", "OPERATOR_AKADEMIK", "MAHASISWA"],
+                },
+
+                // Standalone Menus (No Parent)
+                {
+                        title: "Dashboard",
+                        path: "/dashboard",
+                        icon: "home",
+                        aksesLevel: ["ADMIN", "OPERATOR_KEMAHASISWAAN", "OPERATOR_AKADEMIK", "MAHASISWA", "KASUBBAG_KEMAHASISWAAN", "KASUBBAG_AKADEMIK"],
                 },
                 {
                         title: "User Management",
                         path: "/user-management",
+                        icon: "users",
                         aksesLevel: ["ADMIN"],
                 },
                 {
                         title: "Access Control List",
                         path: "/acl",
+                        icon: "shield",
                         aksesLevel: ["ADMIN"],
                 },
         ];
@@ -58,8 +95,10 @@ export async function seedMenu(prisma: PrismaClient) {
                                         await prisma.menu.create({
                                                 data: {
                                                         ulid: ulid(),
+                                                        parentMenu: menu.parentMenu,
                                                         title: menu.title,
                                                         path: menu.path,
+                                                        icon: menu.icon,
                                                         aksesLevelId: aksesLevel.id,
                                                         aclId: acl.id,
                                                 },

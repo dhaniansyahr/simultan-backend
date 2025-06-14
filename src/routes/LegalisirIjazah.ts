@@ -5,32 +5,24 @@ import * as Validation from "$validations/LegalisirIjazahValidation";
 
 const LegalisirIjazahRoutes = new Hono();
 
-LegalisirIjazahRoutes.get(
-        "/",
-        AuthMiddleware.checkJwt,
-        AuthMiddleware.checkAccess("PENGAJUAN_YUDISIUM", "VIEW"),
-        LegalisirIjazahController.getAll
-);
+LegalisirIjazahRoutes.get("/", AuthMiddleware.checkJwt, AuthMiddleware.checkAccess("LEGALISIR_IJAZAH", "VIEW"), LegalisirIjazahController.getAll);
 
 LegalisirIjazahRoutes.post(
         "/",
         AuthMiddleware.checkJwt,
-        AuthMiddleware.checkAccess("PENGAJUAN_YUDISIUM", "CREATE"),
+        AuthMiddleware.checkAccess("LEGALISIR_IJAZAH", "CREATE"),
         Validation.validateLegalisirIjazahDTO,
         LegalisirIjazahController.create
 );
 
-LegalisirIjazahRoutes.get(
-        "/:id",
-        AuthMiddleware.checkJwt,
-        AuthMiddleware.checkAccess("PENGAJUAN_YUDISIUM", "VIEW"),
-        LegalisirIjazahController.getById
-);
+LegalisirIjazahRoutes.get("/:id", AuthMiddleware.checkJwt, AuthMiddleware.checkAccess("LEGALISIR_IJAZAH", "VIEW"), LegalisirIjazahController.getById);
+
+LegalisirIjazahRoutes.put("/:id", AuthMiddleware.checkJwt, AuthMiddleware.checkAccess("LEGALISIR_IJAZAH", "UPDATE"), LegalisirIjazahController.update);
 
 LegalisirIjazahRoutes.put(
-        "/:id/verifikasi",
+        "/:id/verification",
         AuthMiddleware.checkJwt,
-        AuthMiddleware.checkAccess("PENGAJUAN_YUDISIUM", "VERIFICATION"),
+        AuthMiddleware.checkAccess("LEGALISIR_IJAZAH", "VERIFICATION"),
         Validation.validateVerifikasiStatusDTO,
         LegalisirIjazahController.verification
 );

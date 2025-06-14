@@ -173,15 +173,21 @@ model AksesLevel {
   acl       Acl[]
 }
 
+enum PARENT_MENU {
+  KEMAHASISWAAN
+  AKADEMIK
+}
+
 model Menu {
-  id           Int      @id @default(autoincrement())
-  ulid         String   @unique
+  id           Int          @id @default(autoincrement())
+  ulid         String       @unique
   title        String
   path         String
   icon         String?
+  parentMenu   PARENT_MENU?
   aksesLevelId Int
   aclId        Int
-  createdAt    DateTime @default(now())
+  createdAt    DateTime     @default(now())
 
   aksesLevel AksesLevel @relation(fields: [aksesLevelId], references: [id])
 }
@@ -229,78 +235,59 @@ enum TipeSuratKeteranganKuliah {
   LAINNYA
 }
 
-enum VerifikasiStatusBagianKemahasiswaan {
-  DIPROSES_OPERATOR_KEMAHASISWAAN
-  DISETUJUI_OPERATOR_KEMAHASISWAAN
-  DIPROSES_KASUBBAG_KEMAHASISWAAN
-  DISETUJUI_KASUBBAG_KEMAHASISWAAN
-  SURAT_DIPROSES
-  USULAN_DISETUJUI
-  USULAN_DITOLAK
-}
-
 model SuratKeteranganKuliah {
-  id               Int                                 @id @default(autoincrement())
-  ulid             String                              @unique
+  id               Int                       @id @default(autoincrement())
+  ulid             String                    @unique
   tipeSurat        TipeSuratKeteranganKuliah
-  deskripsi        String                              @db.Text
+  deskripsi        String                    @db.Text
   dokumenUrl       String
-  verifikasiStatus VerifikasiStatusBagianKemahasiswaan @default(DIPROSES_OPERATOR_KEMAHASISWAAN)
-  alasanPenolakan  String?                             @db.Text
+  verifikasiStatus String                    @default("DIPROSES OLEH OPERATOR KEMAHASISWAAN")
+  alasanPenolakan  String?                   @db.Text
   nomorSurat       String?
   userId           Int
-  createdAt        DateTime                            @default(now())
+  createdAt        DateTime                  @default(now())
 
   user   User     @relation(fields: [userId], references: [id])
   status Status[]
 }
 
 model CutiSementara {
-  id                   Int                                 @id @default(autoincrement())
-  ulid                 String                              @unique
+  id                   Int      @id @default(autoincrement())
+  ulid                 String   @unique
   suratIzinOrangTuaUrl String
   suratBssUrl          String
   suratBebasPustakaUrl String
-  alasanPengajuan      String                              @db.Text
-  verifikasiStatus     VerifikasiStatusBagianKemahasiswaan
-  alasanPenolakan      String?                             @db.Text
+  alasanPengajuan      String   @db.Text
+  verifikasiStatus     String   @default("DIPROSES OLEH OPERATOR KEMAHASISWAAN")
+  alasanPenolakan      String?  @db.Text
   userId               Int
-  createdAt            DateTime                            @default(now())
+  createdAt            DateTime @default(now())
 
   user   User     @relation(fields: [userId], references: [id])
   status Status[]
 }
 
-enum VerifikasiStatusBagianAkademik {
-  DIPROSES_OPERATOR_AKADEMIK
-  DISETUJUI_OPERATOR_AKADEMIK
-  DIPROSES_KASUBBAG_AKADEMIK
-  DISETUJUI_KASUBBAG_AKADEMIK
-  USULAN_DISETUJUI
-  USULAN_DITOLAK
-}
-
 model PengajuanYudisium {
-  id               Int                            @id @default(autoincrement())
-  ulid             String                         @unique
+  id               Int      @id @default(autoincrement())
+  ulid             String   @unique
   dokumenUrl       String
-  verifikasiStatus VerifikasiStatusBagianAkademik
-  alasanPenolakan  String?                        @db.Text
+  verifikasiStatus String   @default("DIPROSES OLEH OPERATOR AKADEMIK")
+  alasanPenolakan  String?  @db.Text
   userId           Int
-  createdAt        DateTime                       @default(now())
+  createdAt        DateTime @default(now())
 
   user   User     @relation(fields: [userId], references: [id])
   status Status[]
 }
 
 model LegalisirIjazah {
-  id               Int                            @id @default(autoincrement())
-  ulid             String                         @unique
+  id               Int      @id @default(autoincrement())
+  ulid             String   @unique
   dokumenUrl       String
-  verifikasiStatus VerifikasiStatusBagianAkademik
-  alasanPenolakan  String?                        @db.Text
+  verifikasiStatus String   @default("DIPROSES OLEH OPERATOR AKADEMIK")
+  alasanPenolakan  String?  @db.Text
   userId           Int
-  createdAt        DateTime                       @default(now())
+  createdAt        DateTime @default(now())
 
   user   User     @relation(fields: [userId], references: [id])
   status Status[]

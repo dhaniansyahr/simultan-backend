@@ -1,13 +1,8 @@
 import { FilteringQueryV2, PagedList } from "$entities/Query";
-import {
-        BadRequestWithMessage,
-        INTERNAL_SERVER_ERROR_SERVICE_RESPONSE,
-        INVALID_ID_SERVICE_RESPONSE,
-        ServiceResponse,
-} from "$entities/Service";
+import { BadRequestWithMessage, INTERNAL_SERVER_ERROR_SERVICE_RESPONSE, INVALID_ID_SERVICE_RESPONSE, ServiceResponse } from "$entities/Service";
 import Logger from "$pkg/logger";
 import { prisma } from "$utils/prisma.utils";
-import { SuratKeteranganKuliah, VerifikasiStatusBagianKemahasiswaan } from "@prisma/client";
+import { SuratKeteranganKuliah } from "@prisma/client";
 import { buildFilterQueryLimitOffsetV2 } from "./helpers/FilterQueryV2";
 import { LetterProcessDTO, SuratKeteranganKuliahDTO, VerifikasiSuratDTO } from "$entities/SuratKeteranganKuliah";
 import { UserJWTDAO } from "$entities/User";
@@ -15,32 +10,38 @@ import { buildBufferPDF } from "$utils/buffer.utils";
 import { DateTime } from "luxon";
 import { ulid } from "ulid";
 import { getCurrentAcademicInfo } from "$utils/strings.utils";
-import { flowCreatingStatusVeification, getNextVerificationStatus } from "$utils/helper.utils";
+import { flowCreatingStatusVerification, getNextVerificationStatus, VERIFICATION_STATUS } from "$utils/helper.utils";
 
 /** TODO
  * [] Verifkasi Harus teken 2x karna diproses dulu baru disetujui
  */
 
 export type CreateResponse = SuratKeteranganKuliah | {};
-export async function create(
-        data: SuratKeteranganKuliahDTO,
-        user: UserJWTDAO
-): Promise<ServiceResponse<CreateResponse>> {
+export async function create(data: SuratKeteranganKuliahDTO, user: UserJWTDAO): Promise<ServiceResponse<CreateResponse>> {
         try {
-                // Create the letter first
+                // Check if user is a student (MAHASISWA)
+                const aksesLevel = await prisma.aksesLevel.findUnique({
+                        where: { id: user.aksesLevelId },
+                });
+
+                if (!aksesLevel || aksesLevel.name !== "MAHASISWA") {
+                        return BadRequestWithMessage("Hanya mahasiswa yang dapat mengajukan surat keterangan kuliah!");
+                }
+
+                // Create the letter with initial status
                 const surat = await prisma.suratKeteranganKuliah.create({
                         data: {
                                 ulid: ulid(),
                                 tipeSurat: data.tipeSurat,
                                 deskripsi: data.deskripsi,
                                 dokumenUrl: data.dokumenUrl,
-                                verifikasiStatus: VerifikasiStatusBagianKemahasiswaan.DIPROSES_OPERATOR_KEMAHASISWAAN,
+                                verifikasiStatus: VERIFICATION_STATUS.DIPROSES_OLEH_OPERATOR,
                                 userId: user.id,
                                 status: {
                                         create: {
                                                 ulid: ulid(),
-                                                nama: VerifikasiStatusBagianKemahasiswaan.DIPROSES_OPERATOR_KEMAHASISWAAN,
-                                                deskripsi: `Pengajuan Surat oleh ${user.nama} dan ${VerifikasiStatusBagianKemahasiswaan.DIPROSES_OPERATOR_KEMAHASISWAAN}`,
+                                                nama: VERIFICATION_STATUS.DIPROSES_OLEH_OPERATOR,
+                                                deskripsi: `Pengajuan surat keterangan kuliah oleh ${user.nama} - menunggu verifikasi operator kemahasiswaan`,
                                                 userId: user.id,
                                         },
                                 },
@@ -55,7 +56,7 @@ export async function create(
                         data: {
                                 ulid: ulid(),
                                 flagMenu: "SURAT_KETERANGAN_KULIAH",
-                                deskripsi: `Pengajuan surat keterangan kuliah baru dengan ID ${surat.ulid}`,
+                                deskripsi: `Pengajuan surat keterangan kuliah baru dengan ID ${surat.ulid} oleh mahasiswa ${user.nama}`,
                                 aksesLevelId: user.aksesLevelId,
                                 userId: user.id,
                         },
@@ -91,12 +92,16 @@ export async function getAll(filters: FilteringQueryV2, user: UserJWTDAO): Promi
                         });
                 }
 
-                // For Operator and Kasubbag, show letters that are not yet approved or rejected
-                if (aksesLevel.name === "OPERATOR_KEMAHASISWAAN" || aksesLevel.name === "KASUBBAG_KEMAHASISWAAN") {
+                // Filter based on user role
+                if (aksesLevel.name === "OPERATOR_KEMAHASISWAAN") {
+                        // Operator sees: letters waiting for their action + letters waiting for letter number input
                         usedFilters.where.AND.push({
-                                verifikasiStatus: {
-                                        notIn: ["USULAN_DISETUJUI", "USULAN_DITOLAK"],
-                                },
+                                OR: [{ verifikasiStatus: VERIFICATION_STATUS.DIPROSES_OLEH_OPERATOR }, { verifikasiStatus: VERIFICATION_STATUS.SEDANG_INPUT_NOMOR_SURAT }],
+                        });
+                } else if (aksesLevel.name === "KASUBBAG_KEMAHASISWAAN") {
+                        // Kasubbag sees: letters waiting for their verification
+                        usedFilters.where.AND.push({
+                                verifikasiStatus: VERIFICATION_STATUS.DIPROSES_OLEH_KASUBBAG,
                         });
                 }
 
@@ -192,11 +197,7 @@ export async function getById(id: string): Promise<ServiceResponse<GetByIdRespon
 }
 
 export type VerificationSuratResponse = SuratKeteranganKuliah | {};
-export async function verificationStatus(
-        id: string,
-        data: VerifikasiSuratDTO,
-        user: UserJWTDAO
-): Promise<ServiceResponse<VerificationSuratResponse>> {
+export async function verificationStatus(id: string, data: VerifikasiSuratDTO, user: UserJWTDAO): Promise<ServiceResponse<VerificationSuratResponse>> {
         try {
                 const surat = await prisma.suratKeteranganKuliah.findUnique({
                         where: { ulid: id },
@@ -204,51 +205,93 @@ export async function verificationStatus(
 
                 if (!surat) return INVALID_ID_SERVICE_RESPONSE;
 
-                // Get current verification status
-                const currentStatus = surat.verifikasiStatus;
-                let nextStatus: VerifikasiStatusBagianKemahasiswaan;
+                // Get user's access level
+                const aksesLevel = await prisma.aksesLevel.findUnique({
+                        where: { id: user.aksesLevelId },
+                });
 
-                if (data.action === "DISETUJUI") {
-                        nextStatus = getNextVerificationStatus(currentStatus);
-                } else {
-                        nextStatus = VerifikasiStatusBagianKemahasiswaan.USULAN_DITOLAK;
+                if (!aksesLevel) return BadRequestWithMessage("Akses level tidak ditemukan!");
+
+                // Check authorization based on current status and user role
+                const currentStatus = surat.verifikasiStatus;
+                let isAuthorized = false;
+
+                if (currentStatus === VERIFICATION_STATUS.DIPROSES_OLEH_OPERATOR && aksesLevel.name === "OPERATOR_KEMAHASISWAAN") {
+                        isAuthorized = true;
+                } else if (currentStatus === VERIFICATION_STATUS.DIPROSES_OLEH_KASUBBAG && aksesLevel.name === "KASUBBAG_KEMAHASISWAAN") {
+                        isAuthorized = true;
                 }
 
-                // Update the letter with new status
-                const updatedSurat = await prisma.suratKeteranganKuliah.update({
+                if (!isAuthorized) {
+                        return BadRequestWithMessage("Anda tidak berwenang untuk memverifikasi surat pada tahap ini!");
+                }
+
+                if (data.action === "DISETUJUI") {
+                        if (currentStatus === VERIFICATION_STATUS.DIPROSES_OLEH_OPERATOR) {
+                                await flowCreatingStatusVerification(currentStatus, id, user.nama, user.id, user.aksesLevelId, false);
+                                await flowCreatingStatusVerification(VERIFICATION_STATUS.DISETUJUI_OLEH_OPERATOR, id, user.nama, user.id, user.aksesLevelId, false);
+                        } else if (currentStatus === VERIFICATION_STATUS.DIPROSES_OLEH_KASUBBAG) {
+                                await flowCreatingStatusVerification(currentStatus, id, user.nama, user.id, user.aksesLevelId, false);
+                                await flowCreatingStatusVerification(VERIFICATION_STATUS.DISETUJUI_OLEH_KASUBBAG, id, user.nama, user.id, user.aksesLevelId, false);
+                        }
+                } else {
+                        // Handle rejection
+                        let nextStatus: string;
+                        if (aksesLevel.name === "OPERATOR_KEMAHASISWAAN") {
+                                nextStatus = VERIFICATION_STATUS.DITOLAK_OLEH_OPERATOR;
+                        } else {
+                                nextStatus = VERIFICATION_STATUS.DITOLAK_OLEH_KASUBBAG;
+                        }
+
+                        const statusDescription = `Surat ditolak oleh ${user.nama} (${aksesLevel.name}): ${data.alasanPenolakan}`;
+
+                        await prisma.suratKeteranganKuliah.update({
+                                where: { ulid: id },
+                                data: {
+                                        verifikasiStatus: nextStatus,
+                                        alasanPenolakan: data.alasanPenolakan,
+                                        status: {
+                                                create: {
+                                                        ulid: ulid(),
+                                                        nama: nextStatus,
+                                                        deskripsi: statusDescription,
+                                                        userId: user.id,
+                                                },
+                                        },
+                                },
+                        });
+                }
+
+                // Get updated surat
+                const updatedSurat = await prisma.suratKeteranganKuliah.findUnique({
                         where: { ulid: id },
-                        data: {
-                                verifikasiStatus: nextStatus,
-                                alasanPenolakan: data.action === "DITOLAK" ? data.alasanPenolakan : undefined,
+                        include: {
                                 status: {
-                                        create: {
-                                                ulid: ulid(),
-                                                nama: nextStatus,
-                                                deskripsi:
-                                                        data.action === "DISETUJUI"
-                                                                ? `Surat disetujui oleh ${user.nama}`
-                                                                : `Surat ditolak oleh ${user.nama}: ${data.alasanPenolakan}`,
-                                                userId: user.id,
+                                        orderBy: { createdAt: "asc" },
+                                        include: {
+                                                user: {
+                                                        select: {
+                                                                nama: true,
+                                                                aksesLevel: true,
+                                                        },
+                                                },
                                         },
                                 },
                         },
-                        include: {
-                                status: true,
-                        },
                 });
+
+                if (!updatedSurat) return INVALID_ID_SERVICE_RESPONSE;
 
                 // Create log entry
                 await prisma.log.create({
                         data: {
                                 ulid: ulid(),
                                 flagMenu: "SURAT_KETERANGAN_KULIAH",
-                                deskripsi: `Verifikasi surat: ${nextStatus}`,
+                                deskripsi: `Verifikasi surat ID ${id}: ${data.action} oleh ${user.nama} (${aksesLevel.name})`,
                                 aksesLevelId: user.aksesLevelId,
                                 userId: user.id,
                         },
                 });
-
-                await flowCreatingStatusVeification(nextStatus, updatedSurat.ulid, user.nama, user.id, false);
 
                 return {
                         status: true,
@@ -260,11 +303,7 @@ export async function verificationStatus(
         }
 }
 
-export async function letterProcess(
-        id: string,
-        user: UserJWTDAO,
-        data: LetterProcessDTO
-): Promise<ServiceResponse<{}>> {
+export async function letterProcess(id: string, user: UserJWTDAO, data: LetterProcessDTO): Promise<ServiceResponse<{}>> {
         try {
                 const suratKeteranganKuliah = await prisma.suratKeteranganKuliah.findUnique({
                         where: {
@@ -287,18 +326,14 @@ export async function letterProcess(
                 const currentStatus = suratKeteranganKuliah.verifikasiStatus;
 
                 // Check if the letter is already processed
-                if (currentStatus === "USULAN_DISETUJUI") {
+                if (currentStatus === VERIFICATION_STATUS.DISETUJUI) {
                         return BadRequestWithMessage("Surat sudah diproses!");
-                } else if (currentStatus === "USULAN_DITOLAK") {
-                        return BadRequestWithMessage(
-                                "Surat ditolak, Mohon periksa alasan penolakan dan ajukan surat baru!"
-                        );
+                } else if (currentStatus === VERIFICATION_STATUS.DITOLAK_OLEH_OPERATOR || currentStatus === VERIFICATION_STATUS.DITOLAK_OLEH_KASUBBAG) {
+                        return BadRequestWithMessage("Surat ditolak, Mohon periksa alasan penolakan dan ajukan surat baru!");
                 }
 
-                if (currentStatus !== VerifikasiStatusBagianKemahasiswaan.SURAT_DIPROSES) {
-                        return BadRequestWithMessage(
-                                "Nomor surat hanya dapat ditambahkan ketika status SURAT_DIPROSES!"
-                        );
+                if (currentStatus !== VERIFICATION_STATUS.SEDANG_INPUT_NOMOR_SURAT) {
+                        return BadRequestWithMessage("Nomor surat hanya dapat ditambahkan ketika status SEDANG INPUT NOMOR SURAT!");
                 }
 
                 // Get the next status
@@ -335,6 +370,23 @@ export async function letterProcess(
                         },
                 });
 
+                // Additional log entry for final DISETUJUI status
+                if (
+                        nextStatus === VERIFICATION_STATUS.DISETUJUI ||
+                        nextStatus === VERIFICATION_STATUS.DISETUJUI_OLEH_OPERATOR ||
+                        nextStatus === VERIFICATION_STATUS.DISETUJUI_OLEH_KASUBBAG
+                ) {
+                        await prisma.log.create({
+                                data: {
+                                        ulid: ulid(),
+                                        flagMenu: "SURAT_KETERANGAN_KULIAH",
+                                        deskripsi: `Surat Keterangan Kuliah dengan ID ${id} DISETUJUI setelah input nomor surat oleh ${user.nama}`,
+                                        aksesLevelId: user.aksesLevelId,
+                                        userId: user.id,
+                                },
+                        });
+                }
+
                 return {
                         status: true,
                         data: updatedSurat,
@@ -350,7 +402,7 @@ export async function cetakSurat(id: string, user: UserJWTDAO): Promise<ServiceR
                 const suratKeteranganKuliah = await prisma.suratKeteranganKuliah.findUnique({
                         where: {
                                 ulid: id,
-                                verifikasiStatus: "USULAN_DISETUJUI",
+                                verifikasiStatus: VERIFICATION_STATUS.DISETUJUI,
                         },
                         include: {
                                 user: {
@@ -404,6 +456,37 @@ export async function cetakSurat(id: string, user: UserJWTDAO): Promise<ServiceR
                 };
         } catch (err) {
                 Logger.error(`SuratKeteranganKuliahService.cetakSurat : ${err}`);
+                return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
+        }
+}
+
+export type UpdateResponse = SuratKeteranganKuliah | {};
+export async function update(id: string, data: Partial<SuratKeteranganKuliahDTO>): Promise<ServiceResponse<UpdateResponse>> {
+        try {
+                let suratKeteranganKuliah = await prisma.suratKeteranganKuliah.findUnique({
+                        where: {
+                                ulid: id,
+                        },
+                });
+
+                if (!suratKeteranganKuliah) return INVALID_ID_SERVICE_RESPONSE;
+
+                if (!VERIFICATION_STATUS.DITOLAK_OLEH_OPERATOR || !VERIFICATION_STATUS.DITOLAK_OLEH_KASUBBAG)
+                        return BadRequestWithMessage("Anda tidak dapat melakukan perubahan pada Surat Keterangan Aktif Kuliah tidak ditolak!");
+
+                suratKeteranganKuliah = await prisma.suratKeteranganKuliah.update({
+                        where: {
+                                ulid: id,
+                        },
+                        data,
+                });
+
+                return {
+                        status: true,
+                        data: suratKeteranganKuliah,
+                };
+        } catch (err) {
+                Logger.error(`SuratKeteranganKuliahService.update : ${err}`);
                 return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
         }
 }

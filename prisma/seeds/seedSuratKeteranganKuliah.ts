@@ -1,4 +1,4 @@
-import { PrismaClient, TipeSuratKeteranganKuliah, VerifikasiStatusBagianKemahasiswaan } from "@prisma/client";
+import { PrismaClient, TipeSuratKeteranganKuliah } from "@prisma/client";
 import { ulid } from "ulid";
 
 export async function seedSuratKeteranganKuliah(prisma: PrismaClient) {
@@ -25,12 +25,11 @@ export async function seedSuratKeteranganKuliah(prisma: PrismaClient) {
                                 tipeSurat: TipeSuratKeteranganKuliah.KP4,
                                 deskripsi: "Untuk Keperluan BPJS Kesehatan",
                                 dokumenUrl: "https://example.com/dokumen",
-                                verifikasiStatus: VerifikasiStatusBagianKemahasiswaan.DIPROSES_OPERATOR_KEMAHASISWAAN,
                                 userId: findMhs.id,
                                 status: {
                                         create: {
                                                 ulid: ulid(),
-                                                nama: VerifikasiStatusBagianKemahasiswaan.DIPROSES_OPERATOR_KEMAHASISWAAN,
+                                                nama: "DIPROSES OLEH OPERATOR KEMAHASISWAAN",
                                                 deskripsi: `Pengajuan Surat oleh ${findMhs.nama}`,
                                                 userId: findMhs.id,
                                         },

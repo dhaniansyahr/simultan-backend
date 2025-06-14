@@ -8,16 +8,9 @@ export async function validateCutiSementaraDTO(c: Context, next: Next) {
         const data: CutiSementaraDTO = await c.req.json();
         const invalidFields: ErrorStructure[] = [];
 
-        if (!data.suratIzinOrangTuaUrl)
-                invalidFields.push(
-                        generateErrorStructure(
-                                "suratPersetujuanOrangTuaUrl",
-                                "suratPersetujuanOrangTuaUrl cannot be empty"
-                        )
-                );
+        if (!data.suratIzinOrangTuaUrl) invalidFields.push(generateErrorStructure("suratPersetujuanOrangTuaUrl", "suratPersetujuanOrangTuaUrl cannot be empty"));
 
-        if (!data.suratBebasPustakaUrl)
-                invalidFields.push(generateErrorStructure("bebasPustakaUrl", "bebasPustakaUrl cannot be empty"));
+        if (!data.suratBebasPustakaUrl) invalidFields.push(generateErrorStructure("bebasPustakaUrl", "bebasPustakaUrl cannot be empty"));
 
         if (!data.suratBssUrl) invalidFields.push(generateErrorStructure("bssFormUrl", "bssFormUrl cannot be empty"));
 
@@ -31,17 +24,11 @@ export async function validateVerificationSuratKeteranganKuliahDTO(c: Context, n
 
         if (!data.action) invalidFields.push(generateErrorStructure("action", "action cannot be empty"));
 
-        if (data.action !== "USULAN_DISETUJUI" && data.action !== "USULAN_DITOLAK")
-                invalidFields.push(
-                        generateErrorStructure(
-                                "action",
-                                'action is required, expected action "DISETUJUI" or "DITOLAK". '
-                        )
-                );
+        if (data.action !== "DISETUJUI" && data.action !== "DITOLAK")
+                invalidFields.push(generateErrorStructure("action", 'action is required, expected action "DISETUJUI" or "DITOLAK". '));
 
-        if (data.action === "USULAN_DITOLAK") {
-                if (!data.alasanPenolakan)
-                        invalidFields.push(generateErrorStructure("reason", "reason cannot be empty"));
+        if (data.action === "DITOLAK") {
+                if (!data.alasanPenolakan) invalidFields.push(generateErrorStructure("reason", "reason cannot be empty"));
         }
 
         if (invalidFields.length !== 0) return response_bad_request(c, "Validation Error", invalidFields);

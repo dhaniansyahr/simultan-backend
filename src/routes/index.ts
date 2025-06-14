@@ -8,20 +8,20 @@ import * as ExampleBufferController from "$controllers/rest/ExampleBufferControl
 
 const router = new Hono();
 
-router.post("/api/login", AuthValidation.validateLoginDTO, AuthController.login);
-router.post("/api/register", AuthValidation.validateRegisterDTO, AuthController.register);
-router.post("/api/verify-token", AuthController.verifyToken);
-router.put("/api/update-password", AuthMiddleware.checkJwt, AuthController.changePassword);
-router.get("/api/example/buffer/pdf", ExampleBufferController.getPDF);
-router.route("/api/users", RoutesRegistry.UserRoutes);
+router.post("/login", AuthValidation.validateLoginDTO, AuthController.login);
+router.post("/register", AuthValidation.validateRegisterDTO, AuthController.register);
+router.post("/verify-token", AuthController.verifyToken);
+router.put("/update-password", AuthMiddleware.checkJwt, AuthController.changePassword);
+router.get("/example/buffer/pdf", ExampleBufferController.getPDF);
+router.route("/users", RoutesRegistry.UserRoutes);
 
 // Surat Keterangan Kuliah
-router.route("/api/surat-keterangan-kuliah", RoutesRegistry.SuratKeteranganKuliahRoutes);
-router.route("/api/acl", RoutesRegistry.AclRoutes);
-router.route("/api/cuti-sementara", RoutesRegistry.CutiSementaraRoutes);
-router.route("/api/pengajuan-yudisium", RoutesRegistry.PengajuanYudisiumRoutes);
-router.route("/api/legalisir-ijazah", RoutesRegistry.LegalisirIjazahRoutes);
-router.route("/api/menu", RoutesRegistry.MenuRoutes);
+router.route("/surat-keterangan-kuliah", RoutesRegistry.SuratKeteranganKuliahRoutes);
+router.route("/acl", RoutesRegistry.AclRoutes);
+router.route("/cuti-sementara", RoutesRegistry.CutiSementaraRoutes);
+router.route("/pengajuan-yudisium", RoutesRegistry.PengajuanYudisiumRoutes);
+router.route("/legalisir-ijazah", RoutesRegistry.LegalisirIjazahRoutes);
+router.route("/menu", RoutesRegistry.MenuRoutes);
 
 router.get("/", (c: Context) => {
         return response_success(c, "main routes!");

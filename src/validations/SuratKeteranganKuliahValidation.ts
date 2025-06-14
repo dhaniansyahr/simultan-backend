@@ -1,12 +1,16 @@
 import { Context, Next } from "hono";
 import { response_bad_request } from "$utils/response.utils";
 import { ErrorStructure, generateErrorStructure } from "./helper";
-
 import { LetterProcessDTO, SuratKeteranganKuliahDTO, VerifikasiSuratDTO } from "$entities/SuratKeteranganKuliah";
 import { TipeSuratKeteranganKuliah } from "@prisma/client";
+import { UserJWTDAO } from "$entities/User";
+import { prisma } from "$utils/prisma.utils";
+import { VERIFICATION_STATUS } from "$utils/helper.utils";
 
 export async function validateSuratKeteranganKuliahDTO(c: Context, next: Next) {
         const data: SuratKeteranganKuliahDTO = await c.req.json();
+        const user: UserJWTDAO = c.get("jwtPayload");
+
         const invalidFields: ErrorStructure[] = [];
 
         if (!data.tipeSurat) invalidFields.push(generateErrorStructure("tipeSurat", "tipeSurat cannot be empty"));
@@ -15,6 +19,20 @@ export async function validateSuratKeteranganKuliahDTO(c: Context, next: Next) {
 
         if (!Object.values(TipeSuratKeteranganKuliah).find((item: any) => item === data.tipeSurat)) {
                 invalidFields.push(generateErrorStructure("type", "Invalid value of type"));
+        }
+
+        // Check if user already has a pending letter
+        const existingLetter = await prisma.suratKeteranganKuliah.findFirst({
+                where: {
+                        userId: user.id,
+                        verifikasiStatus: {
+                                in: [VERIFICATION_STATUS.DIPROSES_OLEH_OPERATOR, VERIFICATION_STATUS.DIPROSES_OLEH_KASUBBAG],
+                        },
+                },
+        });
+
+        if (existingLetter) {
+                invalidFields.push(generateErrorStructure("pengajuan", "Anda masih memiliki pengajuan surat yang sedang diproses"));
         }
 
         if (invalidFields.length !== 0) return response_bad_request(c, "Validation Error", invalidFields);
@@ -28,10 +46,7 @@ export async function validateVerificationSuratKeteranganKuliahDTO(c: Context, n
         if (!data.action) invalidFields.push(generateErrorStructure("action", "action cannot be empty"));
 
         if (data.action === "DITOLAK") {
-                if (!data.alasanPenolakan)
-                        invalidFields.push(
-                                generateErrorStructure("alasanPenolakan", "alasanPenolakan cannot be empty")
-                        );
+                if (!data.alasanPenolakan) invalidFields.push(generateErrorStructure("alasanPenolakan", "alasanPenolakan cannot be empty"));
         }
 
         if (invalidFields.length !== 0) return response_bad_request(c, "Validation Error", invalidFields);

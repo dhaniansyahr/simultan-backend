@@ -5,12 +5,7 @@ import * as Validation from "$validations/PengajuanYudisiumValidation";
 
 const PengajuanYudisiumRoutes = new Hono();
 
-PengajuanYudisiumRoutes.get(
-        "/",
-        AuthMiddleware.checkJwt,
-        AuthMiddleware.checkAccess("PENGAJUAN_YUDISIUM", "VIEW"),
-        PengajuanYudisiumController.getAll
-);
+PengajuanYudisiumRoutes.get("/", AuthMiddleware.checkJwt, AuthMiddleware.checkAccess("PENGAJUAN_YUDISIUM", "VIEW"), PengajuanYudisiumController.getAll);
 
 PengajuanYudisiumRoutes.post(
         "/",
@@ -20,15 +15,12 @@ PengajuanYudisiumRoutes.post(
         PengajuanYudisiumController.create
 );
 
-PengajuanYudisiumRoutes.get(
-        "/:id",
-        AuthMiddleware.checkJwt,
-        AuthMiddleware.checkAccess("PENGAJUAN_YUDISIUM", "VIEW"),
-        PengajuanYudisiumController.getById
-);
+PengajuanYudisiumRoutes.get("/:id", AuthMiddleware.checkJwt, AuthMiddleware.checkAccess("PENGAJUAN_YUDISIUM", "VIEW"), PengajuanYudisiumController.getById);
+
+PengajuanYudisiumRoutes.put("/:id", AuthMiddleware.checkJwt, AuthMiddleware.checkAccess("PENGAJUAN_YUDISIUM", "UPDATE"), PengajuanYudisiumController.update);
 
 PengajuanYudisiumRoutes.put(
-        "/:id/verifikasi",
+        "/:id/verification",
         AuthMiddleware.checkJwt,
         AuthMiddleware.checkAccess("PENGAJUAN_YUDISIUM", "VERIFICATION"),
         Validation.validateVerifikasiStatusDTO,

@@ -290,19 +290,19 @@ export async function seedAcl(prisma: PrismaClient) {
                         acl: [
                                 {
                                         feature: "SURAT_KETERANGAN_KULIAH",
-                                        actions: ["CREATE", "VIEW", "EXPORT"],
+                                        actions: ["CREATE", "UPDATE", "VIEW", "EXPORT"],
                                 },
                                 {
                                         feature: "CUTI_SEMENTARA",
-                                        actions: ["CREATE", "VIEW"],
+                                        actions: ["CREATE", "UPDATE", "VIEW"],
                                 },
                                 {
                                         feature: "PENGAJUAN_YUDISIUM",
-                                        actions: ["CREATE", "VIEW"],
+                                        actions: ["CREATE", "UPDATE", "VIEW"],
                                 },
                                 {
                                         feature: "LEGALISIR_IJAZAH",
-                                        actions: ["CREATE", "VIEW"],
+                                        actions: ["CREATE", "UPDATE", "VIEW"],
                                 },
                         ],
                 },

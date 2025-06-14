@@ -1,4 +1,4 @@
-import { PrismaClient, VerifikasiStatusBagianAkademik } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { ulid } from "ulid";
 
 export async function seedLegalisirIjazah(prisma: PrismaClient) {
@@ -23,16 +23,15 @@ export async function seedLegalisirIjazah(prisma: PrismaClient) {
                         data: {
                                 ulid: ulid(),
                                 dokumenUrl: "https://example.com/dokumen-ijazah",
-                                verifikasiStatus: VerifikasiStatusBagianAkademik.DIPROSES_OPERATOR_AKADEMIK,
                                 userId: findMhs.id,
                                 status: {
                                         create: {
                                                 ulid: ulid(),
-                                                nama: VerifikasiStatusBagianAkademik.DIPROSES_OPERATOR_AKADEMIK,
+                                                nama: "DIPROSES OLEH OPERATOR AKADEMIK",
                                                 deskripsi: `Pengajuan Legalisir Ijazah oleh ${findMhs.nama}`,
                                                 userId: findMhs.id,
-                                        }
-                                }
+                                        },
+                                },
                         },
                 });
         }

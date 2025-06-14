@@ -1,4 +1,4 @@
-import { PrismaClient, VerifikasiStatusBagianKemahasiswaan } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { ulid } from "ulid";
 
 export async function seedCutiSementara(prisma: PrismaClient) {
@@ -26,12 +26,11 @@ export async function seedCutiSementara(prisma: PrismaClient) {
                                 suratBssUrl: "https://example.com/surat-bss",
                                 suratBebasPustakaUrl: "https://example.com/surat-bebas-pustaka",
                                 alasanPengajuan: "Alasan pengajuan cuti sementara",
-                                verifikasiStatus: VerifikasiStatusBagianKemahasiswaan.DIPROSES_OPERATOR_KEMAHASISWAAN,
                                 userId: findMhs.id,
                                 status: {
                                         create: {
                                                 ulid: ulid(),
-                                                nama: VerifikasiStatusBagianKemahasiswaan.DIPROSES_OPERATOR_KEMAHASISWAAN,
+                                                nama: "DIPROSES OLEH OPERATOR KEMAHASISWAAN",
                                                 deskripsi: `Pengajuan Cuti oleh ${findMhs.nama}`,
                                                 userId: findMhs.id,
                                         },

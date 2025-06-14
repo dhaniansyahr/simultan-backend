@@ -44,6 +44,19 @@ export async function getById(c: Context): Promise<TypedResponse> {
         return response_success(c, serviceResponse.data, "Successfully fetched LegalisirIjazah by id!");
 }
 
+export async function update(c: Context): Promise<TypedResponse> {
+        const id = c.req.param("id");
+        const data: LegalisirIjazahDTO = await c.req.json();
+
+        const serviceResponse = await LegalisirIjazahService.update(id, data);
+
+        if (!serviceResponse.status) {
+                return handleServiceErrorWithResponse(c, serviceResponse);
+        }
+
+        return response_success(c, serviceResponse.data, "Successfully fetched LegalisirIjazah by id!");
+}
+
 export async function verification(c: Context): Promise<TypedResponse> {
         const data: VerifikasiLegalisirIjazahDTO = await c.req.json();
         const id = c.req.param("id");

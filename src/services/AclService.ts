@@ -1,9 +1,5 @@
 import { FilteringQueryV2, PagedList } from "$entities/Query";
-import {
-        INTERNAL_SERVER_ERROR_SERVICE_RESPONSE,
-        INVALID_ID_SERVICE_RESPONSE,
-        ServiceResponse,
-} from "$entities/Service";
+import { INTERNAL_SERVER_ERROR_SERVICE_RESPONSE, INVALID_ID_SERVICE_RESPONSE, ServiceResponse } from "$entities/Service";
 import Logger from "$pkg/logger";
 import { prisma } from "$utils/prisma.utils";
 import { AksesLevel, Prisma } from "@prisma/client";
@@ -96,43 +92,70 @@ export async function getByAksesLevelId(aksesLevelId: number): Promise<ServiceRe
 
 export async function getMenuByAksesLevelId(aksesLevelId: number): Promise<ServiceResponse<{}>> {
         try {
-                // const features = await prisma.feature.findMany();
-
-                // let acls = await prisma.acl.findMany({
-                //         where: {
-                //                 aksesLevelId,
-                //         },
-                //         include: {
-                //                 feature: true,
-                //         },
-                // });
-
-                // if (acls.length === 0) return INVALID_ID_SERVICE_RESPONSE;
-
-                // const mappingAcl = features.map((feature) => {
-                //         const actions = acls.filter((acl) => acl.namaFitur === feature.nama).map((acl) => acl.namaAksi);
-                //         return {
-                //                 feature: feature.nama,
-                //                 actions,
-                //         };
-                // });
-
-                const menu = await prisma.menu.findMany({
+                const menus = await prisma.menu.findMany({
                         where: {
                                 aksesLevelId,
                         },
+                        orderBy: [{ parentMenu: "asc" }, { title: "asc" }],
                 });
 
-                if (!menu) return INVALID_ID_SERVICE_RESPONSE;
+                if (!menus) return INVALID_ID_SERVICE_RESPONSE;
+
+                // Group child menus by their parent
+                const childMenusByParent = menus
+                        .filter((menu) => menu.parentMenu) // Only menus with parents
+                        .reduce((acc, menu) => {
+                                const parentKey = menu.parentMenu!;
+                                if (!acc[parentKey]) {
+                                        acc[parentKey] = [];
+                                }
+                                acc[parentKey].push({
+                                        title: menu.title,
+                                        path: menu.path,
+                                        icon: menu.icon || "",
+                                });
+                                return acc;
+                        }, {} as Record<string, any[]>);
+
+                // Get unique parent menus and standalone menus
+                const parentMenus = Array.from(new Set(menus.filter((menu) => menu.parentMenu).map((menu) => menu.parentMenu!)));
+
+                const standaloneMenus = menus.filter((menu) => !menu.parentMenu);
+
+                // Build final menu structure
+                const formattedMenus = [
+                        // Add parent menus with their children
+                        ...parentMenus.map((parentMenu) => ({
+                                title: parentMenu,
+                                path: `/${parentMenu!.toLowerCase()}`,
+                                icon: getParentMenuIcon(parentMenu!),
+                                children: childMenusByParent[parentMenu!] || [],
+                        })),
+                        // Add standalone menus (no parent)
+                        ...standaloneMenus.map((menu) => ({
+                                title: menu.title,
+                                path: menu.path,
+                                icon: menu.icon || "",
+                        })),
+                ];
 
                 return {
                         status: true,
-                        data: menu,
+                        data: formattedMenus,
                 };
         } catch (error) {
-                Logger.error(`AclService.getByAksesLevelId: ${error}`);
+                Logger.error(`AclService.getMenuByAksesLevelId: ${error}`);
                 return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
         }
+}
+
+// Helper function to get icons for parent menus
+function getParentMenuIcon(parentMenu: string): string {
+        const iconMap: Record<string, string> = {
+                KEMAHASISWAAN: "users",
+                AKADEMIK: "book-open",
+        };
+        return iconMap[parentMenu] || "folder";
 }
 
 export async function getAllFeature(): Promise<ServiceResponse<{}>> {

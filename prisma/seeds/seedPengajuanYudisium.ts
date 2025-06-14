@@ -1,4 +1,4 @@
-import { PrismaClient, VerifikasiStatusBagianAkademik } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { ulid } from "ulid";
 
 export async function seedPengajuanYudisium(prisma: PrismaClient) {
@@ -23,12 +23,11 @@ export async function seedPengajuanYudisium(prisma: PrismaClient) {
                         data: {
                                 ulid: ulid(),
                                 dokumenUrl: "https://example.com/dokumen-yudisium",
-                                verifikasiStatus: VerifikasiStatusBagianAkademik.DIPROSES_OPERATOR_AKADEMIK,
                                 userId: findMhs.id,
                                 status: {
                                         create: {
                                                 ulid: ulid(),
-                                                nama: VerifikasiStatusBagianAkademik.DIPROSES_OPERATOR_AKADEMIK,
+                                                nama: "DIPROSES OLEH OPERATOR AKADEMIK",
                                                 deskripsi: `Pengajuan Yudisium oleh ${findMhs.nama}`,
                                                 userId: findMhs.id,
                                         },

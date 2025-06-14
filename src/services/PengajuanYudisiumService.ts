@@ -1,18 +1,14 @@
 import { FilteringQueryV2, PagedList } from "$entities/Query";
-import {
-        BadRequestWithMessage,
-        INTERNAL_SERVER_ERROR_SERVICE_RESPONSE,
-        INVALID_ID_SERVICE_RESPONSE,
-        ServiceResponse,
-} from "$entities/Service";
+import { BadRequestWithMessage, INTERNAL_SERVER_ERROR_SERVICE_RESPONSE, INVALID_ID_SERVICE_RESPONSE, ServiceResponse } from "$entities/Service";
 import Logger from "$pkg/logger";
 import { prisma } from "$utils/prisma.utils";
 import { PengajuanYudisiumDTO, VerifikasiPengajuanYudisiumDTO } from "$entities/PengajuanYudisium";
 import { buildFilterQueryLimitOffsetV2 } from "./helpers/FilterQueryV2";
 import { ulid } from "ulid";
-import { VerifikasiStatusBagianAkademik } from "@prisma/client";
 import { UserJWTDAO } from "$entities/User";
-import { flowCreatingStatusVeificationAkademik, getNextVerificationStatusAkademik } from "$utils/helper.utils";
+import { VERIFICATION_STATUS } from "$utils/helper.utils";
+import { PengajuanYudisium } from "@prisma/client";
+import { flowCreatingStatusVeificationAkademik } from "./helpers/LogStatus";
 
 export type CreateResponse = PengajuanYudisiumDTO | {};
 export async function create(data: PengajuanYudisiumDTO, user: UserJWTDAO): Promise<ServiceResponse<CreateResponse>> {
@@ -22,13 +18,13 @@ export async function create(data: PengajuanYudisiumDTO, user: UserJWTDAO): Prom
                         data: {
                                 ulid: ulid(),
                                 dokumenUrl: data.dokumenUrl,
-                                verifikasiStatus: VerifikasiStatusBagianAkademik.DIPROSES_OPERATOR_AKADEMIK,
+                                verifikasiStatus: VERIFICATION_STATUS.DIPROSES_OLEH_OPERATOR,
                                 userId: user.id,
                                 status: {
                                         create: {
                                                 ulid: ulid(),
-                                                nama: VerifikasiStatusBagianAkademik.DIPROSES_OPERATOR_AKADEMIK,
-                                                deskripsi: `Pengajuan Yudisium oleh ${user.nama} dan ${VerifikasiStatusBagianAkademik.DIPROSES_OPERATOR_AKADEMIK}`,
+                                                nama: VERIFICATION_STATUS.DIPROSES_OLEH_OPERATOR,
+                                                deskripsi: `Pengajuan Yudisium oleh ${user.nama} - menunggu verifikasi operator akademik`,
                                                 userId: user.id,
                                         },
                                 },
@@ -79,15 +75,20 @@ export async function getAll(filters: FilteringQueryV2, user: UserJWTDAO): Promi
                         });
                 }
 
-                // For Operator and Kasubbag, show letters that are not yet approved or rejected
-                if (aksesLevel.name === "OPERATOR_AKADEMIK" || aksesLevel.name === "KASUBBAG_AKADEMIK") {
+                // Filter based on user role
+                if (aksesLevel.name === "OPERATOR_AKADEMIK") {
+                        // Operator sees: letters waiting for their action + letters waiting for letter number input
                         usedFilters.where.AND.push({
-                                verifikasiStatus: {
-                                        notIn: ["USULAN_DISETUJUI", "USULAN_DITOLAK"],
-                                },
+                                OR: [{ verifikasiStatus: VERIFICATION_STATUS.DIPROSES_OPERATOR_AKADEMIK }],
+                        });
+                } else if (aksesLevel.name === "KASUBBAG_AKADEMIK") {
+                        // Kasubbag sees: letters waiting for their verification
+                        usedFilters.where.AND.push({
+                                verifikasiStatus: VERIFICATION_STATUS.DIPROSES_KASUBBAG_AKADEMIK,
                         });
                 }
 
+                // Modified include to get all related status records
                 usedFilters.include = {
                         user: {
                                 select: {
@@ -95,7 +96,20 @@ export async function getAll(filters: FilteringQueryV2, user: UserJWTDAO): Promi
                                         npm: true,
                                 },
                         },
-                        status: true,
+                        status: {
+                                include: {
+                                        user: {
+                                                select: {
+                                                        nama: true,
+                                                        aksesLevel: true,
+                                                },
+                                        },
+                                },
+                        },
+                };
+
+                usedFilters.orderBy = {
+                        createdAt: "asc",
                 };
 
                 const [yudisium, totalData] = await Promise.all([
@@ -152,72 +166,105 @@ export async function getById(id: string): Promise<ServiceResponse<GetByIdRespon
         }
 }
 
-export async function verificationStatus(
-        id: string,
-        data: VerifikasiPengajuanYudisiumDTO,
-        user: UserJWTDAO
-): Promise<ServiceResponse<{}>> {
+export type VerificationResponse = PengajuanYudisium | {};
+export async function verificationStatus(id: string, data: VerifikasiPengajuanYudisiumDTO, user: UserJWTDAO): Promise<ServiceResponse<VerificationResponse>> {
         try {
                 const yudisium = await prisma.pengajuanYudisium.findUnique({
                         where: { ulid: id },
-                        include: {
-                                status: true,
-                        },
                 });
 
                 if (!yudisium) return INVALID_ID_SERVICE_RESPONSE;
 
-                const currentStatus = yudisium.verifikasiStatus;
-                let nextStatus: VerifikasiStatusBagianAkademik;
+                // Get user's access level
+                const aksesLevel = await prisma.aksesLevel.findUnique({
+                        where: { id: user.aksesLevelId },
+                });
 
-                if (data.action === "USULAN_DISETUJUI") {
-                        nextStatus = getNextVerificationStatusAkademik(currentStatus);
-                } else {
-                        nextStatus = VerifikasiStatusBagianAkademik.USULAN_DITOLAK;
+                if (!aksesLevel) return BadRequestWithMessage("Akses level tidak ditemukan!");
+
+                // Check authorization based on current status and user role
+                const currentStatus = yudisium.verifikasiStatus;
+                let isAuthorized = false;
+
+                console.log("Current Status Yudis : ", currentStatus);
+
+                if (currentStatus === VERIFICATION_STATUS.DIPROSES_OPERATOR_AKADEMIK && aksesLevel.name === "OPERATOR_AKADEMIK") {
+                        isAuthorized = true;
+                } else if (currentStatus === VERIFICATION_STATUS.DIPROSES_KASUBBAG_AKADEMIK && aksesLevel.name === "KASUBBAG_AKADEMIK") {
+                        isAuthorized = true;
                 }
 
-                // Update yudisium with new status
-                const updateYudisium = await prisma.pengajuanYudisium.update({
+                if (!isAuthorized) {
+                        return BadRequestWithMessage("Anda tidak berwenang untuk memverifikasi pengajuan pada tahap ini!");
+                }
+
+                if (data.action === "DISETUJUI") {
+                        if (currentStatus === VERIFICATION_STATUS.DIPROSES_OPERATOR_AKADEMIK) {
+                                console.log("Service Masuk ke Flow Create Status");
+                                await flowCreatingStatusVeificationAkademik(currentStatus, id, user.nama, user.id, true);
+                                await flowCreatingStatusVeificationAkademik(VERIFICATION_STATUS.DISETUJUI_OPERATOR_AKADEMIK, id, user.nama, user.id, true);
+                        } else if (currentStatus === VERIFICATION_STATUS.DIPROSES_KASUBBAG_AKADEMIK) {
+                                await flowCreatingStatusVeificationAkademik(currentStatus, id, user.nama, user.id, true);
+                                await flowCreatingStatusVeificationAkademik(VERIFICATION_STATUS.DISETUJUI_KASUBBAG_AKADEMIK, id, user.nama, user.id, true);
+                        }
+                } else {
+                        // Handle rejection
+                        let nextStatus: string;
+                        if (aksesLevel.name === "OPERATOR_AKADEMIK") {
+                                nextStatus = VERIFICATION_STATUS.DITOLAK;
+                        } else {
+                                nextStatus = VERIFICATION_STATUS.DITOLAK;
+                        }
+
+                        const statusDescription = `Pengajuan ditolak oleh ${user.nama} (${aksesLevel.name}): ${data.alasanPenolakan}`;
+
+                        await prisma.pengajuanYudisium.update({
+                                where: { ulid: id },
+                                data: {
+                                        verifikasiStatus: nextStatus,
+                                        alasanPenolakan: data.alasanPenolakan,
+                                        status: {
+                                                create: {
+                                                        ulid: ulid(),
+                                                        nama: nextStatus,
+                                                        deskripsi: statusDescription,
+                                                        userId: user.id,
+                                                },
+                                        },
+                                },
+                        });
+                }
+
+                // Get updated yudisium
+                const updateYudisium = await prisma.pengajuanYudisium.findUnique({
                         where: { ulid: id },
-                        data: {
-                                verifikasiStatus: nextStatus,
-                                alasanPenolakan: data.action === "USULAN_DITOLAK" ? data.alasanPenolakan : null,
+                        include: {
                                 status: {
-                                        create: {
-                                                ulid: ulid(),
-                                                nama: nextStatus,
-                                                deskripsi:
-                                                        data.action === "USULAN_DISETUJUI"
-                                                                ? `Surat disetujui oleh ${user.nama}`
-                                                                : `Surat ditolak oleh ${user.nama}: ${data.alasanPenolakan}`,
-                                                userId: user.id,
+                                        orderBy: { createdAt: "asc" },
+                                        include: {
+                                                user: {
+                                                        select: {
+                                                                nama: true,
+                                                                aksesLevel: true,
+                                                        },
+                                                },
                                         },
                                 },
                         },
-                        include: {
-                                status: true,
-                        },
                 });
 
+                if (!updateYudisium) return INVALID_ID_SERVICE_RESPONSE;
+
+                // Create log entry
                 await prisma.log.create({
                         data: {
                                 ulid: ulid(),
                                 flagMenu: "PENGAJUAN_YUDISIUM",
-                                deskripsi: `Verifikasi Pengajuan Yudisium: ${nextStatus}`,
+                                deskripsi: `Verifikasi pengajuan ID ${id}: ${data.action} oleh ${user.nama} (${aksesLevel.name})`,
                                 aksesLevelId: user.aksesLevelId,
                                 userId: user.id,
                         },
                 });
-
-                if (nextStatus !== "USULAN_DISETUJUI" && nextStatus !== "USULAN_DITOLAK") {
-                        await flowCreatingStatusVeificationAkademik(
-                                nextStatus,
-                                yudisium.ulid,
-                                user.nama,
-                                user.id,
-                                true
-                        );
-                }
 
                 return {
                         status: true,
@@ -225,6 +272,36 @@ export async function verificationStatus(
                 };
         } catch (error) {
                 Logger.error(`PengajuanYudisiumService.verificationStatus : ${error}`);
+                return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
+        }
+}
+
+export type UpdateResponse = PengajuanYudisium | {};
+export async function update(id: string, data: Partial<PengajuanYudisiumDTO>): Promise<ServiceResponse<UpdateResponse>> {
+        try {
+                let pengajuanYudisium = await prisma.pengajuanYudisium.findUnique({
+                        where: {
+                                ulid: id,
+                        },
+                });
+
+                if (!pengajuanYudisium) return INVALID_ID_SERVICE_RESPONSE;
+
+                if (!VERIFICATION_STATUS.DITOLAK) return BadRequestWithMessage("Anda tidak dapat melakukan perubahan pada Pengajuan Yudisium yang tidak ditolak!");
+
+                pengajuanYudisium = await prisma.pengajuanYudisium.update({
+                        where: {
+                                ulid: id,
+                        },
+                        data,
+                });
+
+                return {
+                        status: true,
+                        data: pengajuanYudisium,
+                };
+        } catch (err) {
+                Logger.error(`PengajuanYudisium.update : ${err}`);
                 return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
         }
 }

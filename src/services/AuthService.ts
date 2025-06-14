@@ -6,6 +6,8 @@ import { prisma } from "$utils/prisma.utils";
 import Logger from "$pkg/logger";
 import bcrypt from "bcrypt";
 import { ulid } from "ulid";
+import { isValidEmail, isValidNIP, isValidNPM } from "$utils/helper.utils";
+import axios from "axios";
 
 function createToken(user: User, expired: number) {
         const jwtPayload = exclude(user, "password") as UserJWTDAO;
@@ -13,87 +15,222 @@ function createToken(user: User, expired: number) {
         return token;
 }
 
+// Helper function to determine identity type
+function getIdentityType(identity: string): "NPM" | "NIP" | "EMAIL" | "UNKNOWN" {
+        if (isValidNPM(identity)) return "NPM";
+        if (isValidNIP(identity)) return "NIP";
+        if (isValidEmail(identity)) return "EMAIL";
+        return "UNKNOWN";
+}
+
+// Common function to process login result
+async function processLoginResult(user: any, password: string): Promise<ServiceResponse<any>> {
+        if (!user) return BadRequestWithMessage("User not found!");
+
+        // Map nama based on role relation
+        const userRole =
+                user.admin ??
+                user.operatorKemahasiswaan ??
+                user.operatorAkademik ??
+                user.ktu ??
+                user.kasubbagKemahasiswaan ??
+                user.kasubbagAkademik ??
+                user.dekan ??
+                user.wd1 ??
+                user.kadep ??
+                user.kaprodi ??
+                user.pimpinanFakultas;
+
+        const userData = {
+                ...user,
+                nama: userRole?.nama ?? user.nama,
+        };
+
+        const isPasswordVerified = await bcrypt.compare(password, user.password);
+
+        if (!isPasswordVerified) {
+                return {
+                        status: false,
+                        err: {
+                                message: "Invalid password!",
+                                code: 404,
+                        },
+                        data: {},
+                };
+        }
+
+        const token = createToken(userData, 3600);
+        const refreshToken = createToken(userData, 3600 * 24);
+        return {
+                status: true,
+                data: {
+                        user: exclude(userData, "password"),
+                        token,
+                        refreshToken,
+                },
+        };
+}
+
+// Login by NPM (for students)
+export async function loginByNPM(npm: string, password: string): Promise<ServiceResponse<any>> {
+        const user = await prisma.user.findFirst({
+                where: { npm },
+                include: {
+                        admin: true,
+                        operatorKemahasiswaan: true,
+                        operatorAkademik: true,
+                        ktu: true,
+                        kasubbagKemahasiswaan: true,
+                        kasubbagAkademik: true,
+                        dekan: true,
+                        wd1: true,
+                        kadep: true,
+                        kaprodi: true,
+                        pimpinanFakultas: true,
+                        aksesLevel: true,
+                },
+        });
+
+        return processLoginResult(user, password);
+}
+
+// Login by NIP (for staff/faculty)
+export async function loginByNIP(nip: string, password: string): Promise<ServiceResponse<any>> {
+        const user = await prisma.user.findFirst({
+                where: {
+                        OR: [
+                                { admin: { nip } },
+                                { operatorKemahasiswaan: { nip } },
+                                { operatorAkademik: { nip } },
+                                { ktu: { nip } },
+                                { kasubbagKemahasiswaan: { nip } },
+                                { kasubbagAkademik: { nip } },
+                                { dekan: { nip } },
+                                { wd1: { nip } },
+                                { kadep: { nip } },
+                                { kaprodi: { nip } },
+                                { pimpinanFakultas: { nip } },
+                        ],
+                },
+                include: {
+                        admin: true,
+                        operatorKemahasiswaan: true,
+                        operatorAkademik: true,
+                        ktu: true,
+                        kasubbagKemahasiswaan: true,
+                        kasubbagAkademik: true,
+                        dekan: true,
+                        wd1: true,
+                        kadep: true,
+                        kaprodi: true,
+                        pimpinanFakultas: true,
+                        aksesLevel: true,
+                },
+        });
+
+        return processLoginResult(user, password);
+}
+
+// Login by Email
+export async function loginByEmail(email: string, password: string): Promise<ServiceResponse<any>> {
+        const user = await prisma.user.findFirst({
+                where: {
+                        OR: [
+                                { admin: { email } },
+                                { operatorKemahasiswaan: { email } },
+                                { operatorAkademik: { email } },
+                                { ktu: { email } },
+                                { kasubbagKemahasiswaan: { email } },
+                                { kasubbagAkademik: { email } },
+                                { dekan: { email } },
+                                { wd1: { email } },
+                                { kadep: { email } },
+                                { kaprodi: { email } },
+                                { pimpinanFakultas: { email } },
+                        ],
+                },
+                include: {
+                        admin: true,
+                        operatorKemahasiswaan: true,
+                        operatorAkademik: true,
+                        ktu: true,
+                        kasubbagKemahasiswaan: true,
+                        kasubbagAkademik: true,
+                        dekan: true,
+                        wd1: true,
+                        kadep: true,
+                        kaprodi: true,
+                        pimpinanFakultas: true,
+                        aksesLevel: true,
+                },
+        });
+
+        return processLoginResult(user, password);
+}
+
+// Main login function that routes to appropriate login method
 export async function logIn(data: UserLoginDTO): Promise<ServiceResponse<any>> {
         try {
-                const { identityNumber, password } = data;
+                const { identity, password } = data;
 
-                const user = await prisma.user.findFirst({
-                        where: {
-                                OR: [
-                                        { npm: identityNumber },
-                                        { admin: { nip: identityNumber } },
-                                        { operatorKemahasiswaan: { nip: identityNumber } },
-                                        { operatorAkademik: { nip: identityNumber } },
-                                        { ktu: { nip: identityNumber } },
-                                        { kasubbagKemahasiswaan: { nip: identityNumber } },
-                                        { kasubbagAkademik: { nip: identityNumber } },
-                                        { dekan: { nip: identityNumber } },
-                                        { wd1: { nip: identityNumber } },
-                                        { kadep: { nip: identityNumber } },
-                                        { kaprodi: { nip: identityNumber } },
-                                        { pimpinanFakultas: { nip: identityNumber } },
-                                ],
-                        },
-                        include: {
-                                admin: true,
-                                operatorKemahasiswaan: true,
-                                operatorAkademik: true,
-                                ktu: true,
-                                kasubbagKemahasiswaan: true,
-                                kasubbagAkademik: true,
-                                dekan: true,
-                                wd1: true,
-                                kadep: true,
-                                kaprodi: true,
-                                pimpinanFakultas: true,
-                                aksesLevel: true,
-                        },
-                });
+                const identityType = getIdentityType(identity);
+                const authMethod = process.env.AUTH_METHOD;
 
-                if (!user) return BadRequestWithMessage("User not found!");
+                console.log("Method Login : ", authMethod);
 
-                // Map nama based on role relation
-                const userRole =
-                        user.admin ??
-                        user.operatorKemahasiswaan ??
-                        user.operatorAkademik ??
-                        user.ktu ??
-                        user.kasubbagKemahasiswaan ??
-                        user.kasubbagAkademik ??
-                        user.dekan ??
-                        user.wd1 ??
-                        user.kadep ??
-                        user.kaprodi ??
-                        user.pimpinanFakultas;
+                switch (identityType) {
+                        case "NPM":
+                                if (authMethod === "MANUAL") {
+                                        return await loginByNPM(identity, password);
+                                } else {
+                                        const res = await axios.post(`${process.env.AUTH_API_URL}/nim/${identity}/key/${password}/format/json`);
 
-                const userData = {
-                        ...user,
-                        nama: userRole?.nama ?? user.nama,
-                };
+                                        if (res.status === 200) {
+                                                const data = res.data;
+                                                return {
+                                                        status: true,
+                                                        data: data,
+                                                };
+                                        } else {
+                                                return BadRequestWithMessage("Invalid identity format or user not found!");
+                                        }
+                                }
 
-                const isPasswordVerified = await bcrypt.compare(password, user.password);
+                        case "NIP":
+                                if (authMethod === "MANUAL") {
+                                        return await loginByNIP(identity, password);
+                                } else {
+                                        const res = await axios.post(`${process.env.AUTH_API_URL}/nip/${identity}/key/${password}/format/json`);
 
-                if (!isPasswordVerified) {
-                        return {
-                                status: false,
-                                err: {
-                                        message: "Invalid password!",
-                                        code: 404,
-                                },
-                                data: {},
-                        };
+                                        console.log("Response from web service : ", res);
+
+                                        if (res.status === 200) {
+                                                const data = res.data;
+                                                return {
+                                                        status: true,
+                                                        data: data,
+                                                };
+                                        } else {
+                                                return BadRequestWithMessage("Invalid identity format or user not found!");
+                                        }
+                                }
+
+                        case "EMAIL":
+                                return await loginByEmail(identity, password);
+                        case "UNKNOWN":
+                        default:
+                                // Fallback: try all methods
+                                const npmResult = await loginByNPM(identity, password);
+                                if (npmResult.status) return npmResult;
+
+                                const nipResult = await loginByNIP(identity, password);
+                                if (nipResult.status) return nipResult;
+
+                                const emailResult = await loginByEmail(identity, password);
+                                if (emailResult.status) return emailResult;
+
+                                return BadRequestWithMessage("Invalid identity format or user not found!");
                 }
-
-                const token = createToken(userData, 3600);
-                const refreshToken = createToken(userData, 3600 * 24);
-                return {
-                        status: true,
-                        data: {
-                                user: exclude(userData, "password"),
-                                token,
-                                refreshToken,
-                        },
-                };
         } catch (err) {
                 Logger.error(`AuthService.login : ${err}`);
                 return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
@@ -151,11 +288,7 @@ export function verifyToken(token: string): ServiceResponse<any> {
         }
 }
 
-export async function changePassword(
-        userId: number,
-        oldPassword: string,
-        newPassword: string
-): Promise<ServiceResponse<any>> {
+export async function changePassword(userId: number, oldPassword: string, newPassword: string): Promise<ServiceResponse<any>> {
         try {
                 const user = await prisma.user.findUnique({
                         where: {

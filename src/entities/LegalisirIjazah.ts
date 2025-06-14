@@ -3,6 +3,6 @@ export interface LegalisirIjazahDTO {
 }
 
 export interface VerifikasiLegalisirIjazahDTO {
-        action: "USULAN_DISETUJUI" | "USULAN_DITOLAK";
+        action: "DISETUJUI" | "DITOLAK";
         alasanPenolakan?: string;
 }

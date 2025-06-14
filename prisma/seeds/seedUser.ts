@@ -2,307 +2,221 @@ import { PrismaClient } from "@prisma/client";
 import { ulid } from "ulid";
 import * as bcrypt from "bcrypt";
 
-export async function seedUser(prisma: PrismaClient) {
-    const countUser = await prisma.user.count();
-    if (countUser === 0) {
-        // Get admin data
-        const admin = await prisma.admin.count();
-        const aksesLevelAdmin = await prisma.aksesLevel.findUnique({
-            where: { name: "ADMIN" },
-        });
+// Define user data structure
+interface UserSeedData {
+        role: string;
+        nama: string;
+        email: string;
+        nip?: string;
+        npm?: string;
+        password: string;
+        aksesLevel: string;
+}
 
-        if (admin === 0) {
-            const admin = await prisma.admin.create({
-                data: {
-                    ulid: ulid(),
-                    nama: "Admin",
-                    email: "admin@test.com",
-                    nip: "1976032420050110",
-                },
-            });
-
-            if (aksesLevelAdmin && admin) {
-                // Create admin user
-                await prisma.user.create({
-                    data: {
-                        ulid: ulid(),
-                        npm: admin.nip,
-                        nama: admin.nama,
-                        password: await bcrypt.hash("admin123", 10),
-                        adminId: admin.id,
-                        aksesLevelId: aksesLevelAdmin.id,
-                    },
-                });
-            }
-        }
-
-        // Create Operator Kemahasiswaan
-        const operatorKemahasiswaan = await prisma.operatorKemahasiswaan.create({
-            data: {
-                ulid: ulid(),
-                nama: "Operator Kemahasiswaan",
-                email: "op.kemahasiswaan@test.com",
+// User data array
+const USERS_DATA: UserSeedData[] = [
+        // Admin
+        {
+                role: "admin",
+                nama: "Admin",
+                email: "admin@usk.ac.id",
                 nip: "1976032420050110",
-            },
-        });
+                password: "admin123",
+                aksesLevel: "ADMIN",
+        },
 
-        const aksesLevelOpKemahasiswaan = await prisma.aksesLevel.findUnique({
-            where: { name: "OPERATOR_KEMAHASISWAAN" },
-        });
-
-        if (aksesLevelOpKemahasiswaan) {
-            await prisma.user.create({
-                data: {
-                    ulid: ulid(),
-                    password: await bcrypt.hash("opkemahasiswaan123", 10),
-                    operatorKemahasiswaanId: operatorKemahasiswaan.id,
-                    aksesLevelId: aksesLevelOpKemahasiswaan.id,
-                },
-            });
-        }
-
-        // Create Operator Akademik
-        const operatorAkademik = await prisma.operatorAkademik.create({
-            data: {
-                ulid: ulid(),
+        // Operators
+        {
+                role: "operatorKemahasiswaan",
+                nama: "Operator Kemahasiswaan",
+                email: "op.kemahasiswaan@usk.ac.id",
+                nip: "1976032420050111",
+                password: "operator123",
+                aksesLevel: "OPERATOR_KEMAHASISWAAN",
+        },
+        {
+                role: "operatorAkademik",
                 nama: "Operator Akademik",
-                email: "op.akademik@test.com",
+                email: "op.akademik@usk.ac.id",
                 nip: "1982071320100420",
-            },
-        });
+                password: "operator123",
+                aksesLevel: "OPERATOR_AKADEMIK",
+        },
 
-        const aksesLevelOpAkademik = await prisma.aksesLevel.findUnique({
-            where: { name: "OPERATOR_AKADEMIK" },
-        });
-
-        if (aksesLevelOpAkademik) {
-            await prisma.user.create({
-                data: {
-                    ulid: ulid(),
-                    password: await bcrypt.hash("opakademik123", 10),
-                    operatorAkademikId: operatorAkademik.id,
-                    aksesLevelId: aksesLevelOpAkademik.id,
-                },
-            });
-        }
-
-        // Create KTU
-        const ktu = await prisma.ktu.create({
-            data: {
-                ulid: ulid(),
+        // Management
+        {
+                role: "ktu",
                 nama: "Kepala Tata Usaha",
-                email: "ktu@test.com",
+                email: "ktu@usk.ac.id",
                 nip: "1979082820070120",
-            },
-        });
-
-        const aksesLevelKtu = await prisma.aksesLevel.findUnique({
-            where: { name: "KTU" },
-        });
-
-        if (aksesLevelKtu) {
-            await prisma.user.create({
-                data: {
-                    ulid: ulid(),
-                    password: await bcrypt.hash("ktu123", 10),
-                    ktuId: ktu.id,
-                    aksesLevelId: aksesLevelKtu.id,
-                },
-            });
-        }
-
-        // Create Kasubbag Akademik
-        const kasubbagAkademik = await prisma.kasubbagAkademik.create({
-            data: {
-                ulid: ulid(),
+                password: "operator123",
+                aksesLevel: "KTU",
+        },
+        {
+                role: "kasubbagAkademik",
                 nama: "Kasubbag Akademik",
-                email: "kasubbag.akademik@test.com",
+                email: "kasubbag.akademik@usk.ac.id",
                 nip: "1990011520120315",
-            },
-        });
-
-        const aksesLevelKasubbagAkademik = await prisma.aksesLevel.findUnique({
-            where: { name: "KASUBBAG_AKADEMIK" },
-        });
-
-        if (aksesLevelKasubbagAkademik) {
-            await prisma.user.create({
-                data: {
-                    ulid: ulid(),
-                    password: await bcrypt.hash("kasubbagakademik123", 10),
-                    kasubbagAkademikId: kasubbagAkademik.id,
-                    aksesLevelId: aksesLevelKasubbagAkademik.id,
-                },
-            });
-        }
-
-        // Create Kasubbag Kemahasiswaan
-        const kasubbagKemahasiswaan = await prisma.kasubbagKemahasiswaan.create({
-            data: {
-                ulid: ulid(),
+                password: "operator123",
+                aksesLevel: "KASUBBAG_AKADEMIK",
+        },
+        {
+                role: "kasubbagKemahasiswaan",
                 nama: "Kasubbag Kemahasiswaan",
-                email: "kasubbag.kemahasiswaan@test.com",
+                email: "kasubbag.kemahasiswaan@usk.ac.id",
                 nip: "1987123020150226",
-            },
-        });
+                password: "operator123",
+                aksesLevel: "KASUBBAG_KEMAHASISWAAN",
+        },
 
-        const aksesLevelKasubbagKemahasiswaan = await prisma.aksesLevel.findUnique({
-            where: { name: "KASUBBAG_KEMAHASISWAAN" },
-        });
-
-        if (aksesLevelKasubbagKemahasiswaan) {
-            await prisma.user.create({
-                data: {
-                    ulid: ulid(),
-                    password: await bcrypt.hash("kasubbagkemahasiswaan123", 10),
-                    kasubbagKemahasiswaanId: kasubbagKemahasiswaan.id,
-                    aksesLevelId: aksesLevelKasubbagKemahasiswaan.id,
-                },
-            });
-        }
-
-        // Create Dekan
-        const dekan = await prisma.dekan.create({
-            data: {
-                ulid: ulid(),
+        // Leadership
+        {
+                role: "dekan",
                 nama: "Dekan",
-                email: "dekan@test.com",
+                email: "dekan@usk.ac.id",
                 nip: "1975050620030417",
-            },
-        });
-
-        const aksesLevelDekan = await prisma.aksesLevel.findUnique({
-            where: { name: "DEKAN" },
-        });
-
-        if (aksesLevelDekan) {
-            await prisma.user.create({
-                data: {
-                    ulid: ulid(),
-                    password: await bcrypt.hash("dekan123", 10),
-                    dekanId: dekan.id,
-                    aksesLevelId: aksesLevelDekan.id,
-                },
-            });
-        }
-
-        // Create WD1
-        const wd1 = await prisma.wd1.create({
-            data: {
-                ulid: ulid(),
+                password: "operator123",
+                aksesLevel: "DEKAN",
+        },
+        {
+                role: "wd1",
                 nama: "Wakil Dekan 1",
-                email: "wd1@test.com",
+                email: "wd1@usk.ac.id",
                 nip: "1983091920090128",
-            },
-        });
-
-        const aksesLevelWd1 = await prisma.aksesLevel.findUnique({
-            where: { name: "WD_1" },
-        });
-
-        if (aksesLevelWd1) {
-            await prisma.user.create({
-                data: {
-                    ulid: ulid(),
-                    password: await bcrypt.hash("wd1123", 10),
-                    wd1Id: wd1.id,
-                    aksesLevelId: aksesLevelWd1.id,
-                },
-            });
-        }
-
-        // Create Kepala Departemen
-        const kadep = await prisma.kepalaDepertemen.create({
-            data: {
-                ulid: ulid(),
+                password: "operator123",
+                aksesLevel: "WD_1",
+        },
+        {
+                role: "kadep",
                 nama: "Kepala Departemen",
-                email: "kadep@test.com",
+                email: "kadep@usk.ac.id",
                 nip: "1988022520140319",
-            },
-        });
-
-        const aksesLevelKadep = await prisma.aksesLevel.findUnique({
-            where: { name: "KEPALA_DEPARTEMEN" },
-        });
-
-        if (aksesLevelKadep) {
-            await prisma.user.create({
-                data: {
-                    ulid: ulid(),
-                    password: await bcrypt.hash("kadep123", 10),
-                    kadepId: kadep.id,
-                    aksesLevelId: aksesLevelKadep.id,
-                },
-            });
-        }
-
-        // Create Kepala Prodi
-        const kaprodi = await prisma.kepalaProdi.create({
-            data: {
-                ulid: ulid(),
+                password: "operator123",
+                aksesLevel: "KEPALA_DEPARTEMEN",
+        },
+        {
+                role: "kaprodi",
                 nama: "Kepala Program Studi",
-                email: "kaprodi@test.com",
+                email: "kaprodi@usk.ac.id",
                 nip: "1977041220060421",
-            },
-        });
-
-        const aksesLevelKaprodi = await prisma.aksesLevel.findUnique({
-            where: { name: "KEPALA_PRODI" },
-        });
-
-        if (aksesLevelKaprodi) {
-            await prisma.user.create({
-                data: {
-                    ulid: ulid(),
-                    password: await bcrypt.hash("kaprodi123", 10),
-                    kaprodiId: kaprodi.id,
-                    aksesLevelId: aksesLevelKaprodi.id,
-                },
-            });
-        }
-
-        // Create Pimpinan Fakultas
-        const pimpinanFakultas = await prisma.pimpinanFakultas.create({
-            data: {
-                ulid: ulid(),
+                password: "operator123",
+                aksesLevel: "KEPALA_PRODI",
+        },
+        {
+                role: "pimpinanFakultas",
                 nama: "Pimpinan Fakultas",
-                email: "pimpinan.fakultas@test.com",
+                email: "pimpinan.fakultas@usk.ac.id",
                 nip: "1986100820110211",
-            },
-        });
+                password: "operator123",
+                aksesLevel: "PIMPINAN_FAKULTAS",
+        },
 
-        const aksesLevelPimpinanFakultas = await prisma.aksesLevel.findUnique({
-            where: { name: "PIMPINAN_FAKULTAS" },
-        });
+        // Student
+        {
+                role: "mahasiswa",
+                nama: "Rama Dhaniansyah",
+                email: "rama@mhs.usk.ac.id",
+                npm: "2105107010057",
+                password: "user123",
+                aksesLevel: "MAHASISWA",
+        },
+];
 
-        if (aksesLevelPimpinanFakultas) {
-            await prisma.user.create({
-                data: {
-                    ulid: ulid(),
-                    password: await bcrypt.hash("pimpinanfakultas123", 10),
-                    pimpinanFakultasId: pimpinanFakultas.id,
-                    aksesLevelId: aksesLevelPimpinanFakultas.id,
-                },
-            });
+// Helper function to create role entity
+async function createRoleEntity(prisma: PrismaClient, userData: UserSeedData) {
+        const { role, nama, email, nip } = userData;
+
+        // All role entities require nip, only mahasiswa doesn't have it
+        if (!nip) {
+                throw new Error(`NIP is required for role: ${role}`);
         }
 
-        // Create Mahasiswa
-        const aksesLevelMahasiswa = await prisma.aksesLevel.findUnique({
-            where: { name: "MAHASISWA" },
+        const entityData = {
+                ulid: ulid(),
+                nama,
+                email,
+                nip,
+        };
+
+        switch (role) {
+                case "admin":
+                        return await prisma.admin.create({ data: entityData });
+                case "operatorKemahasiswaan":
+                        return await prisma.operatorKemahasiswaan.create({ data: entityData });
+                case "operatorAkademik":
+                        return await prisma.operatorAkademik.create({ data: entityData });
+                case "ktu":
+                        return await prisma.ktu.create({ data: entityData });
+                case "kasubbagAkademik":
+                        return await prisma.kasubbagAkademik.create({ data: entityData });
+                case "kasubbagKemahasiswaan":
+                        return await prisma.kasubbagKemahasiswaan.create({ data: entityData });
+                case "dekan":
+                        return await prisma.dekan.create({ data: entityData });
+                case "wd1":
+                        return await prisma.wd1.create({ data: entityData });
+                case "kadep":
+                        return await prisma.kepalaDepertemen.create({ data: entityData });
+                case "kaprodi":
+                        return await prisma.kepalaProdi.create({ data: entityData });
+                case "pimpinanFakultas":
+                        return await prisma.pimpinanFakultas.create({ data: entityData });
+                default:
+                        return null;
+        }
+}
+
+// Helper function to create user
+async function createUser(prisma: PrismaClient, userData: UserSeedData, roleEntity: any) {
+        const aksesLevel = await prisma.aksesLevel.findUnique({
+                where: { name: userData.aksesLevel },
         });
 
-        if (aksesLevelMahasiswa) {
-            await prisma.user.create({
-                data: {
-                    ulid: ulid(),
-                    npm: "2108107010057",
-                    nama: "Rama Dhaniansyah",
-                    password: await bcrypt.hash("user123", 10),
-                    aksesLevelId: aksesLevelMahasiswa.id,
-                },
-            });
+        if (!aksesLevel) {
+                console.warn(`Access level ${userData.aksesLevel} not found`);
+                return;
         }
-    }
 
-    console.log("All Users seeded");
+        const userCreateData: any = {
+                ulid: ulid(),
+                nama: userData.nama,
+                password: await bcrypt.hash(userData.password, 10),
+                aksesLevelId: aksesLevel.id,
+        };
+
+        // Add role-specific fields
+        if (userData.role === "mahasiswa") {
+                userCreateData.npm = userData.npm;
+        } else if (roleEntity) {
+                userCreateData[`${userData.role}Id`] = roleEntity.id;
+                userCreateData.npm = userData.nip; // Use NIP as NPM for staff
+        }
+
+        return await prisma.user.create({ data: userCreateData });
+}
+
+export async function seedUser(prisma: PrismaClient) {
+        const countUser = await prisma.user.count();
+        if (countUser > 0) {
+                console.log("Users already exist, skipping seed");
+                return;
+        }
+
+        console.log("Seeding users...");
+
+        for (const userData of USERS_DATA) {
+                try {
+                        // Create role entity (if not mahasiswa)
+                        const roleEntity = userData.role !== "mahasiswa" ? await createRoleEntity(prisma, userData) : null;
+
+                        // Create user
+                        await createUser(prisma, userData, roleEntity);
+
+                        console.log(`✓ Created ${userData.role}: ${userData.nama}`);
+                } catch (error) {
+                        console.error(`✗ Failed to create ${userData.role}: ${userData.nama}`, error);
+                }
+        }
+
+        console.log("All Users seeded successfully!");
 }
