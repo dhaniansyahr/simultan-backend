@@ -26,13 +26,6 @@ export async function seedMenu(prisma: PrismaClient) {
                         icon: "clock",
                         aksesLevel: ["ADMIN", "OPERATOR_KEMAHASISWAAN", "MAHASISWA", "KASUBBAG_KEMAHASISWAAN"],
                 },
-                {
-                        parentMenu: PARENT_MENU.KEMAHASISWAAN,
-                        title: "Beasiswa",
-                        path: "/beasiswa",
-                        icon: "award",
-                        aksesLevel: ["ADMIN", "OPERATOR_KEMAHASISWAAN", "MAHASISWA"],
-                },
 
                 // Akademik Parent Group
                 {
@@ -48,13 +41,6 @@ export async function seedMenu(prisma: PrismaClient) {
                         path: "/legalisir-ijazah",
                         icon: "file-check",
                         aksesLevel: ["ADMIN", "OPERATOR_AKADEMIK", "MAHASISWA", "KASUBBAG_AKADEMIK"],
-                },
-                {
-                        parentMenu: PARENT_MENU.AKADEMIK,
-                        title: "Transkrip Nilai",
-                        path: "/transkrip-nilai",
-                        icon: "list",
-                        aksesLevel: ["ADMIN", "OPERATOR_AKADEMIK", "MAHASISWA"],
                 },
 
                 // Standalone Menus (No Parent)
