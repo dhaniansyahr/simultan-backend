@@ -105,6 +105,10 @@ export async function seedAcl(prisma: PrismaClient) {
                                         feature: "ACL",
                                         actions: ["CREATE", "VIEW", "UPDATE", "DELETE"],
                                 },
+                                {
+                                        feature: "DASHBOARD",
+                                        actions: ["VIEW"],
+                                },
                         ],
                 },
                 {
@@ -118,6 +122,10 @@ export async function seedAcl(prisma: PrismaClient) {
                                         feature: "CUTI_SEMENTARA",
                                         actions: ["VIEW", "VERIFICATION"],
                                 },
+                                {
+                                        feature: "DASHBOARD",
+                                        actions: ["VIEW"],
+                                },
                         ],
                 },
                 {
@@ -130,6 +138,10 @@ export async function seedAcl(prisma: PrismaClient) {
                                 {
                                         feature: "LEGALISIR_IJAZAH",
                                         actions: ["VIEW", "VERIFICATION"],
+                                },
+                                {
+                                        feature: "DASHBOARD",
+                                        actions: ["VIEW"],
                                 },
                         ],
                 },
@@ -152,6 +164,10 @@ export async function seedAcl(prisma: PrismaClient) {
                                         feature: "LEGALISIR_IJAZAH",
                                         actions: ["VIEW"],
                                 },
+                                {
+                                        feature: "DASHBOARD",
+                                        actions: ["VIEW"],
+                                },
                         ],
                 },
                 {
@@ -165,6 +181,10 @@ export async function seedAcl(prisma: PrismaClient) {
                                         feature: "LEGALISIR_IJAZAH",
                                         actions: ["VIEW", "VERIFICATION"],
                                 },
+                                {
+                                        feature: "DASHBOARD",
+                                        actions: ["VIEW"],
+                                },
                         ],
                 },
                 {
@@ -177,6 +197,10 @@ export async function seedAcl(prisma: PrismaClient) {
                                 {
                                         feature: "CUTI_SEMENTARA",
                                         actions: ["VIEW", "VERIFICATION"],
+                                },
+                                {
+                                        feature: "DASHBOARD",
+                                        actions: ["VIEW"],
                                 },
                         ],
                 },
@@ -197,6 +221,10 @@ export async function seedAcl(prisma: PrismaClient) {
                                 },
                                 {
                                         feature: "LEGALISIR_IJAZAH",
+                                        actions: ["VIEW"],
+                                },
+                                {
+                                        feature: "DASHBOARD",
                                         actions: ["VIEW"],
                                 },
                         ],
@@ -220,6 +248,10 @@ export async function seedAcl(prisma: PrismaClient) {
                                         feature: "LEGALISIR_IJAZAH",
                                         actions: ["VIEW"],
                                 },
+                                {
+                                        feature: "DASHBOARD",
+                                        actions: ["VIEW"],
+                                },
                         ],
                 },
                 {
@@ -239,6 +271,10 @@ export async function seedAcl(prisma: PrismaClient) {
                                 },
                                 {
                                         feature: "LEGALISIR_IJAZAH",
+                                        actions: ["VIEW"],
+                                },
+                                {
+                                        feature: "DASHBOARD",
                                         actions: ["VIEW"],
                                 },
                         ],
@@ -262,6 +298,10 @@ export async function seedAcl(prisma: PrismaClient) {
                                         feature: "LEGALISIR_IJAZAH",
                                         actions: ["VIEW"],
                                 },
+                                {
+                                        feature: "DASHBOARD",
+                                        actions: ["VIEW"],
+                                },
                         ],
                 },
                 {
@@ -281,6 +321,10 @@ export async function seedAcl(prisma: PrismaClient) {
                                 },
                                 {
                                         feature: "LEGALISIR_IJAZAH",
+                                        actions: ["VIEW"],
+                                },
+                                {
+                                        feature: "DASHBOARD",
                                         actions: ["VIEW"],
                                 },
                         ],
@@ -303,6 +347,10 @@ export async function seedAcl(prisma: PrismaClient) {
                                 {
                                         feature: "LEGALISIR_IJAZAH",
                                         actions: ["CREATE", "UPDATE", "VIEW"],
+                                },
+                                {
+                                        feature: "DASHBOARD",
+                                        actions: ["VIEW"],
                                 },
                         ],
                 },
