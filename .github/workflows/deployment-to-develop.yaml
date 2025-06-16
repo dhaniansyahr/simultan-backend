@@ -48,6 +48,7 @@ jobs:
                   host: ${{ secrets.HOST }}
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
+                  key: ${{ secrets.PRIVATE_KEY }}
                   port: ${{ secrets.PORT }}
                   script: |
                       cd sim-ult-fp/backend
@@ -58,6 +59,7 @@ jobs:
                   host: ${{ secrets.HOST }}
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
+                  key: ${{ secrets.PRIVATE_KEY }}
                   port: ${{ secrets.PORT }}
                   script: |
                       cd sim-ult-fp/backend
@@ -70,6 +72,7 @@ jobs:
                   host: ${{ secrets.HOST }}
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
+                  key: ${{ secrets.PRIVATE_KEY }}
                   port: ${{ secrets.PORT }}
                   script: |
                       cd sim-ult-fp/backend
@@ -82,6 +85,7 @@ jobs:
                   host: ${{ secrets.HOST }}
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
+                  key: ${{ secrets.PRIVATE_KEY }}
                   port: ${{ secrets.PORT }}
                   script: |
                       cd sim-ult-fp/backend
@@ -94,6 +98,7 @@ jobs:
                   host: ${{ secrets.HOST }}
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
+                  key: ${{ secrets.PRIVATE_KEY }}
                   port: ${{ secrets.PORT }}
                   script: |
                       cd sim-ult-fp/backend
@@ -106,6 +111,7 @@ jobs:
                   host: ${{ secrets.HOST }}
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
+                  key: ${{ secrets.PRIVATE_KEY }}
                   port: ${{ secrets.PORT }}
                   script: |
                       cd sim-ult-fp/backend
@@ -118,6 +124,7 @@ jobs:
                   host: ${{ secrets.HOST }}
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
+                  key: ${{ secrets.PRIVATE_KEY }}
                   port: ${{ secrets.PORT }}
                   script: |
                       cd sim-ult-fp/backend
