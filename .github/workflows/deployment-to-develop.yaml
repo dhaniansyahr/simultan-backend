@@ -49,7 +49,7 @@ jobs:
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
                   script: |
-                      cd /home/simultan/backend
+                      cd sim-ult-fp/backend
 
             - name: Fetch Code and Reset Directory
               uses: appleboy/ssh-action@master
@@ -58,7 +58,7 @@ jobs:
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
                   script: |
-                      cd /home/simultan/backend 
+                      cd sim-ult-fp/backend
                       git add . && git stash && git fetch origin main && git pull
               continue-on-error: false
 
@@ -69,7 +69,7 @@ jobs:
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
                   script: |
-                      cd /home/simultan/backend 
+                      cd sim-ult-fp/backend
                       npm install
                   continue-on-error: false
 
@@ -80,7 +80,7 @@ jobs:
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
                   script: |
-                      cd /home/simultan/backend
+                      cd sim-ult-fp/backend
                       npx prisma migrate deploy
                   continue-on-error: false
 
@@ -91,7 +91,7 @@ jobs:
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
                   script: |
-                      cd /home/simultan/backend 
+                      cd sim-ult-fp/backend
                       npx prisma generate
                   continue-on-error: false
 
@@ -102,7 +102,7 @@ jobs:
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
                   script: |
-                      cd /home/simultan/backend 
+                      cd sim-ult-fp/backend
                       npm run seed
                   continue-on-error: false
 
@@ -113,6 +113,6 @@ jobs:
                   username: ${{ secrets.USERNAME }}
                   password: ${{ secrets.PASSWORD }}
                   script: |
-                      cd /home/simultan/backend 
-                      pm2 restart simultan-backend
+                      cd sim-ult-fp/backend
+                      pm2 restart {{PROJECT_ID}}
                   continue-on-error: false
