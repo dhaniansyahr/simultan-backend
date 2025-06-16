@@ -47,14 +47,15 @@ export async function getById(c: Context): Promise<TypedResponse> {
 export async function update(c: Context): Promise<TypedResponse> {
         const id = c.req.param("id");
         const data: SuratKeteranganKuliahDTO = await c.req.json();
+        const user: UserJWTDAO = c.get("jwtPayload");
 
-        const serviceResponse = await SuratKeteranganKuliahService.update(id, data);
+        const serviceResponse = await SuratKeteranganKuliahService.update(id, data, user);
 
         if (!serviceResponse.status) {
                 return handleServiceErrorWithResponse(c, serviceResponse);
         }
 
-        return response_success(c, serviceResponse.data, "Successfully fetched SuratKeteranganKuliah by id!");
+        return response_success(c, serviceResponse.data, "Successfully updated SuratKeteranganKuliah!");
 }
 
 export async function verificationSurat(c: Context): Promise<Response | TypedResponse> {

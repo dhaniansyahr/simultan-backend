@@ -47,14 +47,15 @@ export async function getById(c: Context): Promise<TypedResponse> {
 export async function update(c: Context): Promise<TypedResponse> {
         const id = c.req.param("id");
         const data: CutiSementaraDTO = await c.req.json();
+        const user: UserJWTDAO = c.get("jwtPayload");
 
-        const serviceResponse = await CutiSementaraService.update(id, data);
+        const serviceResponse = await CutiSementaraService.update(id, data, user);
 
         if (!serviceResponse.status) {
                 return handleServiceErrorWithResponse(c, serviceResponse);
         }
 
-        return response_success(c, serviceResponse.data, "Successfully fetched CutiSementara by id!");
+        return response_success(c, serviceResponse.data, "Successfully updated CutiSementara!");
 }
 
 export async function verificationCuti(c: Context): Promise<Response | TypedResponse> {

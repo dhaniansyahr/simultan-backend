@@ -461,7 +461,7 @@ export async function cetakSurat(id: string, user: UserJWTDAO): Promise<ServiceR
 }
 
 export type UpdateResponse = SuratKeteranganKuliah | {};
-export async function update(id: string, data: Partial<SuratKeteranganKuliahDTO>): Promise<ServiceResponse<UpdateResponse>> {
+export async function update(id: string, data: Partial<SuratKeteranganKuliahDTO>, user: UserJWTDAO): Promise<ServiceResponse<UpdateResponse>> {
         try {
                 let suratKeteranganKuliah = await prisma.suratKeteranganKuliah.findUnique({
                         where: {
@@ -471,14 +471,66 @@ export async function update(id: string, data: Partial<SuratKeteranganKuliahDTO>
 
                 if (!suratKeteranganKuliah) return INVALID_ID_SERVICE_RESPONSE;
 
-                if (!VERIFICATION_STATUS.DITOLAK_OLEH_OPERATOR || !VERIFICATION_STATUS.DITOLAK_OLEH_KASUBBAG)
-                        return BadRequestWithMessage("Anda tidak dapat melakukan perubahan pada Surat Keterangan Aktif Kuliah tidak ditolak!");
+                // Check if user is authorized to update (only the student who created it)
+                if (suratKeteranganKuliah.userId !== user.id) {
+                        return BadRequestWithMessage("Anda tidak berwenang untuk mengubah surat ini!");
+                }
+
+                // Check if the letter can be updated (only if it's rejected or still in process by student)
+                const currentStatus = suratKeteranganKuliah.verifikasiStatus;
+                const canUpdate =
+                        currentStatus === VERIFICATION_STATUS.DITOLAK_OLEH_OPERATOR ||
+                        currentStatus === VERIFICATION_STATUS.DITOLAK_OLEH_KASUBBAG ||
+                        currentStatus === VERIFICATION_STATUS.DIPROSES_OLEH_OPERATOR;
+
+                if (!canUpdate) {
+                        return BadRequestWithMessage("Surat tidak dapat diubah pada status ini!");
+                }
+
+                // Reset status back to initial state when updating
+                const resetStatus = VERIFICATION_STATUS.DIPROSES_OLEH_OPERATOR;
 
                 suratKeteranganKuliah = await prisma.suratKeteranganKuliah.update({
                         where: {
                                 ulid: id,
                         },
-                        data,
+                        data: {
+                                ...data,
+                                verifikasiStatus: resetStatus,
+                                alasanPenolakan: null, // Clear rejection reason
+                                status: {
+                                        create: {
+                                                ulid: ulid(),
+                                                nama: resetStatus,
+                                                deskripsi: `Surat diperbarui oleh ${user.nama} - menunggu verifikasi ulang dari operator kemahasiswaan`,
+                                                userId: user.id,
+                                        },
+                                },
+                        },
+                        include: {
+                                status: {
+                                        orderBy: { createdAt: "asc" },
+                                        include: {
+                                                user: {
+                                                        select: {
+                                                                nama: true,
+                                                                aksesLevel: true,
+                                                        },
+                                                },
+                                        },
+                                },
+                        },
+                });
+
+                // Create log entry for update
+                await prisma.log.create({
+                        data: {
+                                ulid: ulid(),
+                                flagMenu: "SURAT_KETERANGAN_KULIAH",
+                                deskripsi: `Surat dengan ID ${id} diperbarui oleh ${user.nama} - status direset ke awal proses verifikasi`,
+                                aksesLevelId: user.aksesLevelId,
+                                userId: user.id,
+                        },
                 });
 
                 return {

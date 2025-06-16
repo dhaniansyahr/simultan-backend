@@ -295,7 +295,7 @@ export async function verificationStatus(id: string, data: VerifikasiCutiDTO, us
 }
 
 export type UpdateResponse = CutiSementara | {};
-export async function update(id: string, data: Partial<CutiSementaraDTO>): Promise<ServiceResponse<UpdateResponse>> {
+export async function update(id: string, data: Partial<CutiSementaraDTO>, user: UserJWTDAO): Promise<ServiceResponse<UpdateResponse>> {
         try {
                 let cutiSementara = await prisma.cutiSementara.findUnique({
                         where: {
@@ -305,18 +305,68 @@ export async function update(id: string, data: Partial<CutiSementaraDTO>): Promi
 
                 if (!cutiSementara) return INVALID_ID_SERVICE_RESPONSE;
 
-                if (!VERIFICATION_STATUS.DITOLAK_OLEH_OPERATOR || !VERIFICATION_STATUS.DITOLAK_OLEH_KASUBBAG)
-                        return BadRequestWithMessage("Anda tidak dapat melakukan perubahan pada Pengajuan Cuti Sementara tidak ditolak!");
+                // Check if user is authorized to update (only the student who created it)
+                if (cutiSementara.userId !== user.id) {
+                        return BadRequestWithMessage("Anda tidak berwenang untuk mengubah pengajuan cuti ini!");
+                }
+
+                // Check if the cuti can be updated (only if it's rejected or still in process by student)
+                const currentStatus = cutiSementara.verifikasiStatus;
+                const canUpdate =
+                        currentStatus === VERIFICATION_STATUS.DITOLAK_OLEH_OPERATOR ||
+                        currentStatus === VERIFICATION_STATUS.DITOLAK_OLEH_KASUBBAG ||
+                        currentStatus === VERIFICATION_STATUS.DIPROSES_OLEH_OPERATOR;
+
+                if (!canUpdate) {
+                        return BadRequestWithMessage("Pengajuan cuti tidak dapat diubah pada status ini!");
+                }
+
+                // Reset status back to initial state when updating
+                const resetStatus = VERIFICATION_STATUS.DIPROSES_OLEH_OPERATOR;
 
                 cutiSementara = await prisma.cutiSementara.update({
                         where: {
                                 ulid: id,
                         },
                         data: {
-                                suratIzinOrangTuaUrl: data.suratIzinOrangTuaUrl,
+                                alasanPengajuan: data.alasanPengajuan,
                                 suratBebasPustakaUrl: data.suratBebasPustakaUrl,
                                 suratBssUrl: data.suratBssUrl,
-                                alasanPengajuan: data.alasanPengajuan,
+                                suratIzinOrangTuaUrl: data.suratIzinOrangTuaUrl,
+                                verifikasiStatus: resetStatus,
+                                alasanPenolakan: null, // Clear rejection reason
+                                status: {
+                                        create: {
+                                                ulid: ulid(),
+                                                nama: resetStatus,
+                                                deskripsi: `Pengajuan cuti diperbarui oleh ${user.nama} - menunggu verifikasi ulang dari operator kemahasiswaan`,
+                                                userId: user.id,
+                                        },
+                                },
+                        },
+                        include: {
+                                status: {
+                                        orderBy: { createdAt: "asc" },
+                                        include: {
+                                                user: {
+                                                        select: {
+                                                                nama: true,
+                                                                aksesLevel: true,
+                                                        },
+                                                },
+                                        },
+                                },
+                        },
+                });
+
+                // Create log entry for update
+                await prisma.log.create({
+                        data: {
+                                ulid: ulid(),
+                                flagMenu: "CUTI_SEMENTARA",
+                                deskripsi: `Pengajuan cuti dengan ID ${id} diperbarui oleh ${user.nama} - status direset ke awal proses verifikasi`,
+                                aksesLevelId: user.aksesLevelId,
+                                userId: user.id,
                         },
                 });
 

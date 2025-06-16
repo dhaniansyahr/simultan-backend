@@ -33,6 +33,10 @@ export async function seedAcl(prisma: PrismaClient) {
                         feature: "ACL",
                         actions: ["CREATE", "VIEW", "UPDATE", "DELETE"],
                 },
+                {
+                        feature: "DASHBOARD",
+                        actions: ["VIEW"],
+                },
         ];
 
         for (const feature of featuresAndActions) {
@@ -377,14 +381,27 @@ export async function seedAcl(prisma: PrismaClient) {
                                                 });
 
                                                 if (action) {
-                                                        await prisma.acl.create({
-                                                                data: {
-                                                                        ulid: ulid(),
-                                                                        namaFitur: feature.nama,
-                                                                        namaAksi: action.nama,
-                                                                        aksesLevelId: aksesLevel.id,
+                                                        // Check if ACL entry already exists
+                                                        const existingAcl = await prisma.acl.findUnique({
+                                                                where: {
+                                                                        namaFitur_namaAksi_aksesLevelId: {
+                                                                                namaFitur: feature.nama,
+                                                                                namaAksi: action.nama,
+                                                                                aksesLevelId: aksesLevel.id,
+                                                                        },
                                                                 },
                                                         });
+
+                                                        if (!existingAcl) {
+                                                                await prisma.acl.create({
+                                                                        data: {
+                                                                                ulid: ulid(),
+                                                                                namaFitur: feature.nama,
+                                                                                namaAksi: action.nama,
+                                                                                aksesLevelId: aksesLevel.id,
+                                                                        },
+                                                                });
+                                                        }
                                                 }
                                         }
                                 }

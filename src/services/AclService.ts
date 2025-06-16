@@ -73,16 +73,28 @@ export async function getByAksesLevelId(aksesLevelId: number): Promise<ServiceRe
                 if (acls.length === 0) return INVALID_ID_SERVICE_RESPONSE;
 
                 const mappingAcl = features.map((feature) => {
-                        const actions = acls.filter((acl) => acl.namaFitur === feature.nama).map((acl) => acl.namaAksi);
+                        const featureActions = acls.filter((acl) => acl.namaFitur === feature.nama);
+                        const actionMap: Record<string, boolean> = {};
+
+                        // Get all possible actions for this feature from the database
+                        const possibleActions = ["CREATE", "VIEW", "UPDATE", "DELETE", "EXPORT", "VERIFICATION"];
+
+                        // Set each action to true/false based on if it exists in featureActions
+                        possibleActions.forEach((action) => {
+                                actionMap[action] = featureActions.some((fa) => fa.namaAksi === action);
+                        });
+
                         return {
-                                feature: feature.nama,
-                                actions,
+                                [feature.nama]: actionMap,
                         };
                 });
 
+                // Convert array of objects to single object
+                const formattedAcl = mappingAcl.reduce((acc, curr) => ({ ...acc, ...curr }), {});
+
                 return {
                         status: true,
-                        data: mappingAcl,
+                        data: formattedAcl,
                 };
         } catch (error) {
                 Logger.error(`AclService.getByAksesLevelId: ${error}`);
@@ -101,7 +113,7 @@ export async function getMenuByAksesLevelId(aksesLevelId: number): Promise<Servi
 
                 if (!menus) return INVALID_ID_SERVICE_RESPONSE;
 
-                // Group child menus by their parent
+                // Group child menus by their parent and remove duplicates
                 const childMenusByParent = menus
                         .filter((menu) => menu.parentMenu) // Only menus with parents
                         .reduce((acc, menu) => {
@@ -109,35 +121,65 @@ export async function getMenuByAksesLevelId(aksesLevelId: number): Promise<Servi
                                 if (!acc[parentKey]) {
                                         acc[parentKey] = [];
                                 }
-                                acc[parentKey].push({
-                                        title: menu.title,
-                                        path: menu.path,
-                                        icon: menu.icon || "",
-                                });
+
+                                // Check if this menu already exists in the parent's children
+                                const existingMenu = acc[parentKey].find((existingItem) => existingItem.title === menu.title && existingItem.path === menu.path);
+
+                                if (!existingMenu) {
+                                        acc[parentKey].push({
+                                                title: menu.title,
+                                                path: menu.path,
+                                                icon: menu.icon || "",
+                                        });
+                                }
                                 return acc;
                         }, {} as Record<string, any[]>);
 
                 // Get unique parent menus and standalone menus
                 const parentMenus = Array.from(new Set(menus.filter((menu) => menu.parentMenu).map((menu) => menu.parentMenu!)));
 
-                const standaloneMenus = menus.filter((menu) => !menu.parentMenu);
+                // Remove duplicate standalone menus
+                const standaloneMenus = menus
+                        .filter((menu) => !menu.parentMenu)
+                        .filter((menu, index, self) => index === self.findIndex((m) => m.title === menu.title && m.path === menu.path));
 
-                // Build final menu structure
-                const formattedMenus = [
-                        // Add parent menus with their children
+                // Define the desired order for menus
+                const menuOrder = ["Dashboard", "KEMAHASISWAAN", "AKADEMIK"];
+
+                // Create all menu items (both parent and standalone)
+                const allMenuItems = [
+                        // Parent menus with their children
                         ...parentMenus.map((parentMenu) => ({
                                 title: parentMenu,
                                 path: `/${parentMenu!.toLowerCase()}`,
                                 icon: getParentMenuIcon(parentMenu!),
                                 children: childMenusByParent[parentMenu!] || [],
                         })),
-                        // Add standalone menus (no parent)
+                        // Standalone menus (no parent)
                         ...standaloneMenus.map((menu) => ({
                                 title: menu.title,
                                 path: menu.path,
                                 icon: menu.icon || "",
                         })),
                 ];
+
+                // Sort all menus according to the desired order
+                const formattedMenus = allMenuItems.sort((a, b) => {
+                        const indexA = menuOrder.indexOf(a.title);
+                        const indexB = menuOrder.indexOf(b.title);
+
+                        // If both are in the order array, sort by their position
+                        if (indexA !== -1 && indexB !== -1) {
+                                return indexA - indexB;
+                        }
+
+                        // If only one is in the order array, prioritize it
+                        if (indexA !== -1) return -1;
+                        if (indexB !== -1) return 1;
+
+                        // If neither is in the order array, maintain alphabetical order
+                        return a.title.localeCompare(b.title);
+                });
 
                 return {
                         status: true,
