@@ -11,19 +11,19 @@ export async function seedAcl(prisma: PrismaClient) {
         const featuresAndActions: FeatureAction[] = [
                 {
                         feature: "SURAT_KETERANGAN_KULIAH",
-                        actions: ["CREATE", "VIEW", "EXPORT", "VERIFICATION"],
+                        actions: ["CREATE", "VIEW", "UPDATE", "EXPORT", "VERIFICATION"],
                 },
                 {
                         feature: "CUTI_SEMENTARA",
-                        actions: ["CREATE", "VIEW", "VERIFICATION"],
+                        actions: ["CREATE", "VIEW", "UPDATE", "EXPORT", "VERIFICATION"],
                 },
                 {
                         feature: "PENGAJUAN_YUDISIUM",
-                        actions: ["CREATE", "VIEW", "VERIFICATION"],
+                        actions: ["CREATE", "VIEW", "UPDATE", "EXPORT", "VERIFICATION"],
                 },
                 {
                         feature: "LEGALISIR_IJAZAH",
-                        actions: ["CREATE", "VIEW", "VERIFICATION"],
+                        actions: ["CREATE", "VIEW", "UPDATE", "EXPORT", "VERIFICATION"],
                 },
                 {
                         feature: "USER_MANAGEMENT",
@@ -346,7 +346,7 @@ export async function seedAcl(prisma: PrismaClient) {
                                 },
                                 {
                                         feature: "PENGAJUAN_YUDISIUM",
-                                        actions: ["CREATE", "UPDATE", "VIEW"],
+                                        actions: ["CREATE", "UPDATE", "VIEW", "EXPORT"],
                                 },
                                 {
                                         feature: "LEGALISIR_IJAZAH",
