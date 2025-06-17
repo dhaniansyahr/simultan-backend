@@ -18,12 +18,12 @@ export async function create(data: LegalisirIjazahDTO, user: UserJWTDAO): Promis
                         data: {
                                 ...data,
                                 ulid: ulid(),
-                                verifikasiStatus: VERIFICATION_STATUS.DIPROSES_OLEH_OPERATOR,
+                                verifikasiStatus: VERIFICATION_STATUS.DIPROSES_OPERATOR_AKADEMIK,
                                 userId: user.id,
                                 status: {
                                         create: {
                                                 ulid: ulid(),
-                                                nama: VERIFICATION_STATUS.DIPROSES_OLEH_OPERATOR,
+                                                nama: VERIFICATION_STATUS.DIPROSES_OPERATOR_AKADEMIK,
                                                 deskripsi: `Pengajuan Legalisir Ijazah oleh ${user.nama} - menunggu verifikasi operator akademik`,
                                                 userId: user.id,
                                         },

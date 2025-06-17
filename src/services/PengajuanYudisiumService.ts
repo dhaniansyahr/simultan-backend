@@ -21,12 +21,12 @@ export async function create(data: PengajuanYudisiumDTO, user: UserJWTDAO): Prom
                         data: {
                                 ...data,
                                 ulid: ulid(),
-                                verifikasiStatus: VERIFICATION_STATUS.DIPROSES_OLEH_OPERATOR,
+                                verifikasiStatus: VERIFICATION_STATUS.DIPROSES_OPERATOR_AKADEMIK,
                                 userId: user.id,
                                 status: {
                                         create: {
                                                 ulid: ulid(),
-                                                nama: VERIFICATION_STATUS.DIPROSES_OLEH_OPERATOR,
+                                                nama: VERIFICATION_STATUS.DIPROSES_OPERATOR_AKADEMIK,
                                                 deskripsi: `Pengajuan Yudisium oleh ${user.nama} - menunggu verifikasi operator akademik`,
                                                 userId: user.id,
                                         },
@@ -303,7 +303,7 @@ export async function update(id: string, data: Partial<PengajuanYudisiumDTO>, us
                 }
 
                 // Reset status back to initial state when updating
-                const resetStatus = VERIFICATION_STATUS.DIPROSES_OLEH_OPERATOR;
+                const resetStatus = VERIFICATION_STATUS.DIPROSES_OPERATOR_AKADEMIK;
 
                 pengajuanYudisium = await prisma.pengajuanYudisium.update({
                         where: {
