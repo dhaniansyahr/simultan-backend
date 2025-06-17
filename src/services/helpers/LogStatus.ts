@@ -4,7 +4,7 @@ import { VERIFICATION_STATUS } from "$utils/helper.utils";
 import { prisma } from "$utils/prisma.utils";
 import { ulid } from "ulid";
 
-export function getNextVerificationStatusAkademik(currentStatus: string): string {
+export function getNextVerificationStatusAkademik(currentStatus: string, isYudisium: boolean = false): string {
         const statusFlow = new Map<string, string>([
                 // Operator Akademik processes → approves
                 [VERIFICATION_STATUS.DIPROSES_OPERATOR_AKADEMIK, VERIFICATION_STATUS.DISETUJUI_OPERATOR_AKADEMIK],
@@ -16,10 +16,14 @@ export function getNextVerificationStatusAkademik(currentStatus: string): string
                 [VERIFICATION_STATUS.DIPROSES_KASUBBAG_AKADEMIK, VERIFICATION_STATUS.DISETUJUI_KASUBBAG_AKADEMIK],
 
                 // Kasubbag approves → final approval
-                [VERIFICATION_STATUS.DISETUJUI_KASUBBAG_AKADEMIK, VERIFICATION_STATUS.DISETUJUI],
+                [VERIFICATION_STATUS.DISETUJUI_KASUBBAG_AKADEMIK, isYudisium ? VERIFICATION_STATUS.DISETUJUI : VERIFICATION_STATUS.SEDANG_DIPROSES_LEGALISIR],
+
+                // Legalisir processing flow
+                [VERIFICATION_STATUS.SEDANG_DIPROSES_LEGALISIR, VERIFICATION_STATUS.SELESAI],
+                [VERIFICATION_STATUS.DISETUJUI, VERIFICATION_STATUS.SELESAI],
 
                 // Final states remain the same
-                [VERIFICATION_STATUS.DISETUJUI, VERIFICATION_STATUS.DISETUJUI],
+                [VERIFICATION_STATUS.SELESAI, VERIFICATION_STATUS.SELESAI],
                 [VERIFICATION_STATUS.DITOLAK, VERIFICATION_STATUS.DITOLAK],
         ]);
 
@@ -28,7 +32,7 @@ export function getNextVerificationStatusAkademik(currentStatus: string): string
 
 export async function flowCreatingStatusVeificationAkademik(currentStatus: string, id: string, name: string, userId: number, yudisium: boolean) {
         try {
-                const nextStatus: string = getNextVerificationStatusAkademik(currentStatus);
+                const nextStatus: string = getNextVerificationStatusAkademik(currentStatus, yudisium);
 
                 // Determine status description based on current and next status
                 let statusDescription = `Pengajuan Diproses Oleh ${name}`;
@@ -41,10 +45,12 @@ export async function flowCreatingStatusVeificationAkademik(currentStatus: strin
                         statusDescription = `Pengajuan diteruskan ke Kasubbag Akademik setelah disetujui operator`;
                 } else if (nextStatus === VERIFICATION_STATUS.DISETUJUI_KASUBBAG_AKADEMIK) {
                         statusDescription = `Pengajuan DISETUJUI oleh ${name} (Kasubbag Akademik)`;
-                } else if (nextStatus === VERIFICATION_STATUS.DISETUJUI) {
-                        statusDescription = yudisium ? `Pengajuan Yudisium telah disetujui` : `Legalisir Ijazah telah disetujui`;
                 } else if (nextStatus === VERIFICATION_STATUS.DITOLAK) {
                         statusDescription = `Pengajuan ditolak oleh ${name}`;
+                } else if (nextStatus === VERIFICATION_STATUS.SEDANG_DIPROSES_LEGALISIR) {
+                        statusDescription = `Pengajuan Legalisir Ijazah sedang diproses oleh ${name}`;
+                } else if (nextStatus === VERIFICATION_STATUS.SELESAI) {
+                        statusDescription = yudisium ? `Pengajuan Yudisium telah selesai` : `Pengajuan Legalisir Ijazah telah selesai`;
                 }
 
                 if (yudisium) {
@@ -109,6 +115,16 @@ export async function flowCreatingStatusVeificationAkademik(currentStatus: strin
                                                 userId: userId,
                                         },
                                 });
+                        } else if (nextStatus === VERIFICATION_STATUS.SELESAI) {
+                                await prisma.log.create({
+                                        data: {
+                                                ulid: ulid(),
+                                                flagMenu: "PENGAJUAN_YUDISIUM",
+                                                deskripsi: `Pengajuan Yudisium dengan ID ${id} SELESAI oleh ${name}`,
+                                                aksesLevelId: userId,
+                                                userId: userId,
+                                        },
+                                });
                         }
                 } else {
                         await prisma.legalisirIjazah.update({
@@ -151,12 +167,12 @@ export async function flowCreatingStatusVeificationAkademik(currentStatus: strin
                                                 userId: userId,
                                         },
                                 });
-                        } else if (nextStatus === VERIFICATION_STATUS.DISETUJUI) {
+                        } else if (nextStatus === VERIFICATION_STATUS.SEDANG_DIPROSES_LEGALISIR) {
                                 await prisma.log.create({
                                         data: {
                                                 ulid: ulid(),
                                                 flagMenu: "LEGALISIR_IJAZAH",
-                                                deskripsi: `Legalisir Ijazah dengan ID ${id} DISETUJUI oleh ${name}`,
+                                                deskripsi: `Legalisir Ijazah dengan ID ${id} SEDANG DIPROSES oleh ${name}`,
                                                 aksesLevelId: userId,
                                                 userId: userId,
                                         },
@@ -167,6 +183,16 @@ export async function flowCreatingStatusVeificationAkademik(currentStatus: strin
                                                 ulid: ulid(),
                                                 flagMenu: "LEGALISIR_IJAZAH",
                                                 deskripsi: `Legalisir Ijazah dengan ID ${id} DITOLAK oleh ${name}`,
+                                                aksesLevelId: userId,
+                                                userId: userId,
+                                        },
+                                });
+                        } else if (nextStatus === VERIFICATION_STATUS.SELESAI) {
+                                await prisma.log.create({
+                                        data: {
+                                                ulid: ulid(),
+                                                flagMenu: "LEGALISIR_IJAZAH",
+                                                deskripsi: `Legalisir Ijazah dengan ID ${id} SELESAI oleh ${name}`,
                                                 aksesLevelId: userId,
                                                 userId: userId,
                                         },

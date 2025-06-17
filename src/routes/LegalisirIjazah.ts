@@ -20,11 +20,19 @@ LegalisirIjazahRoutes.get("/:id", AuthMiddleware.checkJwt, AuthMiddleware.checkA
 LegalisirIjazahRoutes.put("/:id", AuthMiddleware.checkJwt, AuthMiddleware.checkAccess("LEGALISIR_IJAZAH", "UPDATE"), LegalisirIjazahController.update);
 
 LegalisirIjazahRoutes.put(
-        "/:id/verification",
+        "/:id/verifikasi",
         AuthMiddleware.checkJwt,
         AuthMiddleware.checkAccess("LEGALISIR_IJAZAH", "VERIFICATION"),
         Validation.validateVerifikasiStatusDTO,
         LegalisirIjazahController.verification
+);
+
+LegalisirIjazahRoutes.put(
+        "/proses/:id",
+        AuthMiddleware.checkJwt,
+        AuthMiddleware.checkAccess("LEGALISIR_IJAZAH", "VERIFICATION"),
+        Validation.validateProsesLegalisirDTO,
+        LegalisirIjazahController.prosesLegalisir
 );
 
 export default LegalisirIjazahRoutes;

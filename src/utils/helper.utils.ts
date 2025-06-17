@@ -27,6 +27,10 @@ export const VERIFICATION_STATUS = {
         DIPROSES_KASUBBAG_AKADEMIK: "DIPROSES OLEH KASUBBAG AKADEMIK",
         DISETUJUI_KASUBBAG_AKADEMIK: "DISETUJUI OLEH KASUBBAG AKADEMIK",
         DITOLAK: "DITOLAK",
+
+        // Legalisir Ijazah Processing Statuses
+        SEDANG_DIPROSES_LEGALISIR: "LEGALISIR IJAZAH SEDANG DIPROSES",
+        SELESAI: "SELESAI",
 } as const;
 
 export function getNextVerificationStatus(currentStatus: string, isCuti: boolean = false): string {

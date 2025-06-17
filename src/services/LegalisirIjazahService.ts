@@ -6,7 +6,7 @@ import { buildFilterQueryLimitOffsetV2 } from "./helpers/FilterQueryV2";
 import { ulid } from "ulid";
 import { UserJWTDAO } from "$entities/User";
 import { VERIFICATION_STATUS } from "$utils/helper.utils";
-import { LegalisirIjazahDTO, VerifikasiLegalisirIjazahDTO } from "$entities/LegalisirIjazah";
+import { LegalisirIjazahDTO, VerifikasiLegalisirIjazahDTO, ProsesLegalisirIjazahDTO } from "$entities/LegalisirIjazah";
 import { LegalisirIjazah } from "@prisma/client";
 import { flowCreatingStatusVeificationAkademik } from "./helpers/LogStatus";
 
@@ -79,7 +79,7 @@ export async function getAll(filters: FilteringQueryV2, user: UserJWTDAO): Promi
                 if (aksesLevel.name === "OPERATOR_AKADEMIK") {
                         // Operator sees: letters waiting for their action + letters waiting for letter number input
                         usedFilters.where.AND.push({
-                                OR: [{ verifikasiStatus: VERIFICATION_STATUS.DIPROSES_OPERATOR_AKADEMIK }],
+                                OR: [{ verifikasiStatus: VERIFICATION_STATUS.DIPROSES_OPERATOR_AKADEMIK }, { verifikasiStatus: VERIFICATION_STATUS.SEDANG_DIPROSES_LEGALISIR }],
                         });
                 } else if (aksesLevel.name === "KASUBBAG_AKADEMIK") {
                         // Kasubbag sees: letters waiting for their verification
@@ -191,8 +191,6 @@ export async function verificationStatus(id: string, data: VerifikasiLegalisirIj
                 } else if (currentStatus === VERIFICATION_STATUS.DIPROSES_KASUBBAG_AKADEMIK && aksesLevel.name === "KASUBBAG_AKADEMIK") {
                         isAuthorized = true;
                 }
-
-                console.log("Is Authorized : ", isAuthorized);
 
                 if (!isAuthorized) {
                         return BadRequestWithMessage("Anda tidak berwenang untuk memverifikasi pengajuan pada tahap ini!");
@@ -350,6 +348,91 @@ export async function update(id: string, data: Partial<LegalisirIjazahDTO>, user
                 };
         } catch (err) {
                 Logger.error(`LegalisirIjazahService.update : ${err}`);
+                return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
+        }
+}
+
+export type ProsesLegalisirResponse = LegalisirIjazah | {};
+export async function prosesLegalisir(id: string, data: ProsesLegalisirIjazahDTO, user: UserJWTDAO): Promise<ServiceResponse<ProsesLegalisirResponse>> {
+        try {
+                const legalisirIjazah = await prisma.legalisirIjazah.findUnique({
+                        where: { ulid: id },
+                });
+
+                if (!legalisirIjazah) return INVALID_ID_SERVICE_RESPONSE;
+
+                // Check if status is DISETUJUI (final approval)
+                if (legalisirIjazah.verifikasiStatus !== VERIFICATION_STATUS.SEDANG_DIPROSES_LEGALISIR) {
+                        return BadRequestWithMessage("Pengajuan legalisir ijazah belum disetujui, tidak bisa diproses!");
+                }
+
+                // Get user's access level
+                const aksesLevel = await prisma.aksesLevel.findUnique({
+                        where: { id: user.aksesLevelId },
+                });
+
+                if (!aksesLevel) return BadRequestWithMessage("Akses level tidak ditemukan!");
+
+                // Only OPERATOR_AKADEMIK can process
+                if (aksesLevel.name !== "OPERATOR_AKADEMIK") {
+                        return BadRequestWithMessage("Hanya Operator Akademik yang dapat memproses legalisir ijazah!");
+                }
+
+                const currentStatus = legalisirIjazah.verifikasiStatus;
+                let isAuthorized = false;
+                if (currentStatus === VERIFICATION_STATUS.SEDANG_DIPROSES_LEGALISIR && aksesLevel.name === "OPERATOR_AKADEMIK") {
+                        isAuthorized = true;
+                }
+
+                console.log("currentStatus", currentStatus);
+                if (!isAuthorized) {
+                        return BadRequestWithMessage("Anda tidak berwenang untuk memproses legalisir ijazah!");
+                }
+
+                console.log("currentStatus", currentStatus);
+
+                await flowCreatingStatusVeificationAkademik(currentStatus, id, user.nama, user.id, false);
+
+                const updatedLegalisirIjazah = await prisma.legalisirIjazah.update({
+                        where: { ulid: id },
+                        data: {
+                                tanggalPengambilan: data.tanggalPengambilan,
+                                tempatPengambilan: data.tempatPengambilan,
+                        },
+                        include: {
+                                status: {
+                                        orderBy: { createdAt: "asc" },
+                                        include: {
+                                                user: {
+                                                        select: {
+                                                                nama: true,
+                                                                aksesLevel: true,
+                                                        },
+                                                },
+                                        },
+                                },
+                        },
+                });
+
+                if (!updatedLegalisirIjazah) return INVALID_ID_SERVICE_RESPONSE;
+
+                // Create log entry
+                await prisma.log.create({
+                        data: {
+                                ulid: ulid(),
+                                flagMenu: "LEGALISIR_IJAZAH",
+                                deskripsi: `Legalisir ijazah dengan ID ${id} sedang diproses oleh ${user.nama} - Pengambilan: ${data.tanggalPengambilan} di ${data.tempatPengambilan}`,
+                                aksesLevelId: user.aksesLevelId,
+                                userId: user.id,
+                        },
+                });
+
+                return {
+                        status: true,
+                        data: updatedLegalisirIjazah,
+                };
+        } catch (error) {
+                Logger.error(`LegalisirIjazahService.prosesLegalisir : ${error}`);
                 return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
         }
 }

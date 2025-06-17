@@ -27,4 +27,11 @@ PengajuanYudisiumRoutes.put(
         PengajuanYudisiumController.verification
 );
 
+PengajuanYudisiumRoutes.get(
+        "/:id/cetak-bukti-pengajuan",
+        AuthMiddleware.checkJwt,
+        // AuthMiddleware.checkAccess("PENGAJUAN_YUDISIUM", "EXPORT"),
+        PengajuanYudisiumController.cetakSurat
+);
+
 export default PengajuanYudisiumRoutes;

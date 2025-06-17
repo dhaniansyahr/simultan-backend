@@ -9,6 +9,9 @@ import { UserJWTDAO } from "$entities/User";
 import { VERIFICATION_STATUS } from "$utils/helper.utils";
 import { PengajuanYudisium } from "@prisma/client";
 import { flowCreatingStatusVeificationAkademik } from "./helpers/LogStatus";
+import { DateTime } from "luxon";
+import { getCurrentAcademicInfo } from "$utils/strings.utils";
+import { buildBufferPDF } from "$utils/buffer.utils";
 
 export type CreateResponse = PengajuanYudisiumDTO | {};
 export async function create(data: PengajuanYudisiumDTO, user: UserJWTDAO): Promise<ServiceResponse<CreateResponse>> {
@@ -351,6 +354,69 @@ export async function update(id: string, data: Partial<PengajuanYudisiumDTO>, us
                 };
         } catch (err) {
                 Logger.error(`PengajuanYudisium.update : ${err}`);
+                return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
+        }
+}
+
+export async function cetakSurat(id: string, user: UserJWTDAO): Promise<ServiceResponse<any>> {
+        try {
+                const pengajuanYudisium = await prisma.pengajuanYudisium.findUnique({
+                        where: {
+                                ulid: id,
+                        },
+                        include: {
+                                user: {
+                                        select: {
+                                                nama: true,
+                                                npm: true,
+                                        },
+                                },
+                                status: true,
+                        },
+                });
+
+                if (!pengajuanYudisium) {
+                        return BadRequestWithMessage("Surat tidak ditemukan atau belum disetujui!");
+                }
+
+                if (pengajuanYudisium.verifikasiStatus !== VERIFICATION_STATUS.DISETUJUI) {
+                        return BadRequestWithMessage("Tidak dapat mendownload bukti pengajuan jika pengajuan masih di proses!");
+                }
+
+                let pdfData = {
+                        title: "BUKTI PENDAFTARAN YUDISIUM",
+                        data: {
+                                tanggalPengajuan: DateTime.fromJSDate(pengajuanYudisium.createdAt).toFormat("dd MMMM yyyy HH:mm"),
+                                nama: pengajuanYudisium.user.nama,
+                                npm: pengajuanYudisium.user.npm,
+                        },
+                        date: DateTime.now().toFormat("dd MMMM yyyy"),
+                        ...getCurrentAcademicInfo(),
+                };
+
+                const buffer = await buildBufferPDF("bukti-pendaftaran-yudisium", pdfData);
+                const fileName = `Bukti-Pengajuan-Yudisium-${pengajuanYudisium.user.npm}`;
+
+                // Create log entry for printing
+                await prisma.log.create({
+                        data: {
+                                ulid: ulid(),
+                                flagMenu: "PENGAJUAN_YUDISIUM",
+                                deskripsi: `Bukti pengajuan yudisium dengan ID ${id} dicetak oleh ${user.nama}`,
+                                aksesLevelId: user.aksesLevelId,
+                                userId: user.id,
+                        },
+                });
+
+                return {
+                        status: true,
+                        data: {
+                                buffer,
+                                fileName,
+                        },
+                };
+        } catch (err) {
+                Logger.error(`PengajuanYudisiumService.cetakSurat : ${err}`);
                 return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
         }
 }

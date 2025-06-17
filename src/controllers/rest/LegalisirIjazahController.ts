@@ -4,7 +4,7 @@ import { handleServiceErrorWithResponse, response_created, response_success } fr
 import { FilteringQueryV2 } from "$entities/Query";
 import { checkFilteringQueryV2 } from "$controllers/helpers/CheckFilteringQuery";
 import { UserJWTDAO } from "$entities/User";
-import { LegalisirIjazahDTO, VerifikasiLegalisirIjazahDTO } from "$entities/LegalisirIjazah";
+import { LegalisirIjazahDTO, VerifikasiLegalisirIjazahDTO, ProsesLegalisirIjazahDTO } from "$entities/LegalisirIjazah";
 
 export async function create(c: Context): Promise<TypedResponse> {
         const data: LegalisirIjazahDTO = await c.req.json();
@@ -70,4 +70,18 @@ export async function verification(c: Context): Promise<TypedResponse> {
         }
 
         return response_success(c, serviceResponse.data, "Successfully verificated LegalisirIjazah by id!");
+}
+
+export async function prosesLegalisir(c: Context): Promise<TypedResponse> {
+        const data: ProsesLegalisirIjazahDTO = await c.req.json();
+        const id = c.req.param("id");
+        const user: UserJWTDAO = c.get("jwtPayload");
+
+        const serviceResponse = await LegalisirIjazahService.prosesLegalisir(id, data, user);
+
+        if (!serviceResponse.status) {
+                return handleServiceErrorWithResponse(c, serviceResponse);
+        }
+
+        return response_success(c, serviceResponse.data, "Successfully started processing LegalisirIjazah!");
 }

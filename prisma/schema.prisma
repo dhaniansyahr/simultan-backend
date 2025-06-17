@@ -285,17 +285,19 @@ model PengajuanYudisium {
 }
 
 model LegalisirIjazah {
-  id               Int      @id @default(autoincrement())
-  ulid             String   @unique
-  totalLegalisir   Int
-  namaRekening     String
-  nomorRekening    String
-  namaBank         String
-  buktiPembayaran  String
-  verifikasiStatus String   @default("DIPROSES OLEH OPERATOR AKADEMIK")
-  alasanPenolakan  String?  @db.Text
-  userId           Int
-  createdAt        DateTime @default(now())
+  id                 Int      @id @default(autoincrement())
+  ulid               String   @unique
+  totalLegalisir     Int
+  namaRekening       String
+  nomorRekening      String
+  namaBank           String
+  buktiPembayaran    String
+  verifikasiStatus   String   @default("DIPROSES OLEH OPERATOR AKADEMIK")
+  alasanPenolakan    String?  @db.Text
+  tanggalPengambilan String?
+  tempatPengambilan  String?
+  userId             Int
+  createdAt          DateTime @default(now())
 
   user   User     @relation(fields: [userId], references: [id])
   status Status[]

@@ -10,3 +10,8 @@ export interface VerifikasiLegalisirIjazahDTO {
         action: "DISETUJUI" | "DITOLAK";
         alasanPenolakan?: string;
 }
+
+export interface ProsesLegalisirIjazahDTO {
+        tanggalPengambilan: string;
+        tempatPengambilan: string;
+}

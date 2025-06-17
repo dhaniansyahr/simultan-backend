@@ -1,7 +1,7 @@
 import { Context, Next } from "hono";
 import { response_bad_request } from "$utils/response.utils";
 import { ErrorStructure, generateErrorStructure } from "./helper";
-import { LegalisirIjazahDTO, VerifikasiLegalisirIjazahDTO } from "$entities/LegalisirIjazah";
+import { LegalisirIjazahDTO, VerifikasiLegalisirIjazahDTO, ProsesLegalisirIjazahDTO } from "$entities/LegalisirIjazah";
 
 export async function validateLegalisirIjazahDTO(c: Context, next: Next) {
         const data: LegalisirIjazahDTO = await c.req.json();
@@ -41,4 +41,36 @@ export async function validateVerifikasiStatusDTO(c: Context, next: Next) {
 
         if (invalidFields.length !== 0) return response_bad_request(c, "Validation Error", invalidFields);
         await next();
+}
+
+export async function validateProsesLegalisirDTO(c: Context, next: Next) {
+        const data: ProsesLegalisirIjazahDTO = await c.req.json();
+        const invalidFields: ErrorStructure[] = [];
+
+        if (!data.tanggalPengambilan) invalidFields.push(generateErrorStructure("tanggalPengambilan", "tanggalPengambilan cannot be empty"));
+        if (!data.tempatPengambilan) invalidFields.push(generateErrorStructure("tempatPengambilan", "tempatPengambilan cannot be empty"));
+
+        if (typeof data.tanggalPengambilan !== "string") invalidFields.push(generateErrorStructure("tanggalPengambilan", "tanggalPengambilan must be a string"));
+        if (typeof data.tempatPengambilan !== "string") invalidFields.push(generateErrorStructure("tempatPengambilan", "tempatPengambilan must be a string"));
+
+        // Validate date format (YYYY-MM-DD)
+        if (data.tanggalPengambilan && !isValidDateFormat(data.tanggalPengambilan)) {
+                invalidFields.push(generateErrorStructure("tanggalPengambilan", "tanggalPengambilan must be in YYYY-MM-DD format"));
+        }
+
+        if (invalidFields.length !== 0) return response_bad_request(c, "Validation Error", invalidFields);
+        await next();
+}
+
+// Helper function to validate date format
+function isValidDateFormat(dateString: string): boolean {
+        const regex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!regex.test(dateString)) return false;
+
+        const date = new Date(dateString);
+        const timestamp = date.getTime();
+
+        if (typeof timestamp !== "number" || Number.isNaN(timestamp)) return false;
+
+        return dateString === date.toISOString().split("T")[0];
 }
