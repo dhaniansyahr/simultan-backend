@@ -268,13 +268,17 @@ model CutiSementara {
 }
 
 model PengajuanYudisium {
-  id               Int      @id @default(autoincrement())
-  ulid             String   @unique
-  dokumenUrl       String
-  verifikasiStatus String   @default("DIPROSES OLEH OPERATOR AKADEMIK")
-  alasanPenolakan  String?  @db.Text
-  userId           Int
-  createdAt        DateTime @default(now())
+  id                     Int      @id @default(autoincrement())
+  ulid                   String   @unique
+  suratPendaftaran       String
+  suratBebasLab          String
+  suratBebasPerpustakaan String
+  suratDistribusiSkripsi String
+  suratPendaftaranIka    String
+  verifikasiStatus       String   @default("DIPROSES OLEH OPERATOR AKADEMIK")
+  alasanPenolakan        String?  @db.Text
+  userId                 Int
+  createdAt              DateTime @default(now())
 
   user   User     @relation(fields: [userId], references: [id])
   status Status[]
@@ -283,7 +287,11 @@ model PengajuanYudisium {
 model LegalisirIjazah {
   id               Int      @id @default(autoincrement())
   ulid             String   @unique
-  dokumenUrl       String
+  totalLegalisir   Int
+  namaRekening     String
+  nomorRekening    String
+  namaBank         String
+  buktiPembayaran  String
   verifikasiStatus String   @default("DIPROSES OLEH OPERATOR AKADEMIK")
   alasanPenolakan  String?  @db.Text
   userId           Int

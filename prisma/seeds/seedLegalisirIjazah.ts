@@ -22,7 +22,11 @@ export async function seedLegalisirIjazah(prisma: PrismaClient) {
                 await prisma.legalisirIjazah.create({
                         data: {
                                 ulid: ulid(),
-                                dokumenUrl: "https://example.com/dokumen-ijazah",
+                                totalLegalisir: 2,
+                                namaBank: "BANK BRI",
+                                nomorRekening: "1234567890",
+                                namaRekening: "John Doe",
+                                buktiPembayaran: `https://example.com/bukti_pembayaran_2105107010057_${new Date().toISOString().replace(/[-:T]/g, "").slice(0, 14)}.pdf`,
                                 userId: findMhs.id,
                                 status: {
                                         create: {

@@ -16,8 +16,8 @@ export async function create(data: LegalisirIjazahDTO, user: UserJWTDAO): Promis
                 // Create the letter with initial status
                 const legalisirIjazah = await prisma.legalisirIjazah.create({
                         data: {
+                                ...data,
                                 ulid: ulid(),
-                                dokumenUrl: data.dokumenUrl,
                                 verifikasiStatus: VERIFICATION_STATUS.DIPROSES_OLEH_OPERATOR,
                                 userId: user.id,
                                 status: {
@@ -276,7 +276,7 @@ export async function verificationStatus(id: string, data: VerifikasiLegalisirIj
 }
 
 export type UpdateResponse = LegalisirIjazah | {};
-export async function update(id: string, data: Partial<LegalisirIjazahDTO>): Promise<ServiceResponse<UpdateResponse>> {
+export async function update(id: string, data: Partial<LegalisirIjazahDTO>, user: UserJWTDAO): Promise<ServiceResponse<UpdateResponse>> {
         try {
                 let legalisirIjazah = await prisma.legalisirIjazah.findUnique({
                         where: {
@@ -286,13 +286,62 @@ export async function update(id: string, data: Partial<LegalisirIjazahDTO>): Pro
 
                 if (!legalisirIjazah) return INVALID_ID_SERVICE_RESPONSE;
 
-                if (!VERIFICATION_STATUS.DITOLAK) return BadRequestWithMessage("Anda tidak dapat melakukan perubahan pada Legalisir Ijazah yang tidak ditolak!");
+                if (legalisirIjazah.userId !== user.id) {
+                        return BadRequestWithMessage("Anda tidak berwenang untuk mengubah pengajuan legalisir ijazah ini!");
+                }
+
+                // Check if the cuti can be updated (only if it's rejected or still in process by student)
+                const currentStatus = legalisirIjazah.verifikasiStatus;
+                const canUpdate = currentStatus === VERIFICATION_STATUS.DITOLAK;
+
+                if (!canUpdate) {
+                        return BadRequestWithMessage("Tidak dapat melakukan pemrubahan pada pengajuan legalisir ijazah yang sedang di proses!");
+                }
+
+                // Reset status back to initial state when updating
+                const resetStatus = VERIFICATION_STATUS.DIPROSES_OPERATOR_AKADEMIK;
 
                 legalisirIjazah = await prisma.legalisirIjazah.update({
                         where: {
                                 ulid: id,
                         },
-                        data,
+                        data: {
+                                ...data,
+                                verifikasiStatus: resetStatus,
+                                alasanPenolakan: null, // Clear rejection reason
+                                status: {
+                                        create: {
+                                                ulid: ulid(),
+                                                nama: resetStatus,
+                                                deskripsi: `Pengajuan legalisir ijazah diperbarui oleh ${user.nama} - menunggu verifikasi ulang dari operator akademik`,
+                                                userId: user.id,
+                                        },
+                                },
+                        },
+                        include: {
+                                status: {
+                                        orderBy: { createdAt: "asc" },
+                                        include: {
+                                                user: {
+                                                        select: {
+                                                                nama: true,
+                                                                aksesLevel: true,
+                                                        },
+                                                },
+                                        },
+                                },
+                        },
+                });
+
+                // Create log entry for update
+                await prisma.log.create({
+                        data: {
+                                ulid: ulid(),
+                                flagMenu: "LEGALISIR_IJAZAH",
+                                deskripsi: `Pengajuan legalisir ijazah dengan ID ${id} diperbarui oleh ${user.nama} - status direset ke awal proses verifikasi`,
+                                aksesLevelId: user.aksesLevelId,
+                                userId: user.id,
+                        },
                 });
 
                 return {

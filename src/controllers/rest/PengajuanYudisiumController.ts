@@ -47,8 +47,9 @@ export async function getById(c: Context): Promise<TypedResponse> {
 export async function update(c: Context): Promise<TypedResponse> {
         const id = c.req.param("id");
         const data: PengajuanYudisiumDTO = await c.req.json();
+        const user: UserJWTDAO = c.get("jwtPayload");
 
-        const serviceResponse = await PengajuanYudisiumService.update(id, data);
+        const serviceResponse = await PengajuanYudisiumService.update(id, data, user);
 
         if (!serviceResponse.status) {
                 return handleServiceErrorWithResponse(c, serviceResponse);

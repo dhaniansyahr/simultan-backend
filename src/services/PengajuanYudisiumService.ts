@@ -16,8 +16,8 @@ export async function create(data: PengajuanYudisiumDTO, user: UserJWTDAO): Prom
                 // Create the letter with initial status
                 const yudisium = await prisma.pengajuanYudisium.create({
                         data: {
+                                ...data,
                                 ulid: ulid(),
-                                dokumenUrl: data.dokumenUrl,
                                 verifikasiStatus: VERIFICATION_STATUS.DIPROSES_OLEH_OPERATOR,
                                 userId: user.id,
                                 status: {
@@ -277,7 +277,7 @@ export async function verificationStatus(id: string, data: VerifikasiPengajuanYu
 }
 
 export type UpdateResponse = PengajuanYudisium | {};
-export async function update(id: string, data: Partial<PengajuanYudisiumDTO>): Promise<ServiceResponse<UpdateResponse>> {
+export async function update(id: string, data: Partial<PengajuanYudisiumDTO>, user: UserJWTDAO): Promise<ServiceResponse<UpdateResponse>> {
         try {
                 let pengajuanYudisium = await prisma.pengajuanYudisium.findUnique({
                         where: {
@@ -287,13 +287,62 @@ export async function update(id: string, data: Partial<PengajuanYudisiumDTO>): P
 
                 if (!pengajuanYudisium) return INVALID_ID_SERVICE_RESPONSE;
 
-                if (!VERIFICATION_STATUS.DITOLAK) return BadRequestWithMessage("Anda tidak dapat melakukan perubahan pada Pengajuan Yudisium yang tidak ditolak!");
+                if (pengajuanYudisium.userId !== user.id) {
+                        return BadRequestWithMessage("Anda tidak berwenang untuk mengubah pengajuan cuti ini!");
+                }
+
+                // Check if the cuti can be updated (only if it's rejected or still in process by student)
+                const currentStatus = pengajuanYudisium.verifikasiStatus;
+                const canUpdate = currentStatus === VERIFICATION_STATUS.DITOLAK;
+
+                if (!canUpdate) {
+                        return BadRequestWithMessage("Tidak dapat melakukan pemrubahan pada pengajuan yudisium yang sedang di proses!");
+                }
+
+                // Reset status back to initial state when updating
+                const resetStatus = VERIFICATION_STATUS.DIPROSES_OLEH_OPERATOR;
 
                 pengajuanYudisium = await prisma.pengajuanYudisium.update({
                         where: {
                                 ulid: id,
                         },
-                        data,
+                        data: {
+                                ...data,
+                                verifikasiStatus: resetStatus,
+                                alasanPenolakan: null, // Clear rejection reason
+                                status: {
+                                        create: {
+                                                ulid: ulid(),
+                                                nama: resetStatus,
+                                                deskripsi: `Pengajuan yudisium diperbarui oleh ${user.nama} - menunggu verifikasi ulang dari operator kemahasiswaan`,
+                                                userId: user.id,
+                                        },
+                                },
+                        },
+                        include: {
+                                status: {
+                                        orderBy: { createdAt: "asc" },
+                                        include: {
+                                                user: {
+                                                        select: {
+                                                                nama: true,
+                                                                aksesLevel: true,
+                                                        },
+                                                },
+                                        },
+                                },
+                        },
+                });
+
+                // Create log entry for update
+                await prisma.log.create({
+                        data: {
+                                ulid: ulid(),
+                                flagMenu: "PENGAJUAN_YUDISIUM",
+                                deskripsi: `Pengajuan yudisium dengan ID ${id} diperbarui oleh ${user.nama} - status direset ke awal proses verifikasi`,
+                                aksesLevelId: user.aksesLevelId,
+                                userId: user.id,
+                        },
                 });
 
                 return {

@@ -22,7 +22,17 @@ export async function seedPengajuanYudisium(prisma: PrismaClient) {
                 await prisma.pengajuanYudisium.create({
                         data: {
                                 ulid: ulid(),
-                                dokumenUrl: "https://example.com/dokumen-yudisium",
+                                suratPendaftaran: `https://example.com/surat_pendaftaran_2105107010057_${new Date().toISOString().replace(/[-:T]/g, "").slice(0, 14)}.pdf`,
+                                suratDistribusiSkripsi: `https://example.com/surat_distribusi_skripsi_2105107010057_${new Date()
+                                        .toISOString()
+                                        .replace(/[-:T]/g, "")
+                                        .slice(0, 14)}.pdf`,
+                                suratBebasPerpustakaan: `https://example.com/surat_bebas_perpustakaan_2105107010057_${new Date()
+                                        .toISOString()
+                                        .replace(/[-:T]/g, "")
+                                        .slice(0, 14)}.pdf`,
+                                suratBebasLab: `https://example.com/surat_bebas_lab_2105107010057_${new Date().toISOString().replace(/[-:T]/g, "").slice(0, 14)}.pdf`,
+                                suratPendaftaranIka: `https://example.com/surat_pendaftaran_ika_2105107010057_${new Date().toISOString().replace(/[-:T]/g, "").slice(0, 14)}.pdf`,
                                 userId: findMhs.id,
                                 status: {
                                         create: {

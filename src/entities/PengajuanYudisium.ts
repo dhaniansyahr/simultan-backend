@@ -1,5 +1,9 @@
 export interface PengajuanYudisiumDTO {
-        dokumenUrl: string;
+        suratPendaftaran: string;
+        suratBebasLab: string;
+        suratBebasPerpustakaan: string;
+        suratDistribusiSkripsi: string;
+        suratPendaftaranIka: string;
 }
 
 export interface VerifikasiPengajuanYudisiumDTO {

@@ -1,5 +1,9 @@
 export interface LegalisirIjazahDTO {
-        dokumenUrl: string;
+        totalLegalisir: number;
+        namaRekening: string;
+        nomorRekening: string;
+        namaBank: string;
+        buktiPembayaran: string;
 }
 
 export interface VerifikasiLegalisirIjazahDTO {
