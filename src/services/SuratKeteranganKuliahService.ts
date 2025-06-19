@@ -427,7 +427,6 @@ export async function updateNomorSurat(id: string, user: UserJWTDAO, data: { nom
                 let isAuthorized = false;
 
                 // Only OPERATOR_KEMAHASISWAAN and KASUBBAG_KEMAHASISWAAN can update nomor surat
-                // on specific statuses
                 if (currentStatus === VERIFICATION_STATUS.SEDANG_INPUT_NOMOR_SURAT) {
                         if (aksesLevel.name === "OPERATOR_KEMAHASISWAAN" || aksesLevel.name === "KASUBBAG_KEMAHASISWAAN") {
                                 isAuthorized = true;
