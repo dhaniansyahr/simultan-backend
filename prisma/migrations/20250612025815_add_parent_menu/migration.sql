@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `Menu` ADD COLUMN `parentMenu` ENUM('KEMAHASISWAAN', 'AKADEMIK') NULL;

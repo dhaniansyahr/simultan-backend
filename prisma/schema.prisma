@@ -1,0 +1,331 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider          = "mysql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+model User {
+  id                      Int      @id @default(autoincrement())
+  ulid                    String   @unique
+  password                String
+  nama                    String?
+  npm                     String?  @unique
+  adminId                 Int?
+  operatorKemahasiswaanId Int?
+  operatorAkademikId      Int?
+  ktuId                   Int?
+  kasubbagKemahasiswaanId Int?
+  kasubbagAkademikId      Int?
+  dekanId                 Int?
+  wd1Id                   Int?
+  kadepId                 Int?
+  kaprodiId               Int?
+  pimpinanFakultasId      Int?
+  aksesLevelId            Int?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  admin                 Admin?                 @relation(fields: [adminId], references: [id])
+  operatorKemahasiswaan OperatorKemahasiswaan? @relation(fields: [operatorKemahasiswaanId], references: [id])
+  operatorAkademik      OperatorAkademik?      @relation(fields: [operatorAkademikId], references: [id])
+  ktu                   Ktu?                   @relation(fields: [ktuId], references: [id])
+  kasubbagKemahasiswaan KasubbagKemahasiswaan? @relation(fields: [kasubbagKemahasiswaanId], references: [id])
+  kasubbagAkademik      KasubbagAkademik?      @relation(fields: [kasubbagAkademikId], references: [id])
+  dekan                 Dekan?                 @relation(fields: [dekanId], references: [id])
+  wd1                   Wd1?                   @relation(fields: [wd1Id], references: [id])
+  kadep                 KepalaDepertemen?      @relation(fields: [kadepId], references: [id])
+  kaprodi               KepalaProdi?           @relation(fields: [kaprodiId], references: [id])
+  pimpinanFakultas      PimpinanFakultas?      @relation(fields: [pimpinanFakultasId], references: [id])
+  aksesLevel            AksesLevel?            @relation(fields: [aksesLevelId], references: [id])
+
+  suratKeteranganKuliah SuratKeteranganKuliah[]
+  cutiSementara         CutiSementara[]
+  pengajuanYudisium     PengajuanYudisium[]
+  legalisirIjazah       LegalisirIjazah[]
+  status                Status[]
+  log                   Log[]
+}
+
+model Admin {
+  id        Int      @id @default(autoincrement())
+  ulid      String   @unique
+  nama      String
+  email     String
+  nip       String   @unique
+  createdAt DateTime @default(now())
+  users     User[]
+}
+
+model OperatorKemahasiswaan {
+  id        Int      @id @default(autoincrement())
+  ulid      String   @unique
+  nama      String
+  email     String
+  nip       String   @unique
+  createdAt DateTime @default(now())
+  users     User[]
+}
+
+model OperatorAkademik {
+  id        Int      @id @default(autoincrement())
+  ulid      String   @unique
+  nama      String
+  email     String
+  nip       String   @unique
+  createdAt DateTime @default(now())
+  users     User[]
+}
+
+model Ktu {
+  id        Int      @id @default(autoincrement())
+  ulid      String   @unique
+  nama      String
+  email     String
+  nip       String   @unique
+  createdAt DateTime @default(now())
+  users     User[]
+}
+
+model KasubbagKemahasiswaan {
+  id        Int      @id @default(autoincrement())
+  ulid      String   @unique
+  nama      String
+  email     String
+  nip       String   @unique
+  createdAt DateTime @default(now())
+  users     User[]
+}
+
+model KasubbagAkademik {
+  id        Int      @id @default(autoincrement())
+  ulid      String   @unique
+  nama      String
+  email     String
+  nip       String   @unique
+  createdAt DateTime @default(now())
+  users     User[]
+}
+
+model Dekan {
+  id        Int      @id @default(autoincrement())
+  ulid      String   @unique
+  nama      String
+  email     String
+  nip       String   @unique
+  createdAt DateTime @default(now())
+  users     User[]
+}
+
+model Wd1 {
+  id        Int      @id @default(autoincrement())
+  ulid      String   @unique
+  nama      String
+  email     String
+  nip       String   @unique
+  createdAt DateTime @default(now())
+  users     User[]
+}
+
+model KepalaDepertemen {
+  id        Int      @id @default(autoincrement())
+  ulid      String   @unique
+  nama      String
+  email     String
+  nip       String   @unique
+  createdAt DateTime @default(now())
+  users     User[]
+}
+
+model KepalaProdi {
+  id        Int      @id @default(autoincrement())
+  ulid      String   @unique
+  nama      String
+  email     String
+  nip       String   @unique
+  createdAt DateTime @default(now())
+  users     User[]
+}
+
+model PimpinanFakultas {
+  id        Int      @id @default(autoincrement())
+  ulid      String   @unique
+  nama      String
+  email     String
+  nip       String   @unique
+  createdAt DateTime @default(now())
+  users     User[]
+}
+
+model AksesLevel {
+  id        Int      @id @default(autoincrement())
+  ulid      String   @unique
+  name      String   @unique
+  createdAt DateTime @default(now())
+  users     User[]
+  menu      Menu[]
+  acl       Acl[]
+}
+
+enum PARENT_MENU {
+  KEMAHASISWAAN
+  AKADEMIK
+}
+
+model Menu {
+  id           Int          @id @default(autoincrement())
+  ulid         String       @unique
+  title        String
+  path         String
+  icon         String?
+  parentMenu   PARENT_MENU?
+  aksesLevelId Int
+  aclId        Int
+  createdAt    DateTime     @default(now())
+
+  aksesLevel AksesLevel @relation(fields: [aksesLevelId], references: [id])
+}
+
+model Feature {
+  id        Int      @id @default(autoincrement())
+  ulid      String   @unique
+  nama      String   @unique
+  createdAt DateTime @default(now())
+
+  actions Action[]
+  acl     Acl[]
+}
+
+model Action {
+  id        Int      @id @default(autoincrement())
+  ulid      String   @unique
+  nama      String
+  namaFitur String
+  createdAt DateTime @default(now())
+
+  feature Feature @relation(fields: [namaFitur], references: [nama])
+
+  @@unique([namaFitur, nama])
+}
+
+model Acl {
+  id           Int      @id @default(autoincrement())
+  ulid         String   @unique
+  namaFitur    String
+  namaAksi     String
+  aksesLevelId Int
+  createdAt    DateTime @default(now())
+
+  feature    Feature    @relation(fields: [namaFitur], references: [nama])
+  aksesLevel AksesLevel @relation(fields: [aksesLevelId], references: [id])
+
+  @@unique([namaFitur, namaAksi, aksesLevelId])
+}
+
+enum TipeSuratKeteranganKuliah {
+  KP4
+  SK_PENSIUN
+  SURAT_KETERANGAN_PERUSAHAAN
+  LAINNYA
+}
+
+model SuratKeteranganKuliah {
+  id               Int                       @id @default(autoincrement())
+  ulid             String                    @unique
+  tipeSurat        TipeSuratKeteranganKuliah
+  deskripsi        String                    @db.Text
+  dokumenUrl       String
+  verifikasiStatus String                    @default("DIPROSES OLEH OPERATOR KEMAHASISWAAN")
+  alasanPenolakan  String?                   @db.Text
+  nomorSurat       String?
+  userId           Int
+  createdAt        DateTime                  @default(now())
+
+  user   User     @relation(fields: [userId], references: [id])
+  status Status[]
+}
+
+model CutiSementara {
+  id                   Int      @id @default(autoincrement())
+  ulid                 String   @unique
+  suratIzinOrangTuaUrl String
+  suratBssUrl          String
+  suratBebasPustakaUrl String
+  alasanPengajuan      String   @db.Text
+  verifikasiStatus     String   @default("DIPROSES OLEH OPERATOR KEMAHASISWAAN")
+  alasanPenolakan      String?  @db.Text
+  userId               Int
+  createdAt            DateTime @default(now())
+
+  user   User     @relation(fields: [userId], references: [id])
+  status Status[]
+}
+
+model PengajuanYudisium {
+  id                     Int      @id @default(autoincrement())
+  ulid                   String   @unique
+  suratPendaftaran       String
+  suratBebasLab          String
+  suratBebasPerpustakaan String
+  suratDistribusiSkripsi String
+  suratPendaftaranIka    String
+  verifikasiStatus       String   @default("DIPROSES OLEH OPERATOR AKADEMIK")
+  alasanPenolakan        String?  @db.Text
+  userId                 Int
+  createdAt              DateTime @default(now())
+
+  user   User     @relation(fields: [userId], references: [id])
+  status Status[]
+}
+
+model LegalisirIjazah {
+  id                 Int      @id @default(autoincrement())
+  ulid               String   @unique
+  totalLegalisir     Int
+  namaRekening       String
+  nomorRekening      String
+  namaBank           String
+  buktiPembayaran    String
+  verifikasiStatus   String   @default("DIPROSES OLEH OPERATOR AKADEMIK")
+  alasanPenolakan    String?  @db.Text
+  tanggalPengambilan String?
+  tempatPengambilan  String?
+  userId             Int
+  createdAt          DateTime @default(now())
+
+  user   User     @relation(fields: [userId], references: [id])
+  status Status[]
+}
+
+model Status {
+  id        Int      @id @default(autoincrement())
+  ulid      String   @unique
+  nama      String
+  deskripsi String   @db.Text
+  userId    Int
+  createdAt DateTime @default(now())
+
+  user                  User                    @relation(fields: [userId], references: [id])
+  suratKeteranganKuliah SuratKeteranganKuliah[]
+  cutiSementara         CutiSementara[]
+  pengajuanYudisium     PengajuanYudisium[]
+  legalisirIjazah       LegalisirIjazah[]
+}
+
+model Log {
+  id           Int      @id @default(autoincrement())
+  ulid         String   @unique
+  flagMenu     String
+  deskripsi    String   @db.Text
+  aksesLevelId Int
+  userId       Int
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
