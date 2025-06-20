@@ -35,6 +35,13 @@ SuratKeteranganKuliahRoutes.put(
         SuratKeteranganKuliahController.letterProcess
 );
 
+SuratKeteranganKuliahRoutes.patch(
+        "/:id/nomor-surat", 
+        AuthMiddleware.checkJwt, 
+        AuthMiddleware.checkAccess("SURAT_KETERANGAN_KULIAH", "NOMOR_SURAT"), 
+        SuratKeteranganKuliahController.updateNomorSurat
+);
+
 SuratKeteranganKuliahRoutes.get(
         "/:id/cetak-surat",
         AuthMiddleware.checkJwt,

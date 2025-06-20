@@ -312,7 +312,7 @@ export async function update(id: string, data: Partial<PengajuanYudisiumDTO>, us
                         data: {
                                 ...data,
                                 verifikasiStatus: resetStatus,
-                                alasanPenolakan: null, // Clear rejection reason
+                                alasanPenolakan: pengajuanYudisium.alasanPenolakan , // Clear rejection reason
                                 status: {
                                         create: {
                                                 ulid: ulid(),
