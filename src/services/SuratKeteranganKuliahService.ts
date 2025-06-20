@@ -464,7 +464,7 @@ export async function updateNomorSurat(id: string, user: UserJWTDAO, data: { nom
                                 status: {
                                         create: {
                                                 ulid: ulid(),
-                                                nama: currentStatus, // Keep the same status
+                                                nama: currentStatus,
                                                 deskripsi: oldNomorSurat 
                                                         ? `Nomor surat diubah oleh ${user.nama} (${aksesLevel.name}) dari "${oldNomorSurat}" menjadi "${data.nomorSurat.trim()}"`
                                                         : `Nomor surat ditambahkan oleh ${user.nama} (${aksesLevel.name}): "${data.nomorSurat.trim()}"`,
