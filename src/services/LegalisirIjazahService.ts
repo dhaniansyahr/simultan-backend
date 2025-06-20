@@ -306,7 +306,7 @@ export async function update(id: string, data: Partial<LegalisirIjazahDTO>, user
                         data: {
                                 ...data,
                                 verifikasiStatus: resetStatus,
-                                alasanPenolakan: null, // Clear rejection reason
+                                alasanPenolakan: legalisirIjazah.alasanPenolakan, // Clear rejection reason
                                 status: {
                                         create: {
                                                 ulid: ulid(),
