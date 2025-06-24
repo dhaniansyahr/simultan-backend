@@ -17,5 +17,5 @@ export interface VerifikasiLegalisirIjazahDTO {
 
 export interface ProsesLegalisirIjazahDTO {
         tanggalPengambilan: string;
-        tempatPengambilan: string;
+        tempatPengambilan: OpsiPengambilan;
 }
