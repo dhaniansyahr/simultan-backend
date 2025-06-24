@@ -306,7 +306,7 @@ export async function update(id: string, data: Partial<LegalisirIjazahDTO>, user
                         data: {
                                 ...data,
                                 verifikasiStatus: resetStatus,
-                                alasanPenolakan: null, // Clear rejection reason
+                                alasanPenolakan: legalisirIjazah.alasanPenolakan, // Clear rejection reason
                                 status: {
                                         create: {
                                                 ulid: ulid(),
@@ -397,7 +397,7 @@ export async function prosesLegalisir(id: string, data: ProsesLegalisirIjazahDTO
                         where: { ulid: id },
                         data: {
                                 tanggalPengambilan: data.tanggalPengambilan,
-                                tempatPengambilan: data.tempatPengambilan,
+                                tipePengambilan: data.tipePengambilan,
                         },
                         include: {
                                 status: {
@@ -421,7 +421,7 @@ export async function prosesLegalisir(id: string, data: ProsesLegalisirIjazahDTO
                         data: {
                                 ulid: ulid(),
                                 flagMenu: "LEGALISIR_IJAZAH",
-                                deskripsi: `Legalisir ijazah dengan ID ${id} sedang diproses oleh ${user.nama} - Pengambilan: ${data.tanggalPengambilan} di ${data.tempatPengambilan}`,
+                                deskripsi: `Legalisir ijazah dengan ID ${id} sedang diproses oleh ${user.nama} - Pengambilan: ${data.tipePengambilan} di ${data.tipePengambilan}`,
                                 aksesLevelId: user.aksesLevelId,
                                 userId: user.id,
                         },

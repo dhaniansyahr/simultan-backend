@@ -12,9 +12,6 @@ import { ulid } from "ulid";
 import { getCurrentAcademicInfo } from "$utils/strings.utils";
 import { flowCreatingStatusVerification, getNextVerificationStatus, VERIFICATION_STATUS } from "$utils/helper.utils";
 
-/** TODO
- * [] Verifkasi Harus teken 2x karna diproses dulu baru disetujui
- */
 
 export type CreateResponse = SuratKeteranganKuliah | {};
 export async function create(data: SuratKeteranganKuliahDTO, user: UserJWTDAO): Promise<ServiceResponse<CreateResponse>> {
@@ -150,6 +147,122 @@ export async function getAll(filters: FilteringQueryV2, user: UserJWTDAO): Promi
                 };
         } catch (err) {
                 Logger.error(`SuratKeteranganKuliahService.getAll : ${err} `);
+                return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
+        }
+}
+
+export type GetAllHistoryResponse = PagedList<SuratKeteranganKuliah[]> | {};
+export async function getAllHistory(filters: FilteringQueryV2, user: UserJWTDAO): Promise<ServiceResponse<GetAllHistoryResponse>> {
+        try {
+                const usedFilters = buildFilterQueryLimitOffsetV2(filters);
+
+                const aksesLevel = await prisma.aksesLevel.findUnique({
+                        where: {
+                                id: user.aksesLevelId,
+                        },
+                });
+
+                if (!aksesLevel) return BadRequestWithMessage("Akses Level tidak ditemukan!");
+
+                // Only KASUBBAG_KEMAHASISWAAN and OPERATOR_KEMAHASISWAAN can access history
+                if (aksesLevel.name !== "KASUBBAG_KEMAHASISWAAN" && aksesLevel.name !== "OPERATOR_KEMAHASISWAAN") {
+                        return BadRequestWithMessage("Anda tidak memiliki akses untuk melihat history surat keterangan kuliah!");
+                }
+
+                // KASUBBAG_KEMAHASISWAAN and OPERATOR_KEMAHASISWAAN can see all submissions
+                // No additional filters needed for these roles as they can access all history
+
+                // Include all related data for comprehensive history
+                usedFilters.include = {
+                        user: {
+                                select: {
+                                        nama: true,
+                                        npm: true,
+                                },
+                        },
+                        status: {
+                                orderBy: { createdAt: "asc" },
+                                include: {
+                                        user: {
+                                                select: {
+                                                        nama: true,
+                                                        aksesLevel: {
+                                                                select: {
+                                                                        name: true,
+                                                                },
+                                                        },
+                                                },
+                                        },
+                                },
+                        },
+                };
+
+                // Order by creation date (newest first for history view)
+                usedFilters.orderBy = {
+                        createdAt: "desc",
+                };
+
+                // Get all surat records
+                const [suratKeteranganKuliah, totalData] = await Promise.all([
+                        prisma.suratKeteranganKuliah.findMany(usedFilters),
+                        prisma.suratKeteranganKuliah.count({
+                                where: usedFilters.where,
+                        }),
+                ]);
+
+                let totalPage = 1;
+                if (totalData > usedFilters.take) totalPage = Math.ceil(totalData / usedFilters.take);
+
+                // Add additional metadata for each letter in history
+                const historyWithMetadata = suratKeteranganKuliah.map(surat => {
+                        const suratWithStatus = surat as typeof surat & { status: any[] };
+                        return {
+                                ...surat,
+                                statusCount: suratWithStatus.status.length,
+                                latestStatus: suratWithStatus.status[suratWithStatus.status.length - 1],
+                                isActive: ![
+                                        VERIFICATION_STATUS.DISETUJUI,
+                                        VERIFICATION_STATUS.DITOLAK_OLEH_OPERATOR,
+                                        VERIFICATION_STATUS.DITOLAK_OLEH_KASUBBAG
+                                ].includes(surat.verifikasiStatus as any),
+                                canBeUpdated: [
+                                        VERIFICATION_STATUS.DITOLAK_OLEH_OPERATOR,
+                                        VERIFICATION_STATUS.DITOLAK_OLEH_KASUBBAG,
+                                        VERIFICATION_STATUS.DIPROSES_OLEH_OPERATOR
+                                ].includes(surat.verifikasiStatus as any),
+                        };
+                });
+
+                // Create log entry for history access
+                await prisma.log.create({
+                        data: {
+                                ulid: ulid(),
+                                flagMenu: "SURAT_KETERANGAN_KULIAH",
+                                deskripsi: `History pengajuan surat keterangan kuliah diakses oleh ${user.nama} (${aksesLevel.name})`,
+                                aksesLevelId: user.aksesLevelId,
+                                userId: user.id,
+                        },
+                });
+
+                return {
+                        status: true,
+                        data: {
+                                entries: historyWithMetadata,
+                                totalData,
+                                totalPage,
+                                summary: {
+                                        totalPengajuan: totalData,
+                                        disetujui: historyWithMetadata.filter(s => s.verifikasiStatus === VERIFICATION_STATUS.DISETUJUI).length,
+                                        ditolak: historyWithMetadata.filter(s => 
+                                                s.verifikasiStatus === VERIFICATION_STATUS.DITOLAK_OLEH_OPERATOR ||
+                                                s.verifikasiStatus === VERIFICATION_STATUS.DITOLAK_OLEH_KASUBBAG
+                                        ).length,
+                                        sedangDiproses: historyWithMetadata.filter(s => s.isActive).length,
+                                },
+                        },
+                };
+        } catch (err) {
+                Logger.error(`SuratKeteranganKuliahService.getAllHistory : ${err}`);
                 return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
         }
 }
@@ -397,6 +510,104 @@ export async function letterProcess(id: string, user: UserJWTDAO, data: LetterPr
         }
 }
 
+
+export async function updateNomorSurat(id: string, user: UserJWTDAO, data: { nomorSurat: string }): Promise<ServiceResponse<{}>> {
+        try {
+                const surat = await prisma.suratKeteranganKuliah.findUnique({
+                        where: { ulid: id },
+                        include: {
+                                user: {
+                                        select: {
+                                                nama: true,
+                                                npm: true,
+                                        },
+                                },
+                                status: true,
+                        },
+                });
+
+                if (!surat) return INVALID_ID_SERVICE_RESPONSE;
+
+                // Get user's access level
+                const aksesLevel = await prisma.aksesLevel.findUnique({
+                        where: { id: user.aksesLevelId },
+                });
+
+                if (!aksesLevel) return BadRequestWithMessage("Akses level tidak ditemukan!");
+
+                // Check authorization based on current status and user role for nomor surat update
+                const currentStatus = surat.verifikasiStatus;
+                let isAuthorized = false;
+
+                // Check if the status allows nomor surat update
+                if (currentStatus === VERIFICATION_STATUS.DISETUJUI) {
+                        if (aksesLevel.name === "OPERATOR_KEMAHASISWAAN" || aksesLevel.name === "KASUBBAG_KEMAHASISWAAN") {
+                                isAuthorized = true;
+                        }
+                }
+
+                if (!isAuthorized) {
+                        return BadRequestWithMessage("Anda tidak berwenang untuk mengubah nomor surat pada tahap ini! Hanya Operator Kemahasiswaan dan Kasubbag Kemahasiswaan yang dapat mengubah nomor surat.");
+                }
+
+                // Check if surat already has nomor surat
+                const oldNomorSurat = surat.nomorSurat;
+
+                // Update the letter with new nomor surat
+                const updatedSurat = await prisma.suratKeteranganKuliah.update({
+                        where: { ulid: id },
+                        data: {
+                                nomorSurat: data.nomorSurat.trim(),
+                                status: {
+                                        create: {
+                                                ulid: ulid(),
+                                                nama: currentStatus,
+                                                deskripsi: oldNomorSurat 
+                                                        ? `Nomor surat diubah oleh ${user.nama} (${aksesLevel.name}) dari "${oldNomorSurat}" menjadi "${data.nomorSurat.trim()}"`
+                                                        : `Nomor surat ditambahkan oleh ${user.nama} (${aksesLevel.name}): "${data.nomorSurat.trim()}"`,
+                                                userId: user.id,
+                                        },
+                                },
+                        },
+                        include: {
+                                status: {
+                                        orderBy: { createdAt: "asc" },
+                                        include: {
+                                                user: {
+                                                        select: {
+                                                                nama: true,
+                                                                aksesLevel: true,
+                                                        },
+                                                },
+                                        },
+                                },
+                        },
+                });
+
+                // Create log entry
+                await prisma.log.create({
+                        data: {
+                                ulid: ulid(),
+                                flagMenu: "SURAT_KETERANGAN_KULIAH",
+                                deskripsi: oldNomorSurat 
+                                        ? `Nomor surat Surat Keterangan Kuliah dengan ID ${id} diubah oleh ${user.nama} (${aksesLevel.name}) dari "${oldNomorSurat}" menjadi "${data.nomorSurat.trim()}"`
+                                        : `Nomor surat Surat Keterangan Kuliah dengan ID ${id} ditambahkan oleh ${user.nama} (${aksesLevel.name}): "${data.nomorSurat.trim()}"`,
+                                aksesLevelId: user.aksesLevelId,
+                                userId: user.id,
+                        },
+                });
+
+                return {
+                        status: true,
+                        data: updatedSurat,
+                };
+        } catch (error) {
+                Logger.error(`SuratKeteranganKuliahService.updateNomorSurat : ${error}`);
+                return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
+        }
+}
+
+
 export async function cetakSurat(id: string, user: UserJWTDAO): Promise<ServiceResponse<any>> {
         try {
                 const suratKeteranganKuliah = await prisma.suratKeteranganKuliah.findUnique({
@@ -497,7 +708,7 @@ export async function update(id: string, data: Partial<SuratKeteranganKuliahDTO>
                         data: {
                                 ...data,
                                 verifikasiStatus: resetStatus,
-                                alasanPenolakan: null, // Clear rejection reason
+                                alasanPenolakan: suratKeteranganKuliah.alasanPenolakan,
                                 status: {
                                         create: {
                                                 ulid: ulid(),

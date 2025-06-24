@@ -32,6 +32,19 @@ export async function getAll(c: Context): Promise<TypedResponse> {
         return response_success(c, serviceResponse.data, "Successfully fetched all SuratKeteranganKuliah!");
 }
 
+export async function getAllHistory(c: Context): Promise<TypedResponse> {
+        const filters: FilteringQueryV2 = checkFilteringQueryV2(c);
+        const user: UserJWTDAO = c.get("jwtPayload");
+
+        const serviceResponse = await SuratKeteranganKuliahService.getAllHistory(filters, user);
+
+        if (!serviceResponse.status) {
+                return handleServiceErrorWithResponse(c, serviceResponse);
+        }
+
+        return response_success(c, serviceResponse.data, "Successfully fetched all SuratKeteranganKuliah history!");
+}
+
 export async function getById(c: Context): Promise<TypedResponse> {
         const id = c.req.param("id");
 
@@ -80,6 +93,20 @@ export async function letterProcess(c: Context): Promise<Response | TypedRespons
         if (!serviceResponse.status) return handleServiceErrorWithResponse(c, serviceResponse);
 
         return response_success(c, serviceResponse.data, "Successfully verificated SuratKeteranganKuliah!");
+}
+
+export async function updateNomorSurat(c: Context): Promise<TypedResponse> {
+        const id = c.req.param("id");
+        const data: { nomorSurat: string } = await c.req.json();
+        const user: UserJWTDAO = c.get("jwtPayload");
+
+        const serviceResponse = await SuratKeteranganKuliahService.updateNomorSurat(id, user, data);
+
+        if (!serviceResponse.status) {
+                return handleServiceErrorWithResponse(c, serviceResponse);
+        }
+
+        return response_success(c, serviceResponse.data, "Successfully updated nomor surat!");
 }
 
 export async function cetakSurat(c: Context): Promise<Response | TypedResponse> {

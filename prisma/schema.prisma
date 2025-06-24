@@ -284,20 +284,29 @@ model PengajuanYudisium {
   status Status[]
 }
 
+// Enum for options of pengambilan legalisir ijazah
+enum TIPE_PENGAMBILAN {
+  SEND
+  COD
+}
+
 model LegalisirIjazah {
-  id                 Int      @id @default(autoincrement())
-  ulid               String   @unique
+  id                 Int               @id @default(autoincrement())
+  ulid               String            @unique
   totalLegalisir     Int
   namaRekening       String
   nomorRekening      String
   namaBank           String
   buktiPembayaran    String
-  verifikasiStatus   String   @default("DIPROSES OLEH OPERATOR AKADEMIK")
-  alasanPenolakan    String?  @db.Text
+  buktiIjazah        String
+  verifikasiStatus   String            @default("DIPROSES OLEH OPERATOR AKADEMIK")
+  alasanPenolakan    String?           @db.Text
   tanggalPengambilan String?
+  tipePengambilan    TIPE_PENGAMBILAN?
+  alamatPengiriman   String?
   tempatPengambilan  String?
   userId             Int
-  createdAt          DateTime @default(now())
+  createdAt          DateTime          @default(now())
 
   user   User     @relation(fields: [userId], references: [id])
   status Status[]

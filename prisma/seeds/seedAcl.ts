@@ -11,7 +11,7 @@ export async function seedAcl(prisma: PrismaClient) {
         const featuresAndActions: FeatureAction[] = [
                 {
                         feature: "SURAT_KETERANGAN_KULIAH",
-                        actions: ["CREATE", "VIEW", "UPDATE", "EXPORT", "VERIFICATION"],
+                        actions: ["CREATE", "VIEW", "UPDATE", "EXPORT", "VERIFICATION", "NOMOR_SURAT"],
                 },
                 {
                         feature: "CUTI_SEMENTARA",
@@ -120,7 +120,7 @@ export async function seedAcl(prisma: PrismaClient) {
                         acl: [
                                 {
                                         feature: "SURAT_KETERANGAN_KULIAH",
-                                        actions: ["VIEW", "VERIFICATION"],
+                                        actions: ["VIEW", "VERIFICATION","NOMOR_SURAT"],
                                 },
                                 {
                                         feature: "CUTI_SEMENTARA",
@@ -196,7 +196,7 @@ export async function seedAcl(prisma: PrismaClient) {
                         acl: [
                                 {
                                         feature: "SURAT_KETERANGAN_KULIAH",
-                                        actions: ["VIEW", "VERIFICATION"],
+                                        actions: ["VIEW", "VERIFICATION", "NOMOR_SURAT"],
                                 },
                                 {
                                         feature: "CUTI_SEMENTARA",

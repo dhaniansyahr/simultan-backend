@@ -334,7 +334,7 @@ export async function update(id: string, data: Partial<CutiSementaraDTO>, user: 
                                 suratBssUrl: data.suratBssUrl,
                                 suratIzinOrangTuaUrl: data.suratIzinOrangTuaUrl,
                                 verifikasiStatus: resetStatus,
-                                alasanPenolakan: null, // Clear rejection reason
+                                alasanPenolakan: cutiSementara.alasanPenolakan ,
                                 status: {
                                         create: {
                                                 ulid: ulid(),

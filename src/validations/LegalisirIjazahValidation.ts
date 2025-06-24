@@ -20,6 +20,9 @@ export async function validateLegalisirIjazahDTO(c: Context, next: Next) {
         if (typeof data.nomorRekening !== "string") invalidFields.push(generateErrorStructure("nomorRekening", "nomorRekening must be a string"));
         if (typeof data.namaRekening !== "string") invalidFields.push(generateErrorStructure("namaRekening", "namaRekening must be a string"));
         if (typeof data.buktiPembayaran !== "string") invalidFields.push(generateErrorStructure("buktiPembayaran", "buktiPembayaran must be a string"));
+        if (typeof data.buktiIjazah !== "string") invalidFields.push(generateErrorStructure("buktiIjazah", "buktiIjazah must be a string"));
+        if (typeof data.tempatPengambilan !== "string") invalidFields.push(generateErrorStructure("tempatPengambilan", "tempatPengambilan harus di isi"));
+
 
         if (invalidFields.length !== 0) return response_bad_request(c, "Validation Error", invalidFields);
         await next();
@@ -51,7 +54,7 @@ export async function validateProsesLegalisirDTO(c: Context, next: Next) {
         if (!data.tempatPengambilan) invalidFields.push(generateErrorStructure("tempatPengambilan", "tempatPengambilan cannot be empty"));
 
         if (typeof data.tanggalPengambilan !== "string") invalidFields.push(generateErrorStructure("tanggalPengambilan", "tanggalPengambilan must be a string"));
-        if (typeof data.tempatPengambilan !== "string") invalidFields.push(generateErrorStructure("tempatPengambilan", "tempatPengambilan must be a string"));
+        // if (typeof data.tempatPengambilan !== "string") invalidFields.push(generateErrorStructure("tempatPengambilan", "tempatPengambilan must be a string"));
 
         // Validate date format (YYYY-MM-DD)
         if (data.tanggalPengambilan && !isValidDateFormat(data.tanggalPengambilan)) {

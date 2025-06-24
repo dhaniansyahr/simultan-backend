@@ -27,6 +27,8 @@ export async function seedLegalisirIjazah(prisma: PrismaClient) {
                                 nomorRekening: "1234567890",
                                 namaRekening: "John Doe",
                                 buktiPembayaran: `https://example.com/bukti_pembayaran_2105107010057_${new Date().toISOString().replace(/[-:T]/g, "").slice(0, 14)}.pdf`,
+                                buktiIjazah: `https://example.com/bukti_ijazah_2105107010057_${new Date().toISOString().replace(/[-:T]/g, "").slice(0, 14)}.pdf`,
+                                tempatPengambilan: "Via_POS",
                                 userId: findMhs.id,
                                 status: {
                                         create: {
