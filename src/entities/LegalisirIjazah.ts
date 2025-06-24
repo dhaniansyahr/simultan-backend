@@ -1,4 +1,4 @@
-import { OpsiPengambilan } from "@prisma/client";
+import { TIPE_PENGAMBILAN } from "@prisma/client";
 
 export interface LegalisirIjazahDTO {
         totalLegalisir: number;
@@ -7,7 +7,9 @@ export interface LegalisirIjazahDTO {
         namaBank: string;
         buktiPembayaran: string;
         buktiIjazah: string;
-        tempatPengambilan: OpsiPengambilan;
+        tipePengambilan: TIPE_PENGAMBILAN;
+        alamatPengiriman: string;
+        tempatPengambilan: string;
 }
 
 export interface VerifikasiLegalisirIjazahDTO {
@@ -17,5 +19,5 @@ export interface VerifikasiLegalisirIjazahDTO {
 
 export interface ProsesLegalisirIjazahDTO {
         tanggalPengambilan: string;
-        tempatPengambilan: OpsiPengambilan;
+        tipePengambilan: TIPE_PENGAMBILAN;
 }
