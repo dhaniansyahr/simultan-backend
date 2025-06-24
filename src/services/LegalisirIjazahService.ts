@@ -7,7 +7,7 @@ import { ulid } from "ulid";
 import { UserJWTDAO } from "$entities/User";
 import { VERIFICATION_STATUS } from "$utils/helper.utils";
 import { LegalisirIjazahDTO, VerifikasiLegalisirIjazahDTO, ProsesLegalisirIjazahDTO } from "$entities/LegalisirIjazah";
-import { LegalisirIjazah } from "@prisma/client";
+import { LegalisirIjazah, OpsiPengambilan } from "@prisma/client";
 import { flowCreatingStatusVeificationAkademik } from "./helpers/LogStatus";
 
 export type CreateResponse = LegalisirIjazahDTO | {};
@@ -397,7 +397,7 @@ export async function prosesLegalisir(id: string, data: ProsesLegalisirIjazahDTO
                         where: { ulid: id },
                         data: {
                                 tanggalPengambilan: data.tanggalPengambilan,
-                                tempatPengambilan: data.tempatPengambilan,
+                                tempatPengambilan: data.tempatPengambilan as OpsiPengambilan,
                         },
                         include: {
                                 status: {

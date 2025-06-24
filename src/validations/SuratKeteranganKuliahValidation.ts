@@ -62,3 +62,29 @@ export async function validateInputNomorSuratSuratKeteranganKuliahDTO(c: Context
         if (invalidFields.length !== 0) return response_bad_request(c, "Validation Error", invalidFields);
         await next();
 }
+
+export async function validateUpdateNomorSuratSuratKeteranganKuliahDTO(c: Context, next: Next) {
+        const data: { nomorSurat: string } = await c.req.json();
+        const invalidFields: ErrorStructure[] = [];
+
+        if (!data.nomorSurat) invalidFields.push(generateErrorStructure("nomorSurat", "nomorSurat cannot be empty"));
+        // Check if nomor surat is the same
+        // Check if nomor surat is the same as existing one
+        const { id } = c.req.param();
+        
+        try {
+                const existingSurat = await prisma.suratKeteranganKuliah.findUnique({
+                        where: { ulid: id },
+                        select: { nomorSurat: true }
+                });
+                
+                if (existingSurat?.nomorSurat && existingSurat.nomorSurat === data.nomorSurat.trim()) {
+                        invalidFields.push(generateErrorStructure("nomorSurat", "Nomor surat baru sama dengan nomor surat lama!"));
+                }
+        } catch (error) {
+                invalidFields.push(generateErrorStructure("nomorSurat", "Gagal memvalidasi nomor surat"));
+        }
+
+        if (invalidFields.length !== 0) return response_bad_request(c, "Validation Error", invalidFields);
+        await next();
+}

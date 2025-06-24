@@ -284,6 +284,11 @@ model PengajuanYudisium {
   status Status[]
 }
 
+enum OpsiPengambilan {
+  Via_POS
+  Ambil_Langsung_DiFakultas
+}
+
 model LegalisirIjazah {
   id                 Int      @id @default(autoincrement())
   ulid               String   @unique
@@ -292,10 +297,11 @@ model LegalisirIjazah {
   nomorRekening      String
   namaBank           String
   buktiPembayaran    String
+  buktiIjazah        String
   verifikasiStatus   String   @default("DIPROSES OLEH OPERATOR AKADEMIK")
   alasanPenolakan    String?  @db.Text
   tanggalPengambilan String?
-  tempatPengambilan  String?
+  tempatPengambilan  OpsiPengambilan?
   userId             Int
   createdAt          DateTime @default(now())
 

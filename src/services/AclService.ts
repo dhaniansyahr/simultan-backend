@@ -77,7 +77,7 @@ export async function getByAksesLevelId(aksesLevelId: number): Promise<ServiceRe
                         const actionMap: Record<string, boolean> = {};
 
                         // Get all possible actions for this feature from the database
-                        const possibleActions = ["CREATE", "VIEW", "UPDATE", "DELETE", "EXPORT", "VERIFICATION"];
+                        const possibleActions = ["CREATE", "VIEW", "UPDATE", "DELETE", "EXPORT", "VERIFICATION", "NOMOR_SURAT"];
 
                         // Set each action to true/false based on if it exists in featureActions
                         possibleActions.forEach((action) => {

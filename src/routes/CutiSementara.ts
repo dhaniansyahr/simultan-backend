@@ -8,7 +8,7 @@ CutiSementaraRoutes.get("/", AuthMiddleware.checkJwt, AuthMiddleware.checkAccess
 
 CutiSementaraRoutes.get("/:id", AuthMiddleware.checkJwt, AuthMiddleware.checkAccess("CUTI_SEMENTARA", "VIEW"), CutiSementaraController.getById);
 
-CutiSementaraRoutes.get("/:id", AuthMiddleware.checkJwt, AuthMiddleware.checkAccess("CUTI_SEMENTARA", "UPDATE"), CutiSementaraController.update);
+CutiSementaraRoutes.put("/:id", AuthMiddleware.checkJwt, AuthMiddleware.checkAccess("CUTI_SEMENTARA", "UPDATE"), CutiSementaraController.update);
 
 CutiSementaraRoutes.post("/", AuthMiddleware.checkJwt, AuthMiddleware.checkAccess("CUTI_SEMENTARA", "CREATE"), CutiSementaraController.create);
 

@@ -7,6 +7,13 @@ const SuratKeteranganKuliahRoutes = new Hono();
 
 SuratKeteranganKuliahRoutes.get("/", AuthMiddleware.checkJwt, AuthMiddleware.checkAccess("SURAT_KETERANGAN_KULIAH", "VIEW"), SuratKeteranganKuliahController.getAll);
 
+SuratKeteranganKuliahRoutes.get(
+        "/history",
+        AuthMiddleware.checkJwt,
+        AuthMiddleware.checkAccess("SURAT_KETERANGAN_KULIAH", "VIEW"),
+        SuratKeteranganKuliahController.getAllHistory
+);
+
 SuratKeteranganKuliahRoutes.post(
         "/",
         AuthMiddleware.checkJwt,
@@ -45,6 +52,7 @@ SuratKeteranganKuliahRoutes.patch(
 SuratKeteranganKuliahRoutes.get(
         "/:id/cetak-surat",
         AuthMiddleware.checkJwt,
+        SuratKeteranganKuliahValidation.validateUpdateNomorSuratSuratKeteranganKuliahDTO,
         AuthMiddleware.checkAccess("SURAT_KETERANGAN_KULIAH", "EXPORT"),
         SuratKeteranganKuliahController.cetakSurat
 );
