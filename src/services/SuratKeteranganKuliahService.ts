@@ -539,15 +539,11 @@ export async function updateNomorSurat(id: string, user: UserJWTDAO, data: { nom
                 const currentStatus = surat.verifikasiStatus;
                 let isAuthorized = false;
 
-                // Only OPERATOR_KEMAHASISWAAN and KASUBBAG_KEMAHASISWAAN can update nomor surat
                 // Check if the status allows nomor surat update
-                if (currentStatus === VERIFICATION_STATUS.SEDANG_INPUT_NOMOR_SURAT || 
-                        currentStatus === VERIFICATION_STATUS.DISETUJUI || 
-                        currentStatus === VERIFICATION_STATUS.DISETUJUI_OLEH_OPERATOR || 
-                        currentStatus === VERIFICATION_STATUS.DISETUJUI_OLEH_KASUBBAG) {
-                                if (aksesLevel.name === "OPERATOR_KEMAHASISWAAN" || aksesLevel.name === "KASUBBAG_KEMAHASISWAAN") {
-                                                isAuthorized = true;
-                                }
+                if (currentStatus === VERIFICATION_STATUS.DISETUJUI) {
+                        if (aksesLevel.name === "OPERATOR_KEMAHASISWAAN" || aksesLevel.name === "KASUBBAG_KEMAHASISWAAN") {
+                                isAuthorized = true;
+                        }
                 }
 
                 if (!isAuthorized) {
