@@ -284,6 +284,7 @@ model PengajuanYudisium {
   status Status[]
 }
 
+// Enum for options of pengambilan legalisir ijazah
 enum OpsiPengambilan {
   Via_POS
   Ambil_Langsung_DiFakultas
