@@ -52,7 +52,6 @@ SuratKeteranganKuliahRoutes.patch(
 SuratKeteranganKuliahRoutes.get(
         "/:id/cetak-surat",
         AuthMiddleware.checkJwt,
-        SuratKeteranganKuliahValidation.validateUpdateNomorSuratSuratKeteranganKuliahDTO,
         AuthMiddleware.checkAccess("SURAT_KETERANGAN_KULIAH", "EXPORT"),
         SuratKeteranganKuliahController.cetakSurat
 );

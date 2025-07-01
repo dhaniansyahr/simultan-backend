@@ -51,7 +51,7 @@ export async function validateProsesLegalisirDTO(c: Context, next: Next) {
         const invalidFields: ErrorStructure[] = [];
 
         if (!data.tanggalPengambilan) invalidFields.push(generateErrorStructure("tanggalPengambilan", "tanggalPengambilan cannot be empty"));
-        if (!data.tempatPengambilan) invalidFields.push(generateErrorStructure("tempatPengambilan", "tempatPengambilan cannot be empty"));
+        // if (!data.tempatPengambilan) invalidFields.push(generateErrorStructure("tempatPengambilan", "tempatPengambilan cannot be empty"));
 
         if (typeof data.tanggalPengambilan !== "string") invalidFields.push(generateErrorStructure("tanggalPengambilan", "tanggalPengambilan must be a string"));
         // if (typeof data.tempatPengambilan !== "string") invalidFields.push(generateErrorStructure("tempatPengambilan", "tempatPengambilan must be a string"));
