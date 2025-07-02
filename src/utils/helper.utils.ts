@@ -21,6 +21,8 @@ export const VERIFICATION_STATUS = {
         // Final Status
         DISETUJUI: "DISETUJUI",
 
+        // No Surat di ubah
+
         // Akademik Statuses
         DIPROSES_OPERATOR_AKADEMIK: "DIPROSES OLEH OPERATOR AKADEMIK",
         DISETUJUI_OPERATOR_AKADEMIK: "DISETUJUI OLEH OPERATOR AKADEMIK",
