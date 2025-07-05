@@ -43,7 +43,7 @@ SuratKeteranganKuliahRoutes.put(
 );
 
 SuratKeteranganKuliahRoutes.patch(
-        "/:id/nomor-surat", 
+        "/:id/edit-nomor-surat", 
         AuthMiddleware.checkJwt, 
         AuthMiddleware.checkAccess("SURAT_KETERANGAN_KULIAH", "NOMOR_SURAT"), 
         SuratKeteranganKuliahController.updateNomorSurat

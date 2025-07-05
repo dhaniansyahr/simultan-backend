@@ -8,18 +8,24 @@ export async function validateLegalisirIjazahDTO(c: Context, next: Next) {
         const invalidFields: ErrorStructure[] = [];
 
         if (!data.totalLegalisir) invalidFields.push(generateErrorStructure("totalLegalisir", "totalLegalisir cannot be empty"));
-        if (!data.namaBank) invalidFields.push(generateErrorStructure("namaBank", "namaBank cannot be empty"));
-        if (!data.nomorRekening) invalidFields.push(generateErrorStructure("nomorRekening", "nomorRekening cannot be empty"));
-        if (!data.namaRekening) invalidFields.push(generateErrorStructure("namaRekening", "namaRekening cannot be empty"));
+        // if (!data.namaBank) invalidFields.push(generateErrorStructure("namaBank", "namaBank cannot be empty"));
+        // if (!data.nomorRekening) invalidFields.push(generateErrorStructure("nomorRekening", "nomorRekening cannot be empty"));
+        // if (!data.namaRekening) invalidFields.push(generateErrorStructure("namaRekening", "namaRekening cannot be empty"));
         if (!data.buktiPembayaran) invalidFields.push(generateErrorStructure("buktiPembayaran", "buktiPembayaran cannot be empty"));
+        if (!data.tempatPengambilan) invalidFields.push(generateErrorStructure("tempatPengambilan", "tempatPengambilan harus di isi"));
+        if (!data.buktiPembayaranOngkir) invalidFields.push(generateErrorStructure("buktiPembayaranOngkir", "buktiPembayaranOngkir cannot be empty"));
 
         if (data.totalLegalisir < 1) invalidFields.push(generateErrorStructure("totalLegalisir", "totalLegalisir must be greater than 0"));
 
         if (typeof data.totalLegalisir !== "number") invalidFields.push(generateErrorStructure("totalLegalisir", "totalLegalisir must be a number"));
-        if (typeof data.namaBank !== "string") invalidFields.push(generateErrorStructure("namaBank", "namaBank must be a string"));
-        if (typeof data.nomorRekening !== "string") invalidFields.push(generateErrorStructure("nomorRekening", "nomorRekening must be a string"));
-        if (typeof data.namaRekening !== "string") invalidFields.push(generateErrorStructure("namaRekening", "namaRekening must be a string"));
+        // if (typeof data.namaBank !== "string") invalidFields.push(generateErrorStructure("namaBank", "namaBank must be a string"));
+        // if (typeof data.nomorRekening !== "string") invalidFields.push(generateErrorStructure("nomorRekening", "nomorRekening must be a string"));
+        // if (typeof data.namaRekening !== "string") invalidFields.push(generateErrorStructure("namaRekening", "namaRekening must be a string"));
         if (typeof data.buktiPembayaran !== "string") invalidFields.push(generateErrorStructure("buktiPembayaran", "buktiPembayaran must be a string"));
+        if (typeof data.buktiPembayaranOngkir !== "string") invalidFields.push(generateErrorStructure("buktiPembayaranOngkir", "buktiPembayaranOngkir must be a string"));
+        // Add validation for buktiPembayaranOngkir if tempatPengambilan is Via_POS
+        if (data.tempatPengambilan === "Via_POS" && !data.buktiPembayaranOngkir) {invalidFields.push(generateErrorStructure("buktiPembayaranOngkir", "buktiPembayaranOngkir is required when tempatPengambilan is Via_POS"));
+        }
         if (typeof data.buktiIjazah !== "string") invalidFields.push(generateErrorStructure("buktiIjazah", "buktiIjazah must be a string"));
         if (typeof data.tempatPengambilan !== "string") invalidFields.push(generateErrorStructure("tempatPengambilan", "tempatPengambilan harus di isi"));
 
