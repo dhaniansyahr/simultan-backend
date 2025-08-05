@@ -19,6 +19,7 @@ export interface VerifikasiLegalisirIjazahDTO {
 }
 
 export interface ProsesLegalisirIjazahDTO {
-        tanggalPengambilan: string;
+        tanggalPengambilan?: string;
+        noResi?: string;
         tipePengambilan: TIPE_PENGAMBILAN;
 }
