@@ -394,24 +394,25 @@ export async function prosesLegalisir(id: string, data: ProsesLegalisirIjazahDTO
                 await flowCreatingStatusVeificationAkademik(currentStatus, id, user.nama, user.id, false);
 
                 const updatedLegalisirIjazah = await prisma.legalisirIjazah.update({
-                        where: { ulid: id },
-                        data: {
-                                tanggalPengambilan: data.tanggalPengambilan,
-                                tipePengambilan: data.tipePengambilan,
-                        },
-                        include: {
-                                status: {
-                                        orderBy: { createdAt: "asc" },
-                                        include: {
-                                                user: {
-                                                        select: {
-                                                                nama: true,
-                                                                aksesLevel: true,
-                                                        },
-                                                },
-                                        },
+                                where: { ulid: id },
+                                data: {
+                                                tanggalPengambilan: data.tanggalPengambilan ?? null,
+                                                noResi: data.noResi ?? null,
+                                                tipePengambilan: data.tipePengambilan,
                                 },
-                        },
+                                include: {
+                                                status: {
+                                                                orderBy: { createdAt: "asc" },
+                                                                include: {
+                                                                                user: {
+                                                                                                select: {
+                                                                                                                nama: true,
+                                                                                                                aksesLevel: true,
+                                                                                                },
+                                                                                },
+                                                                },
+                                                },
+                                },
                 });
 
                 if (!updatedLegalisirIjazah) return INVALID_ID_SERVICE_RESPONSE;
