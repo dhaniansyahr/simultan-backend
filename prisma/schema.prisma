@@ -303,6 +303,7 @@ model LegalisirIjazah {
   verifikasiStatus   String            @default("DIPROSES OLEH OPERATOR AKADEMIK")
   alasanPenolakan    String?           @db.Text
   tanggalPengambilan String?
+  noResi             String?
   tipePengambilan    TIPE_PENGAMBILAN?
   alamatPengiriman   String?
   tempatPengambilan  String?
