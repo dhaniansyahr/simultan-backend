@@ -27,6 +27,7 @@ export async function validateLegalisirIjazahDTO(c: Context, next: Next) {
         if (data.tempatPengambilan === "Via_POS" && !data.buktiPembayaranOngkir) {invalidFields.push(generateErrorStructure("buktiPembayaranOngkir", "buktiPembayaranOngkir is required when tempatPengambilan is Via_POS"));
         }
         if (typeof data.buktiIjazah !== "string") invalidFields.push(generateErrorStructure("buktiIjazah", "buktiIjazah must be a string"));
+        if (typeof data.buktiTranskrip !== "string") invalidFields.push(generateErrorStructure("buktiTranskrip", "buktiTranskrip must be a string"));
         if (typeof data.tempatPengambilan !== "string") invalidFields.push(generateErrorStructure("tempatPengambilan", "tempatPengambilan harus di isi"));
 
 
