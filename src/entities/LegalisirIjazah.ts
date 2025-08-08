@@ -6,6 +6,7 @@ export interface LegalisirIjazahDTO {
         nomorRekening?: string;
         namaBank?: string;
         buktiPembayaran: string;
+        buktiTranskrip: string;
         buktiPembayaranOngkir?: string;
         buktiIjazah: string;
         tipePengambilan: TIPE_PENGAMBILAN;
