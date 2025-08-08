@@ -8,18 +8,22 @@ import { seedUser } from "./seedUser";
 import { seedMenu } from "./seedMenu";
 import { seedPengajuanYudisium } from "./seedPengajuanYudisium";
 import { seedLegalisirIjazah } from "./seedLegalisirIjazah";
+import { seedSuratKeteranganLulus } from "./seedSuratKeteranganLulus";
+import { seedRekomendasiMahasiswa } from "./seedRekomendasiMahasiswa";
 
 async function seed() {
-        await seedAksesLevel(prisma);
-        await seedUser(prisma);
-        await seedAcl(prisma);
-        await seedMenu(prisma);
-        await seedSuratKeteranganKuliah(prisma);
-        await seedCutiSementara(prisma);
-        await seedPengajuanYudisium(prisma);
-        await seedLegalisirIjazah(prisma);
+  await seedAksesLevel(prisma);
+  await seedUser(prisma);
+  await seedAcl(prisma);
+  await seedMenu(prisma);
+  await seedSuratKeteranganKuliah(prisma);
+  await seedCutiSementara(prisma);
+  await seedPengajuanYudisium(prisma);
+  await seedLegalisirIjazah(prisma);
+  await seedSuratKeteranganLulus(prisma);
+  await seedRekomendasiMahasiswa(prisma);
 }
 
 seed().then(() => {
-        console.log("ALL SEEDING DONE");
+  console.log("ALL SEEDING DONE");
 });
