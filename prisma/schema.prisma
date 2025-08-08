@@ -300,6 +300,7 @@ model LegalisirIjazah {
   buktiPembayaran    String
   buktiPembayaranOngkir String?
   buktiIjazah        String
+  buktiTranskrip     String
   verifikasiStatus   String            @default("DIPROSES OLEH OPERATOR AKADEMIK")
   alasanPenolakan    String?           @db.Text
   tanggalPengambilan String?
