@@ -14,6 +14,14 @@ export async function seedAcl(prisma: PrismaClient) {
                         actions: ["CREATE", "VIEW", "UPDATE", "EXPORT", "VERIFICATION", "NOMOR_SURAT"],
                 },
                 {
+                        feature: "REKOMENDASI_MAHASISWA",
+                        actions: ["CREATE", "VIEW", "UPDATE", "EXPORT", "VERIFICATION"],
+                },
+                {
+                        feature: "SURAT_KETERANGAN_LULUS",
+                        actions: ["CREATE", "VIEW", "UPDATE", "EXPORT", "VERIFICATION"],
+                },
+                {
                         feature: "CUTI_SEMENTARA",
                         actions: ["CREATE", "VIEW", "UPDATE", "EXPORT", "VERIFICATION"],
                 },
@@ -90,6 +98,14 @@ export async function seedAcl(prisma: PrismaClient) {
                                         actions: ["VIEW"],
                                 },
                                 {
+                                        feature: "REKOMENDASI_MAHASISWA",
+                                        actions: ["VIEW"],
+                                },
+                                {
+                                        feature: "SURAT_KETERANGAN_LULUS",
+                                        actions: ["VIEW"],
+                                },
+                                {
                                         feature: "CUTI_SEMENTARA",
                                         actions: ["VIEW"],
                                 },
@@ -123,6 +139,10 @@ export async function seedAcl(prisma: PrismaClient) {
                                         actions: ["VIEW", "VERIFICATION","NOMOR_SURAT"],
                                 },
                                 {
+                                        feature: "SURAT_KETERANGAN_LULUS",
+                                        actions: ["VIEW", "VERIFICATION","NOMOR_SURAT"],
+                                },
+                                {
                                         feature: "CUTI_SEMENTARA",
                                         actions: ["VIEW", "VERIFICATION"],
                                 },
@@ -140,6 +160,10 @@ export async function seedAcl(prisma: PrismaClient) {
                                         actions: ["VIEW", "VERIFICATION"],
                                 },
                                 {
+                                        feature: "REKOMENDASI_MAHASISWA",
+                                        actions: ["VIEW", "VERIFICATION"],
+                                },
+                                {
                                         feature: "LEGALISIR_IJAZAH",
                                         actions: ["VIEW", "VERIFICATION"],
                                 },
@@ -154,6 +178,14 @@ export async function seedAcl(prisma: PrismaClient) {
                         acl: [
                                 {
                                         feature: "SURAT_KETERANGAN_KULIAH",
+                                        actions: ["VIEW"],
+                                },
+                                {
+                                        feature: "REKOMENDASI_MAHASISWA",
+                                        actions: ["VIEW"],
+                                },
+                                {
+                                        feature: "SURAT_KETERANGAN_LULUS",
                                         actions: ["VIEW"],
                                 },
                                 {
@@ -182,6 +214,10 @@ export async function seedAcl(prisma: PrismaClient) {
                                         actions: ["VIEW", "VERIFICATION"],
                                 },
                                 {
+                                        feature: "REKOMENDASI_MAHASISWA",
+                                        actions: ["VIEW", "VERIFICATION"],
+                                },
+                                {
                                         feature: "LEGALISIR_IJAZAH",
                                         actions: ["VIEW", "VERIFICATION"],
                                 },
@@ -199,6 +235,10 @@ export async function seedAcl(prisma: PrismaClient) {
                                         actions: ["VIEW", "VERIFICATION", "NOMOR_SURAT"],
                                 },
                                 {
+                                        feature: "SURAT_KETERANGAN_LULUS",
+                                        actions: ["VIEW", "VERIFICATION", "NOMOR_SURAT"],
+                                },
+                                {
                                         feature: "CUTI_SEMENTARA",
                                         actions: ["VIEW", "VERIFICATION"],
                                 },
@@ -213,6 +253,14 @@ export async function seedAcl(prisma: PrismaClient) {
                         acl: [
                                 {
                                         feature: "SURAT_KETERANGAN_KULIAH",
+                                        actions: ["VIEW"],
+                                },
+                                {
+                                        feature: "REKOMENDASI_MAHASISWA",
+                                        actions: ["VIEW"],
+                                },
+                                {
+                                        feature: "SURAT_KETERANGAN_LULUS",
                                         actions: ["VIEW"],
                                 },
                                 {
@@ -241,6 +289,14 @@ export async function seedAcl(prisma: PrismaClient) {
                                         actions: ["VIEW"],
                                 },
                                 {
+                                        feature: "REKOMENDASI_MAHASISWA",
+                                        actions: ["VIEW"],
+                                },
+                                {
+                                        feature: "SURAT_KETERANGAN_LULUS",
+                                        actions: ["VIEW"],
+                                },
+                                {
                                         feature: "CUTI_SEMENTARA",
                                         actions: ["VIEW"],
                                 },
@@ -263,6 +319,14 @@ export async function seedAcl(prisma: PrismaClient) {
                         acl: [
                                 {
                                         feature: "SURAT_KETERANGAN_KULIAH",
+                                        actions: ["VIEW"],
+                                },
+                                {
+                                        feature: "REKOMENDASI_MAHASISWA",
+                                        actions: ["VIEW"],
+                                },
+                                {
+                                        feature: "SURAT_KETERANGAN_LULUS",
                                         actions: ["VIEW"],
                                 },
                                 {
@@ -291,6 +355,14 @@ export async function seedAcl(prisma: PrismaClient) {
                                         actions: ["VIEW"],
                                 },
                                 {
+                                        feature: "REKOMENDASI_MAHASISWA",
+                                        actions: ["VIEW"],
+                                },
+                                {
+                                        feature: "SURAT_KETERANGAN_LULUS",
+                                        actions: ["VIEW"],
+                                },
+                                {
                                         feature: "CUTI_SEMENTARA",
                                         actions: ["VIEW"],
                                 },
@@ -316,6 +388,14 @@ export async function seedAcl(prisma: PrismaClient) {
                                         actions: ["VIEW"],
                                 },
                                 {
+                                        feature: "REKOMENDASI_MAHASISWA",
+                                        actions: ["VIEW"],
+                                },
+                                {
+                                        feature: "SURAT_KETERANGAN_LULUS",
+                                        actions: ["VIEW"],
+                                },
+                                {
                                         feature: "CUTI_SEMENTARA",
                                         actions: ["VIEW"],
                                 },
@@ -338,6 +418,14 @@ export async function seedAcl(prisma: PrismaClient) {
                         acl: [
                                 {
                                         feature: "SURAT_KETERANGAN_KULIAH",
+                                        actions: ["CREATE", "UPDATE", "VIEW", "EXPORT"],
+                                },
+                                {
+                                        feature: "REKOMENDASI_MAHASISWA",
+                                        actions: ["CREATE", "UPDATE", "VIEW", "EXPORT"],
+                                },
+                                {
+                                        feature: "SURAT_KETERANGAN_LULUS",
                                         actions: ["CREATE", "UPDATE", "VIEW", "EXPORT"],
                                 },
                                 {
