@@ -1,10 +1,5 @@
 import { FilteringQueryV2, PagedList } from "$entities/Query";
-import {
-  BadRequestWithMessage,
-  INTERNAL_SERVER_ERROR_SERVICE_RESPONSE,
-  INVALID_ID_SERVICE_RESPONSE,
-  ServiceResponse,
-} from "$entities/Service";
+import { BadRequestWithMessage, INTERNAL_SERVER_ERROR_SERVICE_RESPONSE, INVALID_ID_SERVICE_RESPONSE, ServiceResponse } from "$entities/Service";
 import Logger from "$pkg/logger";
 import { prisma } from "$utils/prisma.utils";
 import { CutiSementara } from "@prisma/client";
@@ -12,439 +7,375 @@ import { CutiSementaraDTO, VerifikasiCutiDTO } from "$entities/CutiSementara";
 import { buildFilterQueryLimitOffsetV2 } from "./helpers/FilterQueryV2";
 import { UserJWTDAO } from "$entities/User";
 import { ulid } from "ulid";
-import {
-  VERIFICATION_STATUS,
-  flowCreatingStatusVerification,
-} from "$utils/helper.utils";
+import { VERIFICATION_STATUS, flowCreatingStatusVerification } from "$utils/helper.utils";
 
 export type CreateResponse = CutiSementara | {};
-export async function create(
-  data: CutiSementaraDTO,
-  user: UserJWTDAO
-): Promise<ServiceResponse<CreateResponse>> {
-  try {
-    // Check if user is a student (MAHASISWA)
-    const aksesLevel = await prisma.aksesLevel.findUnique({
-      where: { id: user.aksesLevelId },
-    });
+export async function create(data: CutiSementaraDTO, user: UserJWTDAO): Promise<ServiceResponse<CreateResponse>> {
+        try {
+                // Check if user is a student (MAHASISWA)
+                const aksesLevel = await prisma.aksesLevel.findUnique({
+                        where: { id: user.aksesLevelId },
+                });
 
-    if (!aksesLevel || aksesLevel.name !== "MAHASISWA") {
-      return BadRequestWithMessage(
-        "Hanya mahasiswa yang dapat mengajukan cuti sementara!"
-      );
-    }
+                if (!aksesLevel || aksesLevel.name !== "MAHASISWA") {
+                        return BadRequestWithMessage("Hanya mahasiswa yang dapat mengajukan cuti sementara!");
+                }
 
-    // Create the cuti with initial status
-    const cuti = await prisma.cutiSementara.create({
-      data: {
-        ulid: ulid(),
-        alasanPengajuan: data.alasanPengajuan,
-        suratBebasPustakaUrl: data.suratBebasPustakaUrl,
-        suratBssUrl: data.suratBssUrl,
-        suratIzinOrangTuaUrl: data.suratIzinOrangTuaUrl,
-        verifikasiStatus: VERIFICATION_STATUS.DIPROSES_OLEH_OPERATOR,
-        userId: user.id,
-        status: {
-          create: {
-            ulid: ulid(),
-            nama: VERIFICATION_STATUS.DIPROSES_OLEH_OPERATOR,
-            deskripsi: `Pengajuan cuti sementara oleh ${user.nama} - menunggu verifikasi operator kemahasiswaan`,
-            userId: user.id,
-          },
-        },
-      },
-      include: {
-        status: true,
-      },
-    });
+                // Create the cuti with initial status
+                const cuti = await prisma.cutiSementara.create({
+                        data: {
+                                ulid: ulid(),
+                                alasanPengajuan: data.alasanPengajuan,
+                                suratBebasPustakaUrl: data.suratBebasPustakaUrl,
+                                suratBssUrl: data.suratBssUrl,
+                                suratIzinOrangTuaUrl: data.suratIzinOrangTuaUrl,
+                                verifikasiStatus: VERIFICATION_STATUS.DIPROSES_OLEH_OPERATOR,
+                                userId: user.id,
+                                status: {
+                                        create: {
+                                                ulid: ulid(),
+                                                nama: VERIFICATION_STATUS.DIPROSES_OLEH_OPERATOR,
+                                                deskripsi: `Pengajuan cuti sementara oleh ${user.nama} - menunggu verifikasi operator kemahasiswaan`,
+                                                userId: user.id,
+                                        },
+                                },
+                        },
+                        include: {
+                                status: true,
+                        },
+                });
 
-    // Create log entry
-    await prisma.log.create({
-      data: {
-        ulid: ulid(),
-        flagMenu: "CUTI_SEMENTARA",
-        deskripsi: `Pengajuan cuti sementara baru dengan ID ${cuti.ulid} oleh mahasiswa ${user.nama}`,
-        aksesLevelId: user.aksesLevelId,
-        userId: user.id,
-      },
-    });
+                // Create log entry
+                await prisma.log.create({
+                        data: {
+                                ulid: ulid(),
+                                flagMenu: "CUTI_SEMENTARA",
+                                deskripsi: `Pengajuan cuti sementara baru dengan ID ${cuti.ulid} oleh mahasiswa ${user.nama}`,
+                                aksesLevelId: user.aksesLevelId,
+                                userId: user.id,
+                        },
+                });
 
-    return {
-      status: true,
-      data: cuti,
-    };
-  } catch (err) {
-    Logger.error(`CutiSementaraService.create : ${err}`);
-    return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
-  }
+                return {
+                        status: true,
+                        data: cuti,
+                };
+        } catch (err) {
+                Logger.error(`CutiSementaraService.create : ${err}`);
+                return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
+        }
 }
 
 export type GetAllResponse = PagedList<CutiSementara[]> | {};
-export async function getAll(
-  filters: FilteringQueryV2,
-  user: UserJWTDAO
-): Promise<ServiceResponse<GetAllResponse>> {
-  try {
-    const usedFilters = buildFilterQueryLimitOffsetV2(filters);
+export async function getAll(filters: FilteringQueryV2, user: UserJWTDAO): Promise<ServiceResponse<GetAllResponse>> {
+        try {
+                const usedFilters = buildFilterQueryLimitOffsetV2(filters);
 
-    const aksesLevel = await prisma.aksesLevel.findUnique({
-      where: {
-        id: user.aksesLevelId,
-      },
-    });
+                const aksesLevel = await prisma.aksesLevel.findUnique({
+                        where: {
+                                id: user.aksesLevelId,
+                        },
+                });
 
-    if (!aksesLevel)
-      return BadRequestWithMessage("Akses level tidak ditemukan");
+                if (!aksesLevel) return BadRequestWithMessage("Akses level tidak ditemukan");
 
-    // For Mahasiswa
-    if (aksesLevel.name === "MAHASISWA") {
-      usedFilters.where.AND.push({
-        userId: user.id,
-      });
-    }
+                // For Mahasiswa
+                if (aksesLevel.name === "MAHASISWA") {
+                        usedFilters.where.AND.push({
+                                userId: user.id,
+                        });
+                }
 
-    // Filter based on user role
-    if (aksesLevel.name === "OPERATOR_KEMAHASISWAAN") {
-      // Operator sees: letters waiting for their verification
-      usedFilters.where.AND.push({
-        verifikasiStatus: VERIFICATION_STATUS.DIPROSES_OLEH_OPERATOR,
-      });
-    } else if (aksesLevel.name === "KASUBBAG_KEMAHASISWAAN") {
-      // Kasubbag sees: letters waiting for their verification
-      usedFilters.where.AND.push({
-        verifikasiStatus: VERIFICATION_STATUS.DIPROSES_OLEH_KASUBBAG,
-      });
-    }
+                // Filter based on user role
+                if (aksesLevel.name === "OPERATOR_KEMAHASISWAAN") {
+                        // Operator sees: letters waiting for their verification
+                        usedFilters.where.AND.push({
+                                verifikasiStatus: VERIFICATION_STATUS.DIPROSES_OLEH_OPERATOR,
+                        });
+                } else if (aksesLevel.name === "KASUBBAG_KEMAHASISWAAN") {
+                        // Kasubbag sees: letters waiting for their verification
+                        usedFilters.where.AND.push({
+                                verifikasiStatus: VERIFICATION_STATUS.DIPROSES_OLEH_KASUBBAG,
+                        });
+                }
 
-    usedFilters.include = {
-      user: {
-        select: {
-          nama: true,
-          npm: true,
-        },
-      },
-      status: {
-        include: {
-          user: {
-            select: {
-              nama: true,
-              aksesLevel: true,
-            },
-          },
-        },
-      },
-    };
+                usedFilters.include = {
+                        user: {
+                                select: {
+                                        nama: true,
+                                        npm: true,
+                                },
+                        },
+                        status: {
+                                include: {
+                                        user: {
+                                                select: {
+                                                        nama: true,
+                                                        aksesLevel: true,
+                                                },
+                                        },
+                                },
+                        },
+                };
 
-    usedFilters.orderBy = {
-      createdAt: "asc",
-    };
+                usedFilters.orderBy = {
+                        createdAt: "asc",
+                };
 
-    const [cutiSementara, totalData] = await Promise.all([
-      prisma.cutiSementara.findMany(usedFilters),
-      prisma.cutiSementara.count({
-        where: usedFilters.where,
-      }),
-    ]);
+                const [cutiSementara, totalData] = await Promise.all([
+                        prisma.cutiSementara.findMany(usedFilters),
+                        prisma.cutiSementara.count({
+                                where: usedFilters.where,
+                        }),
+                ]);
 
-    let totalPage = 1;
-    if (totalData > usedFilters.take)
-      totalPage = Math.ceil(totalData / usedFilters.take);
+                let totalPage = 1;
+                if (totalData > usedFilters.take) totalPage = Math.ceil(totalData / usedFilters.take);
 
-    return {
-      status: true,
-      data: {
-        entries: cutiSementara,
-        totalData,
-        totalPage,
-      },
-    };
-  } catch (err) {
-    Logger.error(`CutiSementaraService.getAll : ${err} `);
-    return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
-  }
+                return {
+                        status: true,
+                        data: {
+                                entries: cutiSementara,
+                                totalData,
+                                totalPage,
+                        },
+                };
+        } catch (err) {
+                Logger.error(`CutiSementaraService.getAll : ${err} `);
+                return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
+        }
 }
 
 export type GetByIdResponse = CutiSementara | {};
-export async function getById(
-  id: string
-): Promise<ServiceResponse<GetByIdResponse>> {
-  try {
-    let cutiSementara = await prisma.cutiSementara.findUnique({
-      include: {
-        user: {
-          select: {
-            nama: true,
-            npm: true,
-          },
-        },
-        status: {
-          orderBy: {
-            createdAt: "asc",
-          },
-          include: {
-            user: {
-              select: {
-                nama: true,
-                aksesLevel: true,
-              },
-            },
-          },
-        },
-      },
-      where: {
-        ulid: id,
-      },
-    });
+export async function getById(id: string): Promise<ServiceResponse<GetByIdResponse>> {
+        try {
+                let cutiSementara = await prisma.cutiSementara.findUnique({
+                        include: {
+                                user: {
+                                        select: {
+                                                nama: true,
+                                                npm: true,
+                                        },
+                                },
+                                status: {
+                                        orderBy: {
+                                                createdAt: "asc",
+                                        },
+                                        include: {
+                                                user: {
+                                                        select: {
+                                                                nama: true,
+                                                                aksesLevel: true,
+                                                        },
+                                                },
+                                        },
+                                },
+                        },
+                        where: {
+                                ulid: id,
+                        },
+                });
 
-    if (!cutiSementara) return INVALID_ID_SERVICE_RESPONSE;
+                if (!cutiSementara) return INVALID_ID_SERVICE_RESPONSE;
 
-    return {
-      status: true,
-      data: cutiSementara,
-    };
-  } catch (err) {
-    Logger.error(`CutiSementaraService.getById : ${err}`);
-    return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
-  }
+                return {
+                        status: true,
+                        data: cutiSementara,
+                };
+        } catch (err) {
+                Logger.error(`CutiSementaraService.getById : ${err}`);
+                return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
+        }
 }
 
-export async function verificationStatus(
-  id: string,
-  data: VerifikasiCutiDTO,
-  user: UserJWTDAO
-): Promise<ServiceResponse<{}>> {
-  try {
-    const cuti = await prisma.cutiSementara.findUnique({
-      where: { ulid: id },
-    });
+export async function verificationStatus(id: string, data: VerifikasiCutiDTO, user: UserJWTDAO): Promise<ServiceResponse<{}>> {
+        try {
+                const cuti = await prisma.cutiSementara.findUnique({
+                        where: { ulid: id },
+                });
 
-    if (!cuti) return INVALID_ID_SERVICE_RESPONSE;
+                if (!cuti) return INVALID_ID_SERVICE_RESPONSE;
 
-    // Get user's access level
-    const aksesLevel = await prisma.aksesLevel.findUnique({
-      where: { id: user.aksesLevelId },
-    });
+                // Get user's access level
+                const aksesLevel = await prisma.aksesLevel.findUnique({
+                        where: { id: user.aksesLevelId },
+                });
 
-    if (!aksesLevel)
-      return BadRequestWithMessage("Akses level tidak ditemukan!");
+                if (!aksesLevel) return BadRequestWithMessage("Akses level tidak ditemukan!");
 
-    // Check authorization based on current status and user role
-    const currentStatus = cuti.verifikasiStatus;
-    let isAuthorized = false;
+                // Check authorization based on current status and user role
+                const currentStatus = cuti.verifikasiStatus;
+                let isAuthorized = false;
 
-    if (
-      currentStatus === VERIFICATION_STATUS.DIPROSES_OLEH_OPERATOR &&
-      aksesLevel.name === "OPERATOR_KEMAHASISWAAN"
-    ) {
-      isAuthorized = true;
-    } else if (
-      currentStatus === VERIFICATION_STATUS.DIPROSES_OLEH_KASUBBAG &&
-      aksesLevel.name === "KASUBBAG_KEMAHASISWAAN"
-    ) {
-      isAuthorized = true;
-    }
+                if (currentStatus === VERIFICATION_STATUS.DIPROSES_OLEH_OPERATOR && aksesLevel.name === "OPERATOR_KEMAHASISWAAN") {
+                        isAuthorized = true;
+                } else if (currentStatus === VERIFICATION_STATUS.DIPROSES_OLEH_KASUBBAG && aksesLevel.name === "KASUBBAG_KEMAHASISWAAN") {
+                        isAuthorized = true;
+                }
 
-    if (!isAuthorized) {
-      return BadRequestWithMessage(
-        "Anda tidak berwenang untuk memverifikasi cuti pada tahap ini!"
-      );
-    }
+                if (!isAuthorized) {
+                        return BadRequestWithMessage("Anda tidak berwenang untuk memverifikasi cuti pada tahap ini!");
+                }
 
-    if (data.action === "DISETUJUI") {
-      if (currentStatus === VERIFICATION_STATUS.DIPROSES_OLEH_OPERATOR) {
-        await flowCreatingStatusVerification(
-          currentStatus,
-          id,
-          user.nama,
-          user.id,
-          user.aksesLevelId,
-          true
-        );
-        await flowCreatingStatusVerification(
-          VERIFICATION_STATUS.DISETUJUI_OLEH_OPERATOR,
-          id,
-          user.nama,
-          user.id,
-          user.aksesLevelId,
-          true
-        );
-      } else if (currentStatus === VERIFICATION_STATUS.DIPROSES_OLEH_KASUBBAG) {
-        await flowCreatingStatusVerification(
-          currentStatus,
-          id,
-          user.nama,
-          user.id,
-          user.aksesLevelId,
-          true
-        );
-        await flowCreatingStatusVerification(
-          VERIFICATION_STATUS.DISETUJUI_OLEH_KASUBBAG,
-          id,
-          user.nama,
-          user.id,
-          user.aksesLevelId,
-          true
-        );
-      }
-    } else {
-      // Handle rejection
-      let nextStatus: string;
-      if (aksesLevel.name === "OPERATOR_KEMAHASISWAAN") {
-        nextStatus = VERIFICATION_STATUS.DITOLAK_OLEH_OPERATOR;
-      } else {
-        nextStatus = VERIFICATION_STATUS.DITOLAK_OLEH_KASUBBAG;
-      }
+                if (data.action === "DISETUJUI") {
+                        if (currentStatus === VERIFICATION_STATUS.DIPROSES_OLEH_OPERATOR) {
+                                await flowCreatingStatusVerification(currentStatus, id, user.nama, user.id, user.aksesLevelId, true);
+                                await flowCreatingStatusVerification(VERIFICATION_STATUS.DISETUJUI_OLEH_OPERATOR, id, user.nama, user.id, user.aksesLevelId, true);
+                        } else if (currentStatus === VERIFICATION_STATUS.DIPROSES_OLEH_KASUBBAG) {
+                                await flowCreatingStatusVerification(currentStatus, id, user.nama, user.id, user.aksesLevelId, true);
+                                await flowCreatingStatusVerification(VERIFICATION_STATUS.DISETUJUI_OLEH_KASUBBAG, id, user.nama, user.id, user.aksesLevelId, true);
+                        }
+                } else {
+                        // Handle rejection
+                        let nextStatus: string;
+                        if (aksesLevel.name === "OPERATOR_KEMAHASISWAAN") {
+                                nextStatus = VERIFICATION_STATUS.DITOLAK_OLEH_OPERATOR;
+                        } else {
+                                nextStatus = VERIFICATION_STATUS.DITOLAK_OLEH_KASUBBAG;
+                        }
 
-      const statusDescription = `Cuti ditolak oleh ${user.nama} (${aksesLevel.name}): ${data.alasanPenolakan}`;
+                        const statusDescription = `Cuti ditolak oleh ${user.nama} (${aksesLevel.name}): ${data.alasanPenolakan}`;
 
-      await prisma.cutiSementara.update({
-        where: { ulid: id },
-        data: {
-          verifikasiStatus: nextStatus,
-          alasanPenolakan: data.alasanPenolakan,
-          status: {
-            create: {
-              ulid: ulid(),
-              nama: nextStatus,
-              deskripsi: statusDescription,
-              userId: user.id,
-            },
-          },
-        },
-      });
-    }
+                        await prisma.cutiSementara.update({
+                                where: { ulid: id },
+                                data: {
+                                        verifikasiStatus: nextStatus,
+                                        alasanPenolakan: data.alasanPenolakan,
+                                        status: {
+                                                create: {
+                                                        ulid: ulid(),
+                                                        nama: nextStatus,
+                                                        deskripsi: statusDescription,
+                                                        userId: user.id,
+                                                },
+                                        },
+                                },
+                        });
+                }
 
-    // Get updated cuti
-    const updateCuti = await prisma.cutiSementara.findUnique({
-      where: { ulid: id },
-      include: {
-        status: {
-          orderBy: { createdAt: "asc" },
-          include: {
-            user: {
-              select: {
-                nama: true,
-                aksesLevel: true,
-              },
-            },
-          },
-        },
-      },
-    });
+                // Get updated cuti
+                const updateCuti = await prisma.cutiSementara.findUnique({
+                        where: { ulid: id },
+                        include: {
+                                status: {
+                                        orderBy: { createdAt: "asc" },
+                                        include: {
+                                                user: {
+                                                        select: {
+                                                                nama: true,
+                                                                aksesLevel: true,
+                                                        },
+                                                },
+                                        },
+                                },
+                        },
+                });
 
-    if (!updateCuti) return INVALID_ID_SERVICE_RESPONSE;
+                if (!updateCuti) return INVALID_ID_SERVICE_RESPONSE;
 
-    // Create log entry
-    await prisma.log.create({
-      data: {
-        ulid: ulid(),
-        flagMenu: "CUTI_SEMENTARA",
-        deskripsi: `Verifikasi cuti ID ${id}: ${data.action} oleh ${user.nama} (${aksesLevel.name})`,
-        aksesLevelId: user.aksesLevelId,
-        userId: user.id,
-      },
-    });
+                // Create log entry
+                await prisma.log.create({
+                        data: {
+                                ulid: ulid(),
+                                flagMenu: "CUTI_SEMENTARA",
+                                deskripsi: `Verifikasi cuti ID ${id}: ${data.action} oleh ${user.nama} (${aksesLevel.name})`,
+                                aksesLevelId: user.aksesLevelId,
+                                userId: user.id,
+                        },
+                });
 
-    return {
-      status: true,
-      data: updateCuti,
-    };
-  } catch (error) {
-    Logger.error(`CutiSementaraService.verificationStatus : ${error}`);
-    return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
-  }
+                return {
+                        status: true,
+                        data: updateCuti,
+                };
+        } catch (error) {
+                Logger.error(`CutiSementaraService.verificationStatus : ${error}`);
+                return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
+        }
 }
 
 export type UpdateResponse = CutiSementara | {};
-export async function update(
-  id: string,
-  data: Partial<CutiSementaraDTO>,
-  user: UserJWTDAO
-): Promise<ServiceResponse<UpdateResponse>> {
-  try {
-    let cutiSementara = await prisma.cutiSementara.findUnique({
-      where: {
-        ulid: id,
-      },
-    });
+export async function update(id: string, data: Partial<CutiSementaraDTO>, user: UserJWTDAO): Promise<ServiceResponse<UpdateResponse>> {
+        try {
+                let cutiSementara = await prisma.cutiSementara.findUnique({
+                        where: {
+                                ulid: id,
+                        },
+                });
 
-    if (!cutiSementara) return INVALID_ID_SERVICE_RESPONSE;
+                if (!cutiSementara) return INVALID_ID_SERVICE_RESPONSE;
 
-    // Check if user is authorized to update (only the student who created it)
-    if (cutiSementara.userId !== user.id) {
-      return BadRequestWithMessage(
-        "Anda tidak berwenang untuk mengubah pengajuan cuti ini!"
-      );
-    }
+                // Check if user is authorized to update (only the student who created it)
+                if (cutiSementara.userId !== user.id) {
+                        return BadRequestWithMessage("Anda tidak berwenang untuk mengubah pengajuan cuti ini!");
+                }
 
-    // Check if the cuti can be updated (only if it's rejected or still in process by student)
-    const currentStatus = cutiSementara.verifikasiStatus;
-    const canUpdate =
-      currentStatus === VERIFICATION_STATUS.DITOLAK_OLEH_OPERATOR ||
-      currentStatus === VERIFICATION_STATUS.DITOLAK_OLEH_KASUBBAG ||
-      currentStatus === VERIFICATION_STATUS.DIPROSES_OLEH_OPERATOR;
+                // Check if the cuti can be updated (only if it's rejected or still in process by student)
+                const currentStatus = cutiSementara.verifikasiStatus;
+                const canUpdate =
+                        currentStatus === VERIFICATION_STATUS.DITOLAK_OLEH_OPERATOR ||
+                        currentStatus === VERIFICATION_STATUS.DITOLAK_OLEH_KASUBBAG ||
+                        currentStatus === VERIFICATION_STATUS.DIPROSES_OLEH_OPERATOR;
 
-    if (!canUpdate) {
-      return BadRequestWithMessage(
-        "Pengajuan cuti tidak dapat diubah pada status ini!"
-      );
-    }
+                if (!canUpdate) {
+                        return BadRequestWithMessage("Pengajuan cuti tidak dapat diubah pada status ini!");
+                }
 
-    // Reset status back to initial state when updating
-    const resetStatus = VERIFICATION_STATUS.DIPROSES_OLEH_OPERATOR;
+                // Reset status back to initial state when updating
+                const resetStatus = VERIFICATION_STATUS.DIPROSES_OLEH_OPERATOR;
 
-    cutiSementara = await prisma.cutiSementara.update({
-      where: {
-        ulid: id,
-      },
-      data: {
-        alasanPengajuan: data.alasanPengajuan,
-        suratBebasPustakaUrl: data.suratBebasPustakaUrl,
-        suratBssUrl: data.suratBssUrl,
-        suratIzinOrangTuaUrl: data.suratIzinOrangTuaUrl,
-        verifikasiStatus: resetStatus,
-        alasanPenolakan: null, // Clear rejection reason when updating
-        status: {
-          create: {
-            ulid: ulid(),
-            nama: resetStatus,
-            deskripsi: `Pengajuan cuti diperbarui oleh ${user.nama} - menunggu verifikasi ulang dari operator kemahasiswaan`,
-            userId: user.id,
-          },
-        },
-      },
-      include: {
-        status: {
-          orderBy: { createdAt: "asc" },
-          include: {
-            user: {
-              select: {
-                nama: true,
-                aksesLevel: true,
-              },
-            },
-          },
-        },
-      },
-    });
+                cutiSementara = await prisma.cutiSementara.update({
+                        where: {
+                                ulid: id,
+                        },
+                        data: {
+                                alasanPengajuan: data.alasanPengajuan,
+                                suratBebasPustakaUrl: data.suratBebasPustakaUrl,
+                                suratBssUrl: data.suratBssUrl,
+                                suratIzinOrangTuaUrl: data.suratIzinOrangTuaUrl,
+                                verifikasiStatus: resetStatus,
+                                alasanPenolakan: cutiSementara.alasanPenolakan ,
+                                status: {
+                                        create: {
+                                                ulid: ulid(),
+                                                nama: resetStatus,
+                                                deskripsi: `Pengajuan cuti diperbarui oleh ${user.nama} - menunggu verifikasi ulang dari operator kemahasiswaan`,
+                                                userId: user.id,
+                                        },
+                                },
+                        },
+                        include: {
+                                status: {
+                                        orderBy: { createdAt: "asc" },
+                                        include: {
+                                                user: {
+                                                        select: {
+                                                                nama: true,
+                                                                aksesLevel: true,
+                                                        },
+                                                },
+                                        },
+                                },
+                        },
+                });
 
-    // Create log entry for update
-    await prisma.log.create({
-      data: {
-        ulid: ulid(),
-        flagMenu: "CUTI_SEMENTARA",
-        deskripsi: `Pengajuan cuti dengan ID ${id} diperbarui oleh ${user.nama} - status direset ke awal proses verifikasi`,
-        aksesLevelId: user.aksesLevelId,
-        userId: user.id,
-      },
-    });
+                // Create log entry for update
+                await prisma.log.create({
+                        data: {
+                                ulid: ulid(),
+                                flagMenu: "CUTI_SEMENTARA",
+                                deskripsi: `Pengajuan cuti dengan ID ${id} diperbarui oleh ${user.nama} - status direset ke awal proses verifikasi`,
+                                aksesLevelId: user.aksesLevelId,
+                                userId: user.id,
+                        },
+                });
 
-    return {
-      status: true,
-      data: cutiSementara,
-    };
-  } catch (err) {
-    Logger.error(`CutiSementaraService.update : ${err}`);
-    return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
-  }
+                return {
+                        status: true,
+                        data: cutiSementara,
+                };
+        } catch (err) {
+                Logger.error(`CutiSementaraService.update : ${err}`);
+                return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
+        }
 }
