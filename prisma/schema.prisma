@@ -50,7 +50,7 @@ model User {
   pengajuanYudisium     PengajuanYudisium[]
   legalisirIjazah       LegalisirIjazah[]
   suratKeteranganLulus  SuratKeteranganLulus[]
-  rekomendasiMahasiswa  RekomendasiMahasiswa[]
+  rekomendasiBeasiswa   RekomendasiBeasiswa[]
   status                Status[]
   log                   Log[]
 }
@@ -348,7 +348,7 @@ enum TipeRekomendasi {
   LAINNYA
 }
 
-model RekomendasiMahasiswa {
+model RekomendasiBeasiswa {
   id               Int             @id @default(autoincrement())
   ulid             String          @unique
   tipeRekomendasi  TipeRekomendasi
@@ -379,7 +379,7 @@ model Status {
   pengajuanYudisium     PengajuanYudisium[]
   legalisirIjazah       LegalisirIjazah[]
   suratKeteranganLulus  SuratKeteranganLulus[]
-  rekomendasiMahasiswa  RekomendasiMahasiswa[]
+  rekomendasiBeasiswa   RekomendasiBeasiswa[]
 }
 
 model Log {
