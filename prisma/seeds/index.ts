@@ -9,7 +9,7 @@ import { seedMenu } from "./seedMenu";
 import { seedPengajuanYudisium } from "./seedPengajuanYudisium";
 import { seedLegalisirIjazah } from "./seedLegalisirIjazah";
 import { seedSuratKeteranganLulus } from "./seedSuratKeteranganLulus";
-import { seedRekomendasiMahasiswa } from "./seedRekomendasiMahasiswa";
+import { seedRekomendasiBeasiswa } from "./seedRekomendasiBeasiswa";
 
 async function seed() {
   await seedAksesLevel(prisma);
@@ -21,7 +21,7 @@ async function seed() {
   await seedPengajuanYudisium(prisma);
   await seedLegalisirIjazah(prisma);
   await seedSuratKeteranganLulus(prisma);
-  await seedRekomendasiMahasiswa(prisma);
+  await seedRekomendasiBeasiswa(prisma);
 }
 
 seed().then(() => {

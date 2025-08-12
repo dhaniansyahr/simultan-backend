@@ -1,10 +1,10 @@
 import { PrismaClient } from "@prisma/client";
 import { ulid } from "ulid";
 
-export async function seedRekomendasiMahasiswa(prisma: PrismaClient) {
-  const countRekomendasiMahasiswa = await prisma.rekomendasiMahasiswa.count();
+export async function seedRekomendasiBeasiswa(prisma: PrismaClient) {
+  const countRekomendasiBeasiswa = await prisma.rekomendasiBeasiswa.count();
 
-  if (countRekomendasiMahasiswa === 0) {
+  if (countRekomendasiBeasiswa === 0) {       
     const findMhs = await prisma.user.findFirst({
       where: {
         aksesLevel: {
@@ -18,8 +18,8 @@ export async function seedRekomendasiMahasiswa(prisma: PrismaClient) {
       return;
     }
 
-    // Create Rekomendasi Mahasiswa entry with initial status
-    await prisma.rekomendasiMahasiswa.create({
+    // Create Rekomendasi Beasiswa entry with initial status
+    await prisma.rekomendasiBeasiswa.create({
       data: {
         ulid: ulid(),
         tipeRekomendasi: "UNTUK_BEASISWA",

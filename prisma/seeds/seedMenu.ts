@@ -76,8 +76,8 @@ export async function seedMenu(prisma: PrismaClient) {
     },
     {
       parentMenu: PARENT_MENU.AKADEMIK,
-      title: "Rekomendasi Mahasiswa",
-      path: "/rekomendasi-mahasiswa",
+      title: "Rekomendasi Beasiswa",
+      path: "/rekomendasi-beasiswa",
       icon: "user-check",
       aksesLevel: [
         "ADMIN",

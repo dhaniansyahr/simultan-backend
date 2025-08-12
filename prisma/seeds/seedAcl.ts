@@ -14,7 +14,7 @@ export async function seedAcl(prisma: PrismaClient) {
                         actions: ["CREATE", "VIEW", "UPDATE", "EXPORT", "VERIFICATION", "NOMOR_SURAT"],
                 },
                 {
-                        feature: "REKOMENDASI_MAHASISWA",
+                        feature: "REKOMENDASI_BEASISWA",
                         actions: ["CREATE", "VIEW", "UPDATE", "EXPORT", "VERIFICATION"],
                 },
                 {
@@ -98,7 +98,7 @@ export async function seedAcl(prisma: PrismaClient) {
                                         actions: ["VIEW"],
                                 },
                                 {
-                                        feature: "REKOMENDASI_MAHASISWA",
+                                        feature: "REKOMENDASI_BEASISWA",
                                         actions: ["VIEW"],
                                 },
                                 {
@@ -160,7 +160,7 @@ export async function seedAcl(prisma: PrismaClient) {
                                         actions: ["VIEW", "VERIFICATION"],
                                 },
                                 {
-                                        feature: "REKOMENDASI_MAHASISWA",
+                                        feature: "REKOMENDASI_BEASISWA",
                                         actions: ["VIEW", "VERIFICATION"],
                                 },
                                 {
@@ -181,7 +181,7 @@ export async function seedAcl(prisma: PrismaClient) {
                                         actions: ["VIEW"],
                                 },
                                 {
-                                        feature: "REKOMENDASI_MAHASISWA",
+                                        feature: "REKOMENDASI_BEASISWA",
                                         actions: ["VIEW"],
                                 },
                                 {
@@ -214,7 +214,7 @@ export async function seedAcl(prisma: PrismaClient) {
                                         actions: ["VIEW", "VERIFICATION"],
                                 },
                                 {
-                                        feature: "REKOMENDASI_MAHASISWA",
+                                        feature: "REKOMENDASI_BEASISWA",
                                         actions: ["VIEW", "VERIFICATION"],
                                 },
                                 {
@@ -256,7 +256,7 @@ export async function seedAcl(prisma: PrismaClient) {
                                         actions: ["VIEW"],
                                 },
                                 {
-                                        feature: "REKOMENDASI_MAHASISWA",
+                                        feature: "REKOMENDASI_BEASISWA",
                                         actions: ["VIEW"],
                                 },
                                 {
@@ -289,7 +289,7 @@ export async function seedAcl(prisma: PrismaClient) {
                                         actions: ["VIEW"],
                                 },
                                 {
-                                        feature: "REKOMENDASI_MAHASISWA",
+                                        feature: "REKOMENDASI_BEASISWA",
                                         actions: ["VIEW"],
                                 },
                                 {
@@ -322,7 +322,7 @@ export async function seedAcl(prisma: PrismaClient) {
                                         actions: ["VIEW"],
                                 },
                                 {
-                                        feature: "REKOMENDASI_MAHASISWA",
+                                        feature: "REKOMENDASI_BEASISWA",
                                         actions: ["VIEW"],
                                 },
                                 {
@@ -355,7 +355,7 @@ export async function seedAcl(prisma: PrismaClient) {
                                         actions: ["VIEW"],
                                 },
                                 {
-                                        feature: "REKOMENDASI_MAHASISWA",
+                                        feature: "REKOMENDASI_BEASISWA",
                                         actions: ["VIEW"],
                                 },
                                 {
@@ -388,7 +388,7 @@ export async function seedAcl(prisma: PrismaClient) {
                                         actions: ["VIEW"],
                                 },
                                 {
-                                        feature: "REKOMENDASI_MAHASISWA",
+                                        feature: "REKOMENDASI_BEASISWA",
                                         actions: ["VIEW"],
                                 },
                                 {
@@ -421,7 +421,7 @@ export async function seedAcl(prisma: PrismaClient) {
                                         actions: ["CREATE", "UPDATE", "VIEW", "EXPORT"],
                                 },
                                 {
-                                        feature: "REKOMENDASI_MAHASISWA",
+                                        feature: "REKOMENDASI_BEASISWA",
                                         actions: ["CREATE", "UPDATE", "VIEW", "EXPORT"],
                                 },
                                 {

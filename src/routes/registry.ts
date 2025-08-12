@@ -1,18 +1,19 @@
 import UserRoutes from "./User";
 import SuratKeteranganKuliahRoutes from "./SuratKeteranganKuliah";
 import SuratKeteranganLulusRoutes from "./SuratKeteranganLulus";
-import RekomendasiMahasiswaRoutes from "./RekomendasiMahasiswa";
+import RekomendasiBeasiswaRoutes from "./RekomendasiBeasiswa";
 import AclRoutes from "./Acl";
 import CutiSementaraRoutes from "./CutiSementara";
 import PengajuanYudisiumRoutes from "./PengajuanYudisium";
 import LegalisirIjazahRoutes from "./LegalisirIjazah";
 import MenuRoutes from "./Menu";
 
+
 const RoutesRegistry = {
   UserRoutes,
   SuratKeteranganKuliahRoutes,
   SuratKeteranganLulusRoutes,
-  RekomendasiMahasiswaRoutes,
+  RekomendasiBeasiswaRoutes,
   AclRoutes,
   CutiSementaraRoutes,
   PengajuanYudisiumRoutes,

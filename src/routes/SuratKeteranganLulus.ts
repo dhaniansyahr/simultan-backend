@@ -66,4 +66,11 @@ SuratKeteranganLulusRoutes.patch(
   SuratKeteranganLulusController.updateNomorSurat
 );
 
+SuratKeteranganLulusRoutes.get(
+      "/:id/cetak-surat",
+            AuthMiddleware.checkJwt,
+            AuthMiddleware.checkAccess("SURAT_KETERANGAN_KULIAH", "EXPORT"),
+            SuratKeteranganLulusController.cetakSurat
+)
+
 export default SuratKeteranganLulusRoutes;

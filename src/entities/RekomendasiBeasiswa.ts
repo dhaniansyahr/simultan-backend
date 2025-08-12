@@ -1,17 +1,17 @@
 import { TipeRekomendasi } from "@prisma/client";
 
-export interface RekomendasiMahasiswaDTO {
+export interface RekomendasiBeasiswaDTO {
   tipeRekomendasi: TipeRekomendasi;
   deskripsi: string;
   institusiTujuan: string;
   dokumenPendukung?: string;
 }
 
-export interface VerifikasiRekomendasiMahasiswaDTO {
+export interface VerifikasiRekomendasiBeasiswaDTO {
   action: "DISETUJUI" | "DITOLAK";
   alasanPenolakan?: string;
 }
 
-export interface UpdateNomorSuratRekomendasiMahasiswaDTO {
+export interface UpdateNomorSuratRekomendasiBeasiswaDTO {
   nomorSurat: string;
 }

@@ -33,8 +33,8 @@ router.route(
   RoutesRegistry.SuratKeteranganLulusRoutes
 );
 router.route(
-  "/rekomendasi-mahasiswa",
-  RoutesRegistry.RekomendasiMahasiswaRoutes
+  "/rekomendasi-beasiswa",
+  RoutesRegistry.RekomendasiBeasiswaRoutes
 );
 router.route("/acl", RoutesRegistry.AclRoutes);
 router.route("/cuti-sementara", RoutesRegistry.CutiSementaraRoutes);

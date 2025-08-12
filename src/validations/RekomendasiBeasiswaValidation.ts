@@ -1,13 +1,14 @@
 import { Context, Next } from "hono";
 import { ErrorStructure, generateErrorStructure } from "./helper";
 import {
-  RekomendasiMahasiswaDTO,
-  VerifikasiRekomendasiMahasiswaDTO,
-  UpdateNomorSuratRekomendasiMahasiswaDTO,
-} from "$entities/RekomendasiMahasiswa";
+  RekomendasiBeasiswaDTO,
+  VerifikasiRekomendasiBeasiswaDTO,
+  UpdateNomorSuratRekomendasiBeasiswaDTO,
+} from "$entities/RekomendasiBeasiswa";
 
-export async function validateRekomendasiMahasiswaDTO(c: Context, next: Next) {
-  const data: RekomendasiMahasiswaDTO = await c.req.json();
+
+export async function validateRekomendasiBeasiswaDTO(c: Context, next: Next) {
+  const data: RekomendasiBeasiswaDTO = await c.req.json();
   const invalidFields: ErrorStructure[] = [];
 
   if (!data.tipeRekomendasi)
@@ -43,11 +44,11 @@ export async function validateRekomendasiMahasiswaDTO(c: Context, next: Next) {
   await next();
 }
 
-export async function validateVerifikasiRekomendasiMahasiswaDTO(
+export async function validateVerifikasiRekomendasiBeasiswaDTO(
   c: Context,
   next: Next
 ) {
-  const data: VerifikasiRekomendasiMahasiswaDTO = await c.req.json();
+  const data: VerifikasiRekomendasiBeasiswaDTO = await c.req.json();
   const invalidFields: ErrorStructure[] = [];
 
   if (!data.action)
@@ -97,7 +98,7 @@ export async function validateUpdateNomorSuratRekomendasiMahasiswaDTO(
   }
 
   try {
-    const data: UpdateNomorSuratRekomendasiMahasiswaDTO = await c.req.json();
+    const data: UpdateNomorSuratRekomendasiBeasiswaDTO = await c.req.json();
     const invalidFields: ErrorStructure[] = [];
 
     if (!data.nomorSurat) {

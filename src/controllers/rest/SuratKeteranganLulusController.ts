@@ -1,6 +1,6 @@
 import { Context, TypedResponse } from "hono";
 import * as SuratKeteranganLulusService from "$services/SuratKeteranganLulusService";
-import { handleServiceErrorWithResponse, response_created, response_success } from "$utils/response.utils";
+import { handleServiceErrorWithResponse, MIME_TYPE, response_buffer, response_created, response_success } from "$utils/response.utils";
 import { FilteringQueryV2 } from "$entities/Query";
 import { checkFilteringQueryV2 } from "$controllers/helpers/CheckFilteringQuery";
 import {
@@ -116,4 +116,17 @@ export async function updateNomorSurat(c: Context): Promise<TypedResponse> {
     }
 
     return response_success(c, serviceResponse.data, "Successfully updated nomor surat!");
+}
+
+// cetak surat
+export async function cetakSurat(c: Context): Promise<Response | TypedResponse> {
+        const id = c.req.param("id");
+        const user: UserJWTDAO = c.get("jwtPayload");
+
+        const serviceResponse = await SuratKeteranganLulusService.cetakSurat(id, user);
+        if (!serviceResponse.status) return handleServiceErrorWithResponse(c, serviceResponse);
+
+        const { buffer, fileName } = serviceResponse.data as any;
+
+        return response_buffer(c, fileName, MIME_TYPE.PDF, buffer);
 }

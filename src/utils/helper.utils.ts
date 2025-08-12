@@ -73,8 +73,31 @@ export function getNextVerificationStatus(
       VERIFICATION_STATUS.DISETUJUI,
     ],
 
+    // Academic workflow statuses
+    // Operator Akademik processes → approves
+    [
+      VERIFICATION_STATUS.DIPROSES_OPERATOR_AKADEMIK,
+      VERIFICATION_STATUS.DISETUJUI_OPERATOR_AKADEMIK,
+    ],
+
+    // Operator Akademik approves → goes to Kasubbag Akademik
+    [
+      VERIFICATION_STATUS.DISETUJUI_OPERATOR_AKADEMIK,
+      VERIFICATION_STATUS.DIPROSES_KASUBBAG_AKADEMIK,
+    ],
+
+    // Kasubbag Akademik processes → approves
+    [
+      VERIFICATION_STATUS.DIPROSES_KASUBBAG_AKADEMIK,
+      VERIFICATION_STATUS.DISETUJUI_KASUBBAG_AKADEMIK,
+    ],
+
     // Final states remain the same
     [VERIFICATION_STATUS.DISETUJUI, VERIFICATION_STATUS.DISETUJUI],
+    [
+      VERIFICATION_STATUS.DISETUJUI_KASUBBAG_AKADEMIK,
+      VERIFICATION_STATUS.DISETUJUI_KASUBBAG_AKADEMIK,
+    ],
   ]);
 
   return statusFlow.get(currentStatus) ?? currentStatus;
@@ -87,7 +110,8 @@ export async function flowCreatingStatusVerification(
   userId: number,
   aksesLevelId: number,
   cuti: boolean,
-  suratKeteranganLulus: boolean = false
+  suratKeteranganLulus: boolean = false,
+  rekomendasiBeasiswa: boolean = false
 ) {
   try {
     const nextStatus: string = getNextVerificationStatus(currentStatus, cuti);
@@ -112,6 +136,24 @@ export async function flowCreatingStatusVerification(
         statusDescription = `Pengajuan DISETUJUI oleh ${name} (Kasubbag Kemahasiswaan)`;
       } else {
         statusDescription = `Pengajuan DISETUJUI oleh ${name} (Kasubbag Kemahasiswaan)`;
+      }
+    } else if (nextStatus === VERIFICATION_STATUS.DISETUJUI_OPERATOR_AKADEMIK) {
+      if (rekomendasiBeasiswa) {
+        statusDescription = `Rekomendasi DISETUJUI oleh ${name} (Operator Akademik)`;
+      } else {
+        statusDescription = `Pengajuan DISETUJUI oleh ${name} (Operator Akademik)`;
+      }
+    } else if (nextStatus === VERIFICATION_STATUS.DIPROSES_KASUBBAG_AKADEMIK) {
+      if (rekomendasiBeasiswa) {
+        statusDescription = `Rekomendasi diteruskan ke Kasubbag Akademik setelah disetujui operator`;
+      } else {
+        statusDescription = `Pengajuan diteruskan ke Kasubbag Akademik setelah disetujui operator`;
+      }
+    } else if (nextStatus === VERIFICATION_STATUS.DISETUJUI_KASUBBAG_AKADEMIK) {
+      if (rekomendasiBeasiswa) {
+        statusDescription = `Rekomendasi DISETUJUI oleh ${name} (Kasubbag Akademik) - Proses Selesai`;
+      } else {
+        statusDescription = `Pengajuan DISETUJUI oleh ${name} (Kasubbag Akademik) - Proses Selesai`;
       }
     } else if (nextStatus === VERIFICATION_STATUS.SEDANG_INPUT_NOMOR_SURAT) {
       statusDescription = `Pengajuan disetujui Kasubbag - menunggu input nomor surat`;
@@ -224,6 +266,50 @@ export async function flowCreatingStatusVerification(
             ulid: ulid(),
             flagMenu: "SURAT_KETERANGAN_LULUS",
             deskripsi: `Surat Keterangan Lulus dengan ID ${id} DISETUJUI oleh ${name}`,
+            aksesLevelId: aksesLevelId,
+            userId: userId,
+          },
+        });
+      }
+    } else if (rekomendasiBeasiswa) {
+      await prisma.rekomendasiBeasiswa.update({
+        where: {
+          ulid: id,
+        },
+        data: {
+          verifikasiStatus: nextStatus,
+          status: {
+            create: [
+              {
+                ulid: ulid(),
+                nama: nextStatus,
+                deskripsi: statusDescription,
+                userId: userId,
+              },
+            ],
+          },
+        },
+      });
+
+      // Create log entry for approval statuses
+      if (nextStatus === VERIFICATION_STATUS.DISETUJUI_OPERATOR_AKADEMIK) {
+        await prisma.log.create({
+          data: {
+            ulid: ulid(),
+            flagMenu: "REKOMENDASI_MAHASISWA",
+            deskripsi: `Rekomendasi Mahasiswa dengan ID ${id} DISETUJUI_OPERATOR_AKADEMIK oleh ${name}`,
+            aksesLevelId: aksesLevelId,
+            userId: userId,
+          },
+        });
+      } else if (
+        nextStatus === VERIFICATION_STATUS.DISETUJUI_KASUBBAG_AKADEMIK
+      ) {
+        await prisma.log.create({
+          data: {
+            ulid: ulid(),
+            flagMenu: "REKOMENDASI_MAHASISWA",
+            deskripsi: `Rekomendasi Mahasiswa dengan ID ${id} DISETUJUI_KASUBBAG_AKADEMIK oleh ${name}`,
             aksesLevelId: aksesLevelId,
             userId: userId,
           },

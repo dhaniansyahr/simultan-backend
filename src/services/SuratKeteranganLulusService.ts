@@ -21,6 +21,9 @@ import {
   VerifikasiSuratKeteranganLulusDTO,
   UpdateNomorSuratSuratKeteranganLulusDTO,
 } from "$entities/SuratKeteranganLulus";
+import { buildBufferPDF } from "$utils/buffer.utils";
+import { DateTime } from "luxon";
+import { getCurrentAcademicInfo } from "$utils/strings.utils";
 // import { SuratKeteranganLulus } from "@prisma/client";
 
 export type CreateResponse = SuratKeteranganLulusDTO | {};
@@ -869,3 +872,72 @@ export async function updateNomorSurat(
     return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
   }
 }
+
+// cetak surat keterangan lulus
+
+export async function cetakSurat(
+    id: string,
+    user: UserJWTDAO
+): Promise<ServiceResponse<any>> {
+    try {
+        const suratKeteranganLulus = await prisma.suratKeteranganLulus.findUnique({
+            where: {
+                ulid: id,
+                verifikasiStatus: VERIFICATION_STATUS.DISETUJUI,
+            },
+            include: {
+                user: {
+                    select: {
+                        nama: true,
+                        npm: true,
+                    },
+                },
+                status: true,
+            },
+        });
+
+        if (!suratKeteranganLulus) {
+            return BadRequestWithMessage("Surat tidak ditemukan atau belum disetujui!");
+        }
+
+        const pdfData = {
+            title: "SURAT KETERANGAN LULUS",
+            data: {
+                ...suratKeteranganLulus,
+                nama: suratKeteranganLulus.user.nama,
+                npm: suratKeteranganLulus.user.npm,
+                tipeSurat: suratKeteranganLulus.tipeSurat,
+                deskripsi: suratKeteranganLulus.deskripsi,
+                nomorSurat: suratKeteranganLulus.nomorSurat,
+            },
+            date: DateTime.now().toFormat("dd MMMM yyyy"),
+            ...getCurrentAcademicInfo(),
+        };
+
+        const buffer = await buildBufferPDF("surat-keterangan-lulus", pdfData);
+        const fileName = `Surat-Keterangan-Lulus-${suratKeteranganLulus.user.npm}`;
+
+        // Create log entry for printing
+        await prisma.log.create({
+            data: {
+                ulid: ulid(),
+                flagMenu: "SURAT_KETERANGAN_LULUS",
+                deskripsi: `Surat dengan ID ${id} dicetak oleh ${user.nama}`,
+                aksesLevelId: user.aksesLevelId,
+                userId: user.id,
+            },
+        });
+
+        return {
+            status: true,
+            data: {
+                buffer,
+                fileName,
+            },
+        };
+    } catch (err) {
+        Logger.error(`SuratKeteranganLulusService.cetakSurat : ${err}`);
+        return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
+    }
+}
+
