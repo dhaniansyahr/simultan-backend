@@ -15,7 +15,7 @@ export async function seedAcl(prisma: PrismaClient) {
                 },
                 {
                         feature: "REKOMENDASI_BEASISWA",
-                        actions: ["CREATE", "VIEW", "UPDATE", "EXPORT", "VERIFICATION"],
+                        actions: ["CREATE", "VIEW", "UPDATE", "EXPORT", "VERIFICATION", "NOMOR_SURAT"],
                 },
                 {
                         feature: "SURAT_KETERANGAN_LULUS",

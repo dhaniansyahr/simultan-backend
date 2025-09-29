@@ -14,6 +14,7 @@ import { VERIFICATION_STATUS } from "$utils/helper.utils";
 import { flowCreatingStatusVeificationAkademik } from "./helpers/LogStatus";
 import {
   RekomendasiBeasiswaDTO,
+  UpdateNomorSuratRekomendasiBeasiswaDTO,
   VerifikasiRekomendasiBeasiswaDTO,
 } from "$entities/RekomendasiBeasiswa";
 
@@ -374,6 +375,7 @@ export async function verificationStatus(
           false,
           true
         );
+        // Setelah DISETUJUI_KASUBBAG_AKADEMIK, lanjut ke SEDANG_INPUT_NOMOR_SURAT (input nomor surat oleh operator akademik)
         await flowCreatingStatusVeificationAkademik(
           VERIFICATION_STATUS.DISETUJUI_KASUBBAG_AKADEMIK,
           id,
@@ -382,6 +384,20 @@ export async function verificationStatus(
           false,
           true
         );
+        await prisma.rekomendasiBeasiswa.update({
+          where: { ulid: id },
+          data: {
+            verifikasiStatus: VERIFICATION_STATUS.SEDANG_INPUT_NOMOR_SURAT,
+            status: {
+              create: {
+                ulid: ulid(),
+                nama: VERIFICATION_STATUS.SEDANG_INPUT_NOMOR_SURAT,
+                deskripsi: `Menunggu input nomor surat oleh operator akademik`,
+                userId: user.id,
+              },
+            },
+          },
+        });
       }
     } else {
       // Handle rejection
@@ -457,3 +473,254 @@ export async function verificationStatus(
     return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
   }
 }
+
+export async function letterProcess(id: string, user: UserJWTDAO, data: LetterProcessDTO): Promise<ServiceResponse<{}>> {
+  try {
+    const rekomendasi = await prisma.rekomendasiBeasiswa.findUnique({
+      where: { ulid: id },
+      include: {
+        user: {
+          select: { nama: true, npm: true },
+        },
+        status: true,
+      },
+    });
+
+    if (!rekomendasi) return INVALID_ID_SERVICE_RESPONSE;
+
+    // Get current verification status
+    const currentStatus = rekomendasi.verifikasiStatus;
+
+    // Check if the letter is already processed
+    if (currentStatus === VERIFICATION_STATUS.DISETUJUI) {
+      return BadRequestWithMessage("Surat sudah diproses!");
+    } else if (
+      currentStatus === VERIFICATION_STATUS.DITOLAK ||
+      currentStatus === VERIFICATION_STATUS.DITOLAK_OLEH_OPERATOR ||
+      currentStatus === VERIFICATION_STATUS.DITOLAK_OLEH_KASUBBAG
+    ) {
+      return BadRequestWithMessage("Surat ditolak, Mohon periksa alasan penolakan dan ajukan surat baru!");
+    }
+
+    if (currentStatus !== VERIFICATION_STATUS.SEDANG_INPUT_NOMOR_SURAT) {
+      return BadRequestWithMessage("Nomor surat hanya dapat ditambahkan ketika status SEDANG INPUT NOMOR SURAT!");
+    }
+
+    // Get the next status (you may want to implement getNextVerificationStatus for rekomendasi)
+    const nextStatus = VERIFICATION_STATUS.DISETUJUI;
+
+    // Update the letter with new status
+    const updatedRekomendasi = await prisma.rekomendasiBeasiswa.update({
+      where: { ulid: id },
+      data: {
+        verifikasiStatus: nextStatus,
+        nomorSurat: data.nomorSurat,
+        status: {
+          create: {
+            ulid: ulid(),
+            nama: nextStatus,
+            deskripsi: `Surat rekomendasi beasiswa diproses oleh ${user.nama}`,
+            userId: user.id,
+          },
+        },
+      },
+      include: { status: true },
+    });
+
+    // Create log entry
+    await prisma.log.create({
+      data: {
+        ulid: ulid(),
+        flagMenu: "REKOMENDASI_MAHASISWA",
+        deskripsi: `Surat rekomendasi beasiswa diproses oleh ${user.nama}`,
+        aksesLevelId: user.aksesLevelId,
+        userId: user.id,
+      },
+    });
+
+    // Additional log entry for final DISETUJUI status
+    if (nextStatus === VERIFICATION_STATUS.DISETUJUI) {
+      await prisma.log.create({
+        data: {
+          ulid: ulid(),
+          flagMenu: "REKOMENDASI_MAHASISWA",
+          deskripsi: `Surat rekomendasi beasiswa dengan ID ${id} DISETUJUI setelah input nomor surat oleh ${user.nama}`,
+          aksesLevelId: user.aksesLevelId,
+          userId: user.id,
+        },
+      });
+    }
+
+    return {
+      status: true,
+      data: updatedRekomendasi,
+    };
+  } catch (error) {
+    Logger.error(`RekomendasiBeasiswaService.letterProcess : ${error}`);
+    return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
+  }
+}
+
+export async function updateNomorSurat(id: string, user: UserJWTDAO, data: UpdateNomorSuratRekomendasiBeasiswaDTO): Promise<ServiceResponse<{}>> {
+  try {
+    const rekomendasi = await prisma.rekomendasiBeasiswa.findUnique({
+      where: { ulid: id },
+      include: {
+        user: {
+          select: { nama: true, npm: true },
+        },
+        status: true,
+      },
+    });
+
+    if (!rekomendasi) return INVALID_ID_SERVICE_RESPONSE;
+
+    // Get user's access level
+    const aksesLevel = await prisma.aksesLevel.findUnique({
+      where: { id: user.aksesLevelId },
+    });
+
+    if (!aksesLevel) return BadRequestWithMessage("Akses level tidak ditemukan!");
+
+    // Check authorization based on current status and user role for nomor surat update
+    const currentStatus = rekomendasi.verifikasiStatus;
+    let isAuthorized = false;
+
+    // Only allow update if status is DISETUJUI and by certain roles (adjust as needed)
+    if (currentStatus === VERIFICATION_STATUS.DISETUJUI) {
+      if (
+        aksesLevel.name === "OPERATOR_AKADEMIK" ||
+        aksesLevel.name === "KASUBBAG_AKADEMIK"
+      ) {
+        isAuthorized = true;
+      }
+    }
+
+    if (!isAuthorized) {
+      return BadRequestWithMessage("Anda tidak berwenang untuk mengubah nomor surat pada tahap ini! Hanya Operator Akademik dan Kasubbag Akademik yang dapat mengubah nomor surat.");
+    }
+
+    // Check if surat already has nomor surat
+    const oldNomorSurat = rekomendasi.nomorSurat;
+
+    // Update the letter with new nomor surat
+    const updatedRekomendasi = await prisma.rekomendasiBeasiswa.update({
+      where: { ulid: id },
+      data: {
+        nomorSurat: data.nomorSurat.trim(),
+        status: {
+          create: {
+            ulid: ulid(),
+            nama: currentStatus,
+            deskripsi: oldNomorSurat
+              ? `Nomor surat diubah oleh ${user.nama} (${aksesLevel.name}) dari "${oldNomorSurat}" menjadi "${data.nomorSurat.trim()}"`
+              : `Nomor surat ditambahkan oleh ${user.nama} (${aksesLevel.name}): "${data.nomorSurat.trim()}"`,
+            userId: user.id,
+          },
+        },
+      },
+      include: {
+        status: {
+          orderBy: { createdAt: "asc" },
+          include: {
+            user: {
+              select: {
+                nama: true,
+                aksesLevel: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Create log entry
+    await prisma.log.create({
+      data: {
+        ulid: ulid(),
+        flagMenu: "REKOMENDASI_MAHASISWA",
+        deskripsi: oldNomorSurat
+          ? `Nomor surat rekomendasi beasiswa dengan ID ${id} diubah oleh ${user.nama} (${aksesLevel.name}) dari "${oldNomorSurat}" menjadi "${data.nomorSurat.trim()}"`
+          : `Nomor surat rekomendasi beasiswa dengan ID ${id} ditambahkan oleh ${user.nama} (${aksesLevel.name}): "${data.nomorSurat.trim()}"`,
+        aksesLevelId: user.aksesLevelId,
+        userId: user.id,
+      },
+    });
+
+    return {
+      status: true,
+      data: updatedRekomendasi,
+    };
+  } catch (error) {
+    Logger.error(`RekomendasiBeasiswaService.updateNomorSurat : ${error}`);
+    return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
+  }
+}
+
+
+import { DateTime } from "luxon";
+import { getCurrentAcademicInfo } from "$utils/strings.utils";
+import { buildBufferPDF } from "$utils/buffer.utils";
+import { LetterProcessDTO } from "$entities/SuratKeteranganKuliah";
+
+export async function cetakSurat(id: string, user: UserJWTDAO): Promise<ServiceResponse<any>> {
+  try {
+    const rekomendasiBeasiswa = await prisma.rekomendasiBeasiswa.findUnique({
+      where: { ulid: id },
+      include: {
+        user: true,
+        status: true,
+      },
+    });
+
+    if (!rekomendasiBeasiswa) {
+      return BadRequestWithMessage("Surat tidak ditemukan atau belum disetujui!");
+    }
+
+    if (rekomendasiBeasiswa.verifikasiStatus !== VERIFICATION_STATUS.DISETUJUI) {
+      return BadRequestWithMessage("Tidak dapat mendownload surat rekomendasi jika pengajuan masih di proses!");
+    }
+
+    // Compose pdfData for surat rekomendasi beasiswa
+    let pdfData = {
+      title: "SURAT REKOMENDASI BEASISWA",
+      data: {
+        nama: rekomendasiBeasiswa.user.nama,
+        npm: rekomendasiBeasiswa.user.npm,
+        semester: rekomendasiBeasiswa.user.semester || "-",
+        tipeSurat: rekomendasiBeasiswa.tipeRekomendasi || "Rekomendasi Beasiswa",
+        nomorSurat: rekomendasiBeasiswa.nomorSurat || "-",
+        deskripsi: rekomendasiBeasiswa.deskripsi || "",
+        institusiTujuan: rekomendasiBeasiswa.institusiTujuan || "-",
+      },
+      date: DateTime.now().toFormat("dd MMMM yyyy"),
+      ...getCurrentAcademicInfo(),
+    };
+
+    const buffer = await buildBufferPDF("surat-rekom-beasiswa", pdfData);
+    const fileName = `Surat-Rekomendasi-Beasiswa-${rekomendasiBeasiswa.user.npm}`;
+
+    // Create log entry for printing
+    await prisma.log.create({
+      data: {
+        ulid: ulid(),
+        flagMenu: "REKOMENDASI_MAHASISWA",
+        deskripsi: `Surat rekomendasi beasiswa dengan ID ${id} dicetak oleh ${user.nama}`,
+        aksesLevelId: user.aksesLevelId,
+        userId: user.id,
+      },
+    });
+
+    return {
+      status: true,
+      data: {
+        buffer,
+        fileName,
+      },
+    };
+  } catch (err) {
+    Logger.error(`RekomendasiBeasiswaService.cetakSurat : ${err}`);
+    return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
+  }
+}
+

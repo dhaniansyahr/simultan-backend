@@ -15,3 +15,10 @@ export interface VerifikasiRekomendasiBeasiswaDTO {
 export interface UpdateNomorSuratRekomendasiBeasiswaDTO {
   nomorSurat: string;
 }
+
+export interface LetterProcessDTO {
+        nomorSurat: string;
+}
+
+
+

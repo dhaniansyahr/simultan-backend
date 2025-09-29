@@ -92,12 +92,14 @@ export function getNextVerificationStatus(
       VERIFICATION_STATUS.DISETUJUI_KASUBBAG_AKADEMIK,
     ],
 
-    // Final states remain the same
-    [VERIFICATION_STATUS.DISETUJUI, VERIFICATION_STATUS.DISETUJUI],
+    // Rekomendasi Beasiswa: Setelah DISETUJUI_KASUBBAG_AKADEMIK → SEDANG_INPUT_NOMOR_SURAT (input nomor surat by operator akademik)
     [
       VERIFICATION_STATUS.DISETUJUI_KASUBBAG_AKADEMIK,
-      VERIFICATION_STATUS.DISETUJUI_KASUBBAG_AKADEMIK,
+      VERIFICATION_STATUS.SEDANG_INPUT_NOMOR_SURAT,
     ],
+
+    // Final states remain the same
+    [VERIFICATION_STATUS.DISETUJUI, VERIFICATION_STATUS.DISETUJUI],
   ]);
 
   return statusFlow.get(currentStatus) ?? currentStatus;
