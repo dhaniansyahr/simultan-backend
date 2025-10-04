@@ -160,6 +160,138 @@ export async function getAll(
   }
 }
 
+export type GetAllHistoryRekomendasiBeasiswaResponse =
+  | PagedList<RekomendasiBeasiswaDTO[]>
+  | {};
+
+export async function getAllHistory(
+  filters: FilteringQueryV2,
+  user: UserJWTDAO
+): Promise<ServiceResponse<GetAllHistoryRekomendasiBeasiswaResponse>> {
+  try {
+    const usedFilters = buildFilterQueryLimitOffsetV2(filters);
+
+    const aksesLevel = await prisma.aksesLevel.findUnique({
+      where: {
+        id: user.aksesLevelId,
+      },
+    });
+
+    if (!aksesLevel)
+      return BadRequestWithMessage("Akses Level tidak ditemukan!");
+
+    // Only KASUBBAG_AKADEMIK and OPERATOR_AKADEMIK can access history
+    if (
+      aksesLevel.name !== "KASUBBAG_AKADEMIK" &&
+      aksesLevel.name !== "OPERATOR_AKADEMIK"
+    ) {
+      return BadRequestWithMessage(
+        "Anda tidak memiliki akses untuk melihat history rekomendasi beasiswa!"
+      );
+    }
+
+    // Include all related data for comprehensive history
+    usedFilters.include = {
+      user: {
+        select: {
+          nama: true,
+          npm: true,
+        },
+      },
+      status: {
+        orderBy: { createdAt: "asc" },
+        include: {
+          user: {
+            select: {
+              nama: true,
+              aksesLevel: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+
+    // Order by creation date (newest first for history view)
+    usedFilters.orderBy = {
+      createdAt: "desc",
+    };
+
+    // Get all rekomendasi records
+    const [rekomendasiList, totalData] = await Promise.all([
+      prisma.rekomendasiBeasiswa.findMany(usedFilters),
+      prisma.rekomendasiBeasiswa.count({
+        where: usedFilters.where,
+      }),
+    ]);
+
+    let totalPage = 1;
+    if (totalData > usedFilters.take)
+      totalPage = Math.ceil(totalData / usedFilters.take);
+
+    // Add additional metadata for each letter in history
+    const historyWithMetadata = rekomendasiList.map((rekom) => {
+      const rekomWithStatus = rekom as typeof rekom & { status: any[] };
+      return {
+        ...rekom,
+        statusCount: rekomWithStatus.status.length,
+        latestStatus: rekomWithStatus.status[rekomWithStatus.status.length - 1],
+        isActive: ![
+          VERIFICATION_STATUS.DISETUJUI,
+          VERIFICATION_STATUS.DITOLAK,
+          VERIFICATION_STATUS.DITOLAK_OLEH_OPERATOR,
+          VERIFICATION_STATUS.DITOLAK_OLEH_KASUBBAG,
+        ].includes(rekom.verifikasiStatus as any),
+        canBeUpdated: [
+          VERIFICATION_STATUS.DITOLAK,
+          VERIFICATION_STATUS.DITOLAK_OLEH_OPERATOR,
+          VERIFICATION_STATUS.DITOLAK_OLEH_KASUBBAG,
+          VERIFICATION_STATUS.DIPROSES_OPERATOR_AKADEMIK,
+        ].includes(rekom.verifikasiStatus as any),
+      };
+    });
+
+    // Create log entry for history access
+    await prisma.log.create({
+      data: {
+        ulid: ulid(),
+        flagMenu: "REKOMENDASI_MAHASISWA",
+        deskripsi: `History pengajuan rekomendasi beasiswa diakses oleh ${user.nama} (${aksesLevel.name})`,
+        aksesLevelId: user.aksesLevelId,
+        userId: user.id,
+      },
+    });
+
+    return {
+      status: true,
+      data: {
+        entries: historyWithMetadata,
+        totalData,
+        totalPage,
+        summary: {
+          totalPengajuan: totalData,
+          disetujui: historyWithMetadata.filter(
+            (s) => s.verifikasiStatus === VERIFICATION_STATUS.DISETUJUI
+          ).length,
+          ditolak: historyWithMetadata.filter(
+            (s) =>
+              s.verifikasiStatus === VERIFICATION_STATUS.DITOLAK ||
+              s.verifikasiStatus === VERIFICATION_STATUS.DITOLAK_OLEH_OPERATOR ||
+              s.verifikasiStatus === VERIFICATION_STATUS.DITOLAK_OLEH_KASUBBAG
+          ).length,
+          sedangDiproses: historyWithMetadata.filter((s) => s.isActive).length,
+        },
+      },
+    };
+  } catch (err) {
+    Logger.error(`RekomendasiBeasiswaService.getAllHistory : ${err}`);
+    return INTERNAL_SERVER_ERROR_SERVICE_RESPONSE;
+  }
+}
+
 export type GetByIdResponse = RekomendasiBeasiswaDTO | {};
 export async function getById(
   id: string,
@@ -387,11 +519,11 @@ export async function verificationStatus(
         await prisma.rekomendasiBeasiswa.update({
           where: { ulid: id },
           data: {
-            verifikasiStatus: VERIFICATION_STATUS.SEDANG_INPUT_NOMOR_SURAT,
+            verifikasiStatus: VERIFICATION_STATUS.SEDANG_INPUT_NOMOR_SURATT,
             status: {
               create: {
                 ulid: ulid(),
-                nama: VERIFICATION_STATUS.SEDANG_INPUT_NOMOR_SURAT,
+                nama: VERIFICATION_STATUS.SEDANG_INPUT_NOMOR_SURATT,
                 deskripsi: `Menunggu input nomor surat oleh operator akademik`,
                 userId: user.id,
               },
@@ -502,7 +634,7 @@ export async function letterProcess(id: string, user: UserJWTDAO, data: LetterPr
       return BadRequestWithMessage("Surat ditolak, Mohon periksa alasan penolakan dan ajukan surat baru!");
     }
 
-    if (currentStatus !== VERIFICATION_STATUS.SEDANG_INPUT_NOMOR_SURAT) {
+    if (currentStatus !== VERIFICATION_STATUS.SEDANG_INPUT_NOMOR_SURATT) {
       return BadRequestWithMessage("Nomor surat hanya dapat ditambahkan ketika status SEDANG INPUT NOMOR SURAT!");
     }
 

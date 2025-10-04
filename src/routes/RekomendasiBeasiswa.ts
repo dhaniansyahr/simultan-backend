@@ -13,6 +13,13 @@ RekomendasiBeasiswaRoutes.get(
 );
 
 RekomendasiBeasiswaRoutes.get(
+  "/history",
+  AuthMiddleware.checkJwt,
+  AuthMiddleware.checkAccess("REKOMENDASI_BEASISWA", "VIEW"),
+  RekomendasiBeasiswaController.getAllHistory
+);
+
+RekomendasiBeasiswaRoutes.get(
   "/:id/cetak-surat",
   AuthMiddleware.checkJwt,
   AuthMiddleware.checkAccess("REKOMENDASI_BEASISWA", "EXPORT"),
@@ -53,7 +60,7 @@ RekomendasiBeasiswaRoutes.put(
 RekomendasiBeasiswaRoutes.put(
   "/:id/input-nomor-surat",
   AuthMiddleware.checkJwt,
-  AuthMiddleware.checkAccess("REKOMENDASI_BEASISWA", "VERIFICATION"),
+  AuthMiddleware.checkAccess("REKOMENDASI_BEASISWA", "VERIFICATION", "NOMOR_SURAT"),
   RekomendasiBeasiswaValidation.validateUpdateNomorSuratRekomendasiMahasiswaDTO,
   RekomendasiBeasiswaController.processLetter
 );

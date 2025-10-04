@@ -23,6 +23,19 @@ export async function getAll(c: Context): Promise<TypedResponse> {
   return response_success(c, serviceResponse.data, "Successfully fetched all RekomendasiBeasiswa!");
 }
 
+export async function getAllHistory(c: Context): Promise<TypedResponse> {
+  const filters: FilteringQueryV2 = checkFilteringQueryV2(c);
+  const user: UserJWTDAO = c.get("jwtPayload");
+
+  const serviceResponse = await RekomendasiBeasiswaService.getAllHistory(filters, user);
+
+  if (!serviceResponse.status) {
+    return handleServiceErrorWithResponse(c, serviceResponse);
+  }
+
+  return response_success(c, serviceResponse.data, "Successfully fetched all RekomendasiBeasiswa history!");
+}
+
 export async function create(c: Context): Promise<TypedResponse> {
   const data: RekomendasiBeasiswaDTO = await c.req.json();
   const user: UserJWTDAO = c.get("jwtPayload");

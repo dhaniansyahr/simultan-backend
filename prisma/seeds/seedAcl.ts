@@ -161,7 +161,7 @@ export async function seedAcl(prisma: PrismaClient) {
                                 },
                                 {
                                         feature: "REKOMENDASI_BEASISWA",
-                                        actions: ["VIEW", "VERIFICATION"],
+                                        actions: ["VIEW", "VERIFICATION", "NOMOR_SURAT"],
                                 },
                                 {
                                         feature: "LEGALISIR_IJAZAH",
@@ -215,7 +215,7 @@ export async function seedAcl(prisma: PrismaClient) {
                                 },
                                 {
                                         feature: "REKOMENDASI_BEASISWA",
-                                        actions: ["VIEW", "VERIFICATION"],
+                                        actions: ["VIEW", "VERIFICATION", "NOMOR_SURAT"],
                                 },
                                 {
                                         feature: "LEGALISIR_IJAZAH",
