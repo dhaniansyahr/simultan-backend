@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE `SuratKeteranganKuliah` MODIFY `status` ENUM('MENUNGGU', 'DISETUJUI', 'DITOLAK') NOT NULL DEFAULT 'MENUNGGU';

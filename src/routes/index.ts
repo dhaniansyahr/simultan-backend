@@ -9,14 +9,33 @@ import * as ExampleBufferController from "$controllers/rest/ExampleBufferControl
 const router = new Hono();
 
 router.post("/login", AuthValidation.validateLoginDTO, AuthController.login);
-router.post("/register", AuthValidation.validateRegisterDTO, AuthController.register);
+router.post(
+  "/register",
+  AuthValidation.validateRegisterDTO,
+  AuthController.register
+);
 router.post("/verify-token", AuthController.verifyToken);
-router.put("/update-password", AuthMiddleware.checkJwt, AuthController.changePassword);
+router.put(
+  "/update-password",
+  AuthMiddleware.checkJwt,
+  AuthController.changePassword
+);
 router.get("/example/buffer/pdf", ExampleBufferController.getPDF);
 router.route("/users", RoutesRegistry.UserRoutes);
 
 // Surat Keterangan Kuliah
-router.route("/surat-keterangan-kuliah", RoutesRegistry.SuratKeteranganKuliahRoutes);
+router.route(
+  "/surat-keterangan-kuliah",
+  RoutesRegistry.SuratKeteranganKuliahRoutes
+);
+router.route(
+  "/surat-keterangan-lulus",
+  RoutesRegistry.SuratKeteranganLulusRoutes
+);
+router.route(
+  "/rekomendasi-beasiswa",
+  RoutesRegistry.RekomendasiBeasiswaRoutes
+);
 router.route("/acl", RoutesRegistry.AclRoutes);
 router.route("/cuti-sementara", RoutesRegistry.CutiSementaraRoutes);
 router.route("/pengajuan-yudisium", RoutesRegistry.PengajuanYudisiumRoutes);
@@ -24,19 +43,19 @@ router.route("/legalisir-ijazah", RoutesRegistry.LegalisirIjazahRoutes);
 router.route("/menu", RoutesRegistry.MenuRoutes);
 
 router.get("/", (c: Context) => {
-        return response_success(c, "main routes!");
+  return response_success(c, "main routes!");
 });
 
 router.get("/robots.txt", (c: Context) => {
-        return c.text(`User-agent: *\nAllow: /`);
+  return c.text(`User-agent: *\nAllow: /`);
 });
 
 router.get("/ping", (c: Context) => {
-        return response_success(c, "pong!");
+  return response_success(c, "pong!");
 });
 
 router.all("*", (c: Context) => {
-        return response_not_found(c);
+  return response_not_found(c);
 });
 
 export default router;

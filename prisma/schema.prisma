@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider          = "mysql"
+  provider          = "postgresql"
   url               = env("DATABASE_URL")
   shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
@@ -17,6 +17,7 @@ model User {
   password                String
   nama                    String?
   npm                     String?  @unique
+  semester                Int?
   adminId                 Int?
   operatorKemahasiswaanId Int?
   operatorAkademikId      Int?
@@ -49,6 +50,8 @@ model User {
   cutiSementara         CutiSementara[]
   pengajuanYudisium     PengajuanYudisium[]
   legalisirIjazah       LegalisirIjazah[]
+  suratKeteranganLulus  SuratKeteranganLulus[]
+  rekomendasiBeasiswa   RekomendasiBeasiswa[]
   status                Status[]
   log                   Log[]
 }
@@ -291,22 +294,73 @@ enum TIPE_PENGAMBILAN {
 }
 
 model LegalisirIjazah {
-  id                 Int               @id @default(autoincrement())
-  ulid               String            @unique
-  totalLegalisir     Int
-  namaRekening       String
-  nomorRekening      String
-  namaBank           String
-  buktiPembayaran    String
-  buktiIjazah        String
-  verifikasiStatus   String            @default("DIPROSES OLEH OPERATOR AKADEMIK")
-  alasanPenolakan    String?           @db.Text
-  tanggalPengambilan String?
-  tipePengambilan    TIPE_PENGAMBILAN?
-  alamatPengiriman   String?
-  tempatPengambilan  String?
-  userId             Int
-  createdAt          DateTime          @default(now())
+  id                    Int               @id @default(autoincrement())
+  ulid                  String            @unique
+  totalLegalisir        Int
+  namaRekening          String?
+  nomorRekening         String?
+  namaBank              String?
+  buktiPembayaran       String
+  buktiPembayaranOngkir String?
+  buktiIjazah           String
+  buktiTranskrip        String
+  verifikasiStatus      String            @default("DIPROSES OLEH OPERATOR AKADEMIK")
+  alasanPenolakan       String?           @db.Text
+  tanggalPengambilan    String?
+  noResi                String?
+  tipePengambilan       TIPE_PENGAMBILAN?
+  alamatPengiriman      String?
+  tempatPengambilan     String?
+  userId                Int
+  createdAt             DateTime          @default(now())
+
+  user   User     @relation(fields: [userId], references: [id])
+  status Status[]
+}
+
+enum TipeSuratKeteranganLulus {
+  UNTUK_BEKERJA
+  UNTUK_MELANJUTKAN_STUDI
+  UNTUK_BEASISWA
+  LAINNYA
+}
+
+model SuratKeteranganLulus {
+  id               Int                      @id @default(autoincrement())
+  ulid             String                   @unique
+  tipeSurat        TipeSuratKeteranganLulus
+  deskripsi        String                   @db.Text
+  dokumenTranskrip String
+  verifikasiStatus String                   @default("DIPROSES OLEH OPERATOR KEMAHASISWAAN")
+  alasanPenolakan  String?                  @db.Text
+  nomorSurat       String?
+  userId           Int
+  createdAt        DateTime                 @default(now())
+
+  user   User     @relation(fields: [userId], references: [id])
+  status Status[]
+}
+
+enum TipeRekomendasi {
+  UNTUK_BEASISWA
+  UNTUK_MAGANG
+  UNTUK_KERJA
+  UNTUK_MELANJUTKAN_STUDI
+  LAINNYA
+}
+
+model RekomendasiBeasiswa {
+  id               Int             @id @default(autoincrement())
+  ulid             String          @unique
+  tipeRekomendasi  TipeRekomendasi
+  deskripsi        String          @db.Text
+  institusiTujuan  String
+  dokumenPendukung String?
+  verifikasiStatus String          @default("DIPROSES OLEH OPERATOR AKADEMIK")
+  alasanPenolakan  String?         @db.Text
+  nomorSurat       String?
+  userId           Int
+  createdAt        DateTime        @default(now())
 
   user   User     @relation(fields: [userId], references: [id])
   status Status[]
@@ -325,6 +379,8 @@ model Status {
   cutiSementara         CutiSementara[]
   pengajuanYudisium     PengajuanYudisium[]
   legalisirIjazah       LegalisirIjazah[]
+  suratKeteranganLulus  SuratKeteranganLulus[]
+  rekomendasiBeasiswa   RekomendasiBeasiswa[]
 }
 
 model Log {

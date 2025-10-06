@@ -7,6 +7,7 @@ interface UserSeedData {
         role: string;
         nama: string;
         email: string;
+        semester?: number;
         nip?: string;
         npm?: string;
         password: string;
@@ -114,6 +115,7 @@ const USERS_DATA: UserSeedData[] = [
         // Student
         {
                 role: "mahasiswa",
+                semester: 4,
                 nama: "Rama Dhaniansyah",
                 email: "rama@mhs.usk.ac.id",
                 npm: "2105107010057",

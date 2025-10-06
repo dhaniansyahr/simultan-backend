@@ -151,8 +151,8 @@ export async function getAll(filters: FilteringQueryV2, user: UserJWTDAO): Promi
         }
 }
 
-export type GetAllHistoryResponse = PagedList<SuratKeteranganKuliah[]> | {};
-export async function getAllHistory(filters: FilteringQueryV2, user: UserJWTDAO): Promise<ServiceResponse<GetAllHistoryResponse>> {
+export type GetAllHisstoryResponse = PagedList<SuratKeteranganKuliah[]> | {};
+export async function getAllHistory(filters: FilteringQueryV2, user: UserJWTDAO): Promise<ServiceResponse<GetAllHisstoryResponse>> {
         try {
                 const usedFilters = buildFilterQueryLimitOffsetV2(filters);
 

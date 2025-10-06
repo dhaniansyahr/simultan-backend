@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE `User` MODIFY `npm` VARCHAR(191) NULL;

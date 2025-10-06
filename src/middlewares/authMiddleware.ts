@@ -21,7 +21,7 @@ export async function checkJwt(c: Context, next: Next) {
     await next();
 }
 
-export function checkAccess(featureName: string, action: string) {
+export function checkAccess(featureName: string, action: string, p0?: string) {
     return async (c: Context, next: Next) => {
         const user: UserJWTDAO = await c.get("jwtPayload");
 
